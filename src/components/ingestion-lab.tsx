@@ -189,9 +189,9 @@ export function IngestionLab({
   const sourceOptions = sources.slice(0, 12);
 
   return (
-    <section className="rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.22)] bg-[linear-gradient(135deg,rgba(64,224,208,0.08),rgba(255,255,255,0.035))] p-4 md:p-5">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
+    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.22)] bg-[linear-gradient(135deg,rgba(64,224,208,0.08),rgba(255,255,255,0.035))] p-4 md:p-5">
+      <div className="flex min-w-0 flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
             <DatabaseZap className="h-4 w-4" aria-hidden="true" />
             Ingestion Lab
@@ -201,7 +201,7 @@ export function IngestionLab({
             Entrada local segura para sinais, evidencias e fontes aprovadas. Sem scraping, sem conector externo e sem transformar falha em insight.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[520px]">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 2xl:min-w-[460px]">
           <MetricChip label="connectors ok" value={String(lab.stats.approvedConnectors)} tone="acid" />
           <MetricChip label="requests abertos" value={String(lab.stats.openRequests)} tone="aqua" />
           <MetricChip label="batches ok" value={String(lab.stats.succeededBatches)} tone="gold" />
@@ -209,7 +209,7 @@ export function IngestionLab({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 2xl:grid-cols-[1.05fr_0.95fr]">
         <motion.form
           ref={signalFormRef}
           onSubmit={submitSignal}
@@ -301,7 +301,7 @@ export function IngestionLab({
           </div>
         </motion.form>
 
-        <div className="grid gap-4">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
           <form
             ref={evidenceFormRef}
             onSubmit={submitEvidence}
@@ -388,7 +388,7 @@ export function IngestionLab({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
             <GitBranch className="h-4 w-4" aria-hidden="true" />

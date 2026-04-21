@@ -154,7 +154,7 @@ const fallbackData: CommandCenterData = {
   persistence: {
     mode: "error-fallback",
     label: "fallback demo",
-    detail: "Banco local indisponivel; exibindo fixtures demo/mock.",
+    detail: "Banco persistente indisponivel; exibindo fixtures demo/mock.",
   },
   ingestionLab: {
     connectors: [],

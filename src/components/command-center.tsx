@@ -204,11 +204,11 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
   const transfer = usTop?.scoreInput.usTransferability ?? 0;
 
   return (
-    <section className="grid gap-3 lg:grid-cols-[1fr_1fr_220px]">
+    <section className="grid min-w-0 gap-3 lg:grid-cols-2 2xl:grid-cols-[1fr_1fr_220px]">
       {[brTop, usTop].map((signal, index) => (
         <div
           key={signal?.id ?? index}
-          className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4"
+          className="relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4"
         >
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(64,224,208,0.44)] to-transparent" />
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
@@ -228,7 +228,7 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
         </div>
       ))}
 
-      <div className="rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.22)] bg-[rgba(199,255,93,0.07)] p-4">
+      <div className="min-w-0 rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.22)] bg-[rgba(199,255,93,0.07)] p-4 lg:col-span-2 2xl:col-span-1">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
           <TrendingUp className="h-4 w-4" aria-hidden="true" />
           ponte US &gt; BR
@@ -253,14 +253,14 @@ function EvidenceInspector({
 }) {
   if (!signal) {
     return (
-      <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+      <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
         <p className="text-sm text-[color:var(--muted)]">Selecione um sinal para revisar evidencia.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -337,7 +337,7 @@ function SavedAndHistory({
   revivalSignals: TrendSignal[];
 }) {
   return (
-    <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
@@ -370,9 +370,9 @@ function SavedAndHistory({
         </div>
         <div className="mt-3 grid gap-2">
           {revivalSignals.map((signal) => (
-            <div key={signal.id} className="flex items-center justify-between gap-3 text-sm">
-              <span className="truncate text-[color:var(--muted-strong)]">{signal.title}</span>
-              <span className="rounded-full border border-[color:var(--line)] px-2 py-1 text-xs text-[color:var(--muted)]">
+            <div key={signal.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 truncate text-[color:var(--muted-strong)]">{signal.title}</span>
+              <span className="shrink-0 rounded-full border border-[color:var(--line)] px-2 py-1 text-xs text-[color:var(--muted)]">
                 {signal.stage}
               </span>
             </div>
@@ -492,12 +492,12 @@ export function CommandCenter({
   ];
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
+    <main className="relative min-h-screen overflow-x-hidden">
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
-      <div className="relative mx-auto grid min-h-screen w-full max-w-[1580px] gap-0 px-3 py-3 lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.74)] p-4 backdrop-blur-xl lg:block">
+      <div className="relative z-0 mx-auto grid min-h-screen w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="hidden min-w-0 border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.74)] p-4 backdrop-blur-xl lg:block">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3 px-2 py-2">
               <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">
@@ -576,7 +576,7 @@ export function CommandCenter({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <label className="flex min-w-[280px] flex-1 items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-3 py-2 text-sm text-[color:var(--muted)] xl:w-[360px] xl:flex-none">
+                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-3 py-2 text-sm text-[color:var(--muted)] sm:min-w-[280px] xl:w-[360px] xl:flex-none">
                   <Search className="h-4 w-4" aria-hidden="true" />
                   <input
                     value={query}
@@ -597,8 +597,8 @@ export function CommandCenter({
             </div>
           </header>
 
-          <div className="grid gap-5 px-4 py-5 md:px-6 2xl:grid-cols-[minmax(0,1fr)_390px]">
-            <div className="grid min-w-0 gap-5">
+          <div className="grid min-w-0 items-start gap-5 px-4 py-5 md:px-6 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
               <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="Metricas demo">
                 {metricTiles.map((metric) => (
                   <MetricTile key={metric.label} {...metric} />
@@ -776,7 +776,7 @@ export function CommandCenter({
               </section>
             </div>
 
-            <aside className="grid content-start gap-4">
+            <aside className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 xl:sticky xl:top-[96px] xl:max-h-[calc(100svh-112px)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
               <EvidenceInspector
                 signal={selectedSignal}
                 savedCount={savedIds.size}
@@ -785,7 +785,7 @@ export function CommandCenter({
 
               <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
 
-              <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+              <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -802,7 +802,7 @@ export function CommandCenter({
                       className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-medium leading-5">{source.title}</p>
+                        <p className="min-w-0 break-words text-sm font-medium leading-5">{source.title}</p>
                         <SourcePill source={source} compact />
                       </div>
                       <p className="mt-3 text-xs leading-5 text-[color:var(--muted)]">
@@ -817,7 +817,7 @@ export function CommandCenter({
                 </div>
               </section>
 
-              <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+              <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                   Fase 3B
                 </p>
