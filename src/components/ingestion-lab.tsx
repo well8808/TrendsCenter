@@ -73,7 +73,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+    <label className="grid min-w-0 gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
       {label}
       {children}
     </label>
@@ -81,7 +81,7 @@ function Field({
 }
 
 const fieldClass =
-  "min-h-10 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-sm normal-case tracking-normal text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.42)]";
+  "min-h-10 w-full min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-sm normal-case tracking-normal text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.42)]";
 
 function ResultBadge({ result }: { result?: ActionResult }) {
   if (!result) {
@@ -372,12 +372,12 @@ export function IngestionLab({
                 </p>
               ) : (
                 lab.connectors.slice(0, 4).map((connector) => (
-                  <div key={connector.id} className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] px-3 py-2">
+                  <div key={connector.id} className="flex min-w-0 items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{connector.title}</p>
                       <p className="mt-1 text-xs text-[color:var(--muted)]">{connector.kind} - {connector.origin}</p>
                     </div>
-                    <span className={cn("rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(connector.status))}>
+                    <span className={cn("shrink-0 rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(connector.status))}>
                       {connector.status}
                     </span>
                   </div>

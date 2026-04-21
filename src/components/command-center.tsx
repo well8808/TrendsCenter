@@ -492,58 +492,60 @@ export function CommandCenter({
   ];
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden">
+    <main className="relative min-h-screen">
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
-      <div className="relative z-0 mx-auto grid min-h-screen w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden min-w-0 border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.74)] p-4 backdrop-blur-xl lg:block">
-          <div className="flex h-full flex-col">
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">
-                <Command className="h-5 w-5" aria-hidden="true" />
+      <div className="relative z-0 mx-auto grid min-h-screen w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:py-0 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_340px] 2xl:grid-cols-[280px_minmax(0,1fr)_390px]">
+        <aside className="hidden min-w-0 lg:block">
+          <div className="sticky top-0 h-[100dvh] overflow-y-auto overscroll-contain border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.74)] p-4 backdrop-blur-xl">
+            <div className="flex min-h-full flex-col">
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">
+                  <Command className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Market Intel</p>
+                  <p className="text-xs text-[color:var(--muted)]">TikTok Command Center</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold">Market Intel</p>
-                <p className="text-xs text-[color:var(--muted)]">TikTok Command Center</p>
+
+              <nav className="mt-7 grid gap-1" aria-label="Navegacao principal">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <button
+                      key={item.label}
+                      className={cn(
+                        "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm text-[color:var(--muted-strong)] transition",
+                        item.active
+                          ? "bg-[rgba(199,255,93,0.13)] text-[color:var(--foreground)]"
+                          : "hover:bg-[rgba(255,255,255,0.055)] hover:text-[color:var(--foreground)]",
+                      )}
+                      type="button"
+                    >
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className="mt-auto rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
+                  <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                  Safe mode
+                </div>
+                <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+                  Nenhum dado de producao conectado. O app bloqueia insight sem fonte e marca mock na UI.
+                </p>
               </div>
-            </div>
-
-            <nav className="mt-7 grid gap-1" aria-label="Navegacao principal">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <button
-                    key={item.label}
-                    className={cn(
-                      "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm text-[color:var(--muted-strong)] transition",
-                      item.active
-                        ? "bg-[rgba(199,255,93,0.13)] text-[color:var(--foreground)]"
-                        : "hover:bg-[rgba(255,255,255,0.055)] hover:text-[color:var(--foreground)]",
-                    )}
-                    type="button"
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="mt-auto rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                Safe mode
-              </div>
-              <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-                Nenhum dado de producao conectado. O app bloqueia insight sem fonte e marca mock na UI.
-              </p>
             </div>
           </div>
         </aside>
 
-        <section className="min-w-0 bg-[rgba(7,7,6,0.52)] backdrop-blur-xl">
+        <section className="min-w-0 bg-[rgba(7,7,6,0.52)] backdrop-blur-xl lg:my-3">
           <header className="sticky top-0 z-20 border-b border-[color:var(--line)] bg-[rgba(7,7,6,0.78)] px-4 py-3 backdrop-blur-2xl md:px-6">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex items-center gap-3">
@@ -597,7 +599,7 @@ export function CommandCenter({
             </div>
           </header>
 
-          <div className="grid min-w-0 items-start gap-5 px-4 py-5 md:px-6 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 px-4 py-5 md:px-6">
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
               <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="Metricas demo">
                 {metricTiles.map((metric) => (
@@ -617,7 +619,7 @@ export function CommandCenter({
                     </p>
                     <h2 className="mt-2 text-lg font-semibold">Estados premium preparados</h2>
                   </div>
-                  <div className="inline-flex w-full rounded-full border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-1 sm:w-auto">
+                  <div className="scrollbar-soft inline-flex w-full overflow-x-auto rounded-full border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-1 sm:w-auto">
                     {stateOptions.map((option) => (
                       <SegmentButton
                         key={option.value}
@@ -710,7 +712,7 @@ export function CommandCenter({
                         </SegmentButton>
                       ))}
                     </div>
-                    <div className="flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-1">
+                    <div className="scrollbar-soft flex max-w-full min-w-0 items-center gap-2 overflow-x-auto rounded-full border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-1">
                       <ArrowDownUp className="ml-2 h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                       {sortOptions.map((option) => (
                         <SegmentButton
@@ -776,7 +778,12 @@ export function CommandCenter({
               </section>
             </div>
 
-            <aside className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 xl:sticky xl:top-[96px] xl:max-h-[calc(100svh-112px)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
+          </div>
+        </section>
+
+        <aside className="mt-5 min-w-0 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
+          <div className="xl:sticky xl:top-3 xl:h-[calc(100dvh-24px)] xl:self-start">
+            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 pb-5 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-8 xl:pr-1">
               <EvidenceInspector
                 signal={selectedSignal}
                 savedCount={savedIds.size}
@@ -851,9 +858,9 @@ export function CommandCenter({
                   nao vier de fonte real aprovada segue marcado como demo/mock.
                 </p>
               </section>
-            </aside>
+            </div>
           </div>
-        </section>
+        </aside>
       </div>
     </main>
   );
