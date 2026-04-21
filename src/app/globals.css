@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  --font-geist-sans:
+    "Segoe UI", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-geist-mono:
+    "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --background: #070706;
+  --foreground: #efe9dc;
+  --surface: #10100d;
+  --surface-elevated: #171714;
+  --surface-soft: #1f1e19;
+  --line: rgba(239, 233, 220, 0.12);
+  --line-strong: rgba(239, 233, 220, 0.2);
+  --muted: #9b9689;
+  --muted-strong: #cfc6b3;
+  --acid: #c7ff5d;
+  --aqua: #40e0d0;
+  --coral: #ff6f61;
+  --gold: #f3c969;
+  --violet: #a98cff;
+  --danger: #ff4d4d;
+  --success: #79e884;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 20px 70px rgba(0, 0, 0, 0.34);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+  min-width: 320px;
+}
+
+body {
+  background:
+    radial-gradient(circle at 18% -10%, rgba(199, 255, 93, 0.12), transparent 24rem),
+    radial-gradient(circle at 84% 0%, rgba(64, 224, 208, 0.1), transparent 28rem),
+    linear-gradient(180deg, #070706 0%, #0d0d0b 46%, #080807 100%);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  min-height: 100svh;
+  overflow-x: hidden;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--aqua);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(199, 255, 93, 0.24);
+  color: var(--foreground);
+}
+
+.premium-grid {
+  background-image:
+    linear-gradient(rgba(239, 233, 220, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 233, 220, 0.05) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
+}
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.04), transparent 30%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.03) 0,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  mix-blend-mode: screen;
+}
+
+.scrollbar-soft {
+  scrollbar-color: rgba(239, 233, 220, 0.24) transparent;
+}
