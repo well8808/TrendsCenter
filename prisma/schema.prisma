@@ -56,6 +56,27 @@ enum ConfidenceBand {
   HIGH
 }
 
+enum SignalPriority {
+  NOW
+  NEXT
+  WATCH
+  HOLD
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TrendStage {
+  EMERGING
+  ACCELERATING
+  PROVING
+  REVIVAL
+  MONITOR
+}
+
 enum ComplianceSeverity {
   INFO
   WARNING
@@ -107,6 +128,13 @@ model TrendSignal {
   market         Market
   audience       String
   status         SignalStatus       @default(WATCH)
+  priority       SignalPriority     @default(WATCH)
+  riskLevel      RiskLevel          @default(LOW)
+  stage          TrendStage         @default(MONITOR)
+  strength       Int                @default(0)
+  trendWindow    String?
+  decision       String?
+  nextAction     String?
   origin         DataOrigin
   sourceId       String
   source         Source             @relation(fields: [sourceId], references: [id])
@@ -119,8 +147,11 @@ model TrendSignal {
   scores         TrendScore[]
   evidence       EvidenceItem[]
   compliance     ComplianceFlag[]
+  savedBy        WorkspaceSavedSignal[]
+  history        SignalHistoryEvent[]
 
   @@index([market, type, status])
+  @@index([priority, riskLevel, stage])
   @@index([origin, isDemo])
 }
 
@@ -180,6 +211,30 @@ model EvidenceItem {
   createdAt   DateTime     @default(now())
 
   @@index([sourceId, capturedAt])
+}
+
+model WorkspaceSavedSignal {
+  id        String      @id @default(cuid())
+  signalId  String
+  signal    TrendSignal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  label     String?
+  notes     String?
+  createdAt DateTime    @default(now())
+
+  @@index([signalId, createdAt])
+}
+
+model SignalHistoryEvent {
+  id        String      @id @default(cuid())
+  signalId  String
+  signal    TrendSignal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  label     String
+  value     String
+  tone      String
+  eventAt   DateTime    @default(now())
+  createdAt DateTime    @default(now())
+
+  @@index([signalId, eventAt])
 }
 
 model ComplianceFlag {

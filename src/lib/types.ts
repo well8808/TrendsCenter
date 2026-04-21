@@ -28,6 +28,12 @@ export type ConfidenceBand = "low" | "medium" | "high";
 
 export type WorkspaceState = "demo" | "loading" | "empty" | "error";
 
+export type SignalPriority = "now" | "next" | "watch" | "hold";
+
+export type RiskLevel = "low" | "medium" | "high";
+
+export type TrendStage = "emerging" | "accelerating" | "proving" | "revival" | "monitor";
+
 export interface SourceRecord {
   id: string;
   title: string;
@@ -38,6 +44,9 @@ export interface SourceRecord {
   market: Market;
   confidence: ConfidenceBand;
   evidenceCount: number;
+  coverage?: string;
+  freshness?: string;
+  gap?: string;
 }
 
 export interface ScoreInput {
@@ -60,6 +69,21 @@ export interface TrendScore {
   riskAdjusted: boolean;
 }
 
+export interface EvidencePoint {
+  id: string;
+  title: string;
+  sourceLabel: string;
+  quality: ConfidenceBand;
+  timestamp: string;
+  note: string;
+}
+
+export interface SignalHistoryItem {
+  label: string;
+  value: string;
+  tone: "acid" | "aqua" | "coral" | "gold" | "violet";
+}
+
 export interface TrendSignal {
   id: string;
   title: string;
@@ -68,11 +92,22 @@ export interface TrendSignal {
   market: Market;
   audience: string;
   status: "rising" | "returning" | "watch" | "blocked";
+  priority: SignalPriority;
+  riskLevel: RiskLevel;
+  stage: TrendStage;
+  strength: number;
+  trendWindow: string;
+  decision: string;
+  nextAction: string;
+  saved: boolean;
   origin: DataOrigin;
   scoreInput: ScoreInput;
   score: TrendScore;
   source: SourceRecord;
   tags: string[];
+  evidence: EvidencePoint[];
+  history: SignalHistoryItem[];
+  scoreDrivers: string[];
 }
 
 export interface MetricTile {
