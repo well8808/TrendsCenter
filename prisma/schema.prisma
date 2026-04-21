@@ -91,69 +91,148 @@ enum JobStatus {
   CANCELED
 }
 
+enum ConnectorStatus {
+  APPROVED
+  PAUSED
+  NEEDS_REVIEW
+  BLOCKED
+}
+
+enum IngestRequestType {
+  SIGNAL_CREATE
+  EVIDENCE_APPEND
+  SOURCE_REGISTER
+  OFFICIAL_SNAPSHOT
+}
+
+enum IngestStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  SKIPPED
+}
+
+enum IngestStepName {
+  RECEIVE
+  VALIDATE
+  NORMALIZE
+  DEDUPE
+  PERSIST
+  SCORE
+  AUDIT
+}
+
+enum ImportBatchKind {
+  MANUAL_SIGNAL
+  MANUAL_EVIDENCE
+  OFFICIAL_SNAPSHOT
+  DEMO_SEED
+}
+
+model SourceConnector {
+  id                 String          @id @default(cuid())
+  slug               String          @unique
+  title              String
+  kind               SourceKind
+  origin             DataOrigin
+  status             ConnectorStatus @default(NEEDS_REVIEW)
+  market             Market?
+  manualEntryEnabled Boolean         @default(true)
+  officialSurface    String?
+  policyNotes        String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  sources            Source[]
+  ingestRequests     IngestRequest[]
+  importBatches      ImportBatch[]
+
+  @@index([origin, kind, status])
+}
+
 model Source {
-  id          String           @id @default(cuid())
-  title       String
-  kind        SourceKind
-  origin      DataOrigin
-  url         String?
-  market      Market
-  confidence  ConfidenceBand  @default(LOW)
-  notes       String?
-  coverage    String?
-  freshness   String?
-  gap         String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  snapshots   SourceSnapshot[]
-  evidence    EvidenceItem[]
-  signals     TrendSignal[]
+  id             String           @id @default(cuid())
+  title          String
+  kind           SourceKind
+  origin         DataOrigin
+  url            String?
+  market         Market
+  confidence     ConfidenceBand   @default(LOW)
+  notes          String?
+  coverage       String?
+  freshness      String?
+  gap            String?
+  dedupeKey      String?          @unique
+  connectorId    String?
+  connector      SourceConnector? @relation(fields: [connectorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  snapshots      SourceSnapshot[]
+  evidence       EvidenceItem[]
+  signals        TrendSignal[]
+  ingestRequests IngestRequest[]
+  importBatches  ImportBatch[]
+
+  @@index([origin, kind, market])
 }
 
 model SourceSnapshot {
-  id              String             @id @default(cuid())
-  sourceId        String
-  source          Source             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  collectedAt     DateTime
-  rawPayloadHash  String
-  storagePath     String?
-  recordCount     Int                @default(0)
-  isDemo          Boolean            @default(false)
-  createdAt       DateTime           @default(now())
-  observations    TrendObservation[]
+  id             String             @id @default(cuid())
+  sourceId       String
+  source         Source             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  importBatchId  String?
+  importBatch    ImportBatch?       @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  jobRunId       String?
+  jobRun         JobRun?            @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
+  collectedAt    DateTime
+  rawPayloadHash String
+  storagePath    String?
+  recordCount    Int                @default(0)
+  isDemo         Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+  observations   TrendObservation[]
+  evidence       EvidenceItem[]
 }
 
 model TrendSignal {
-  id             String             @id @default(cuid())
+  id             String                 @id @default(cuid())
   title          String
   summary        String
   type           SignalType
   market         Market
   audience       String
-  status         SignalStatus       @default(WATCH)
-  priority       SignalPriority     @default(WATCH)
-  riskLevel      RiskLevel          @default(LOW)
-  stage          TrendStage         @default(MONITOR)
-  strength       Int                @default(0)
+  status         SignalStatus           @default(WATCH)
+  priority       SignalPriority         @default(WATCH)
+  riskLevel      RiskLevel              @default(LOW)
+  stage          TrendStage             @default(MONITOR)
+  strength       Int                    @default(0)
   trendWindow    String?
   decision       String?
   nextAction     String?
   tags           Json?
   scoreDrivers   Json?
+  dedupeKey      String?                @unique
+  importBatchId  String?
+  importBatch    ImportBatch?           @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  lastIngestedAt DateTime?
+  processedAt    DateTime?
   origin         DataOrigin
   sourceId       String
-  source         Source             @relation(fields: [sourceId], references: [id])
-  confidence     ConfidenceBand     @default(LOW)
-  evidenceCount  Int                @default(0)
-  isDemo         Boolean            @default(false)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  source         Source                 @relation(fields: [sourceId], references: [id])
+  confidence     ConfidenceBand         @default(LOW)
+  evidenceCount  Int                    @default(0)
+  isDemo         Boolean                @default(false)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   observations   TrendObservation[]
   scores         TrendScore[]
   evidence       EvidenceItem[]
   compliance     ComplianceFlag[]
   savedBy        WorkspaceSavedSignal[]
   history        SignalHistoryEvent[]
+  ingestRequests IngestRequest[]
 
   @@index([market, type, status])
   @@index([priority, riskLevel, stage])
@@ -161,29 +240,29 @@ model TrendSignal {
 }
 
 model TrendObservation {
-  id            String         @id @default(cuid())
-  signalId      String
-  signal        TrendSignal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
-  snapshotId    String?
-  snapshot      SourceSnapshot? @relation(fields: [snapshotId], references: [id])
-  observedAt    DateTime
-  rank          Int?
-  postCount     Int?
-  viewCount     BigInt?
-  likeCount     BigInt?
-  commentCount  BigInt?
-  shareCount    BigInt?
-  rawMetrics    Json?
-  createdAt     DateTime       @default(now())
+  id           String          @id @default(cuid())
+  signalId     String
+  signal       TrendSignal     @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  snapshotId   String?
+  snapshot     SourceSnapshot? @relation(fields: [snapshotId], references: [id])
+  observedAt   DateTime
+  rank         Int?
+  postCount    Int?
+  viewCount    BigInt?
+  likeCount    BigInt?
+  commentCount BigInt?
+  shareCount   BigInt?
+  rawMetrics   Json?
+  createdAt    DateTime        @default(now())
 
   @@index([signalId, observedAt])
 }
 
 model TrendScore {
-  id                    String          @id @default(cuid())
+  id                    String         @id @default(cuid())
   signalId              String
-  signal                TrendSignal     @relation(fields: [signalId], references: [id], onDelete: Cascade)
-  calculatedAt          DateTime        @default(now())
+  signal                TrendSignal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  calculatedAt          DateTime       @default(now())
   score                 Int
   confidence            ConfidenceBand
   velocity7d            Int
@@ -196,28 +275,36 @@ model TrendScore {
   revivalStrength       Int
   evidenceQuality       Int
   riskPenalty           Int
-  modelVersion          String          @default("score-v0.1")
+  modelVersion          String         @default("score-v0.1")
   explanation           String?
 
   @@index([signalId, calculatedAt])
 }
 
 model EvidenceItem {
-  id          String       @id @default(cuid())
-  signalId    String?
-  signal      TrendSignal? @relation(fields: [signalId], references: [id], onDelete: SetNull)
-  sourceId    String
-  source      Source       @relation(fields: [sourceId], references: [id])
-  title       String
-  url         String?
-  excerpt     String?
-  note        String?
-  quality     ConfidenceBand @default(LOW)
-  capturedAt  DateTime
-  isDemo      Boolean      @default(false)
-  createdAt   DateTime     @default(now())
+  id            String          @id @default(cuid())
+  signalId      String?
+  signal        TrendSignal?    @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  sourceId      String
+  source        Source          @relation(fields: [sourceId], references: [id])
+  importBatchId String?
+  importBatch   ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  jobRunId      String?
+  jobRun        JobRun?         @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
+  snapshotId    String?
+  snapshot      SourceSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  dedupeKey     String?         @unique
+  title         String
+  url           String?
+  excerpt       String?
+  note          String?
+  quality       ConfidenceBand  @default(LOW)
+  capturedAt    DateTime
+  isDemo        Boolean         @default(false)
+  createdAt     DateTime        @default(now())
 
   @@index([sourceId, capturedAt])
+  @@index([signalId, capturedAt])
 }
 
 model WorkspaceSavedSignal {
@@ -245,29 +332,29 @@ model SignalHistoryEvent {
 }
 
 model ComplianceFlag {
-  id          String             @id @default(cuid())
-  signalId    String?
-  signal      TrendSignal?       @relation(fields: [signalId], references: [id], onDelete: SetNull)
-  severity    ComplianceSeverity
-  code        String
-  message     String
-  policyRef   String?
-  resolvedAt  DateTime?
-  createdAt   DateTime           @default(now())
+  id         String             @id @default(cuid())
+  signalId   String?
+  signal     TrendSignal?       @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  severity   ComplianceSeverity
+  code       String
+  message    String
+  policyRef  String?
+  resolvedAt DateTime?
+  createdAt  DateTime           @default(now())
 
   @@index([severity, resolvedAt])
 }
 
 model MediaAsset {
-  id             String           @id @default(cuid())
+  id             String            @id @default(cuid())
   ownerLabel     String
   origin         DataOrigin
   storagePath    String
   mimeType       String
   fileHash       String
-  isLicensed     Boolean          @default(false)
+  isLicensed     Boolean           @default(false)
   metadataReport Json?
-  createdAt      DateTime         @default(now())
+  createdAt      DateTime          @default(now())
   derivatives    MediaDerivative[]
 }
 
@@ -282,14 +369,102 @@ model MediaDerivative {
 }
 
 model JobRun {
-  id          String    @id @default(cuid())
-  name        String
-  status      JobStatus @default(QUEUED)
-  payload     Json?
-  startedAt   DateTime?
-  finishedAt  DateTime?
-  error       String?
-  createdAt   DateTime  @default(now())
+  id            String           @id @default(cuid())
+  name          String
+  status        JobStatus        @default(QUEUED)
+  stage         IngestStepName?
+  requestId     String?
+  request       IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  importBatchId String?
+  importBatch   ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  payload       Json?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  error         String?
+  createdAt     DateTime         @default(now())
+  snapshots     SourceSnapshot[]
+  evidence      EvidenceItem[]
 
   @@index([name, status, createdAt])
+  @@index([importBatchId, status])
+}
+
+model IngestRequest {
+  id            String            @id @default(cuid())
+  requestKey    String            @unique
+  type          IngestRequestType
+  status        IngestStatus      @default(QUEUED)
+  market        Market
+  origin        DataOrigin
+  connectorId   String?
+  connector     SourceConnector?  @relation(fields: [connectorId], references: [id], onDelete: SetNull)
+  sourceId      String?
+  source        Source?           @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  signalId      String?
+  signal        TrendSignal?      @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  title         String
+  submittedBy   String            @default("operator")
+  submittedAt   DateTime          @default(now())
+  collectedAt   DateTime?
+  processedAt   DateTime?
+  completedAt   DateTime?
+  error         String?
+  payload       Json?
+  isDemo        Boolean           @default(false)
+  importBatches ImportBatch[]
+  jobRuns       JobRun[]
+
+  @@index([status, submittedAt])
+  @@index([market, origin, type])
+}
+
+model ImportBatch {
+  id             String           @id @default(cuid())
+  idempotencyKey String           @unique
+  kind           ImportBatchKind
+  status         IngestStatus     @default(QUEUED)
+  market         Market
+  origin         DataOrigin
+  connectorId    String?
+  connector      SourceConnector? @relation(fields: [connectorId], references: [id], onDelete: SetNull)
+  requestId      String?
+  request        IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  sourceId       String?
+  source         Source?          @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  title          String
+  itemCount      Int              @default(0)
+  payloadHash    String?
+  payload        Json?
+  collectedAt    DateTime?
+  processedAt    DateTime?
+  completedAt    DateTime?
+  error          String?
+  isDemo         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  steps          IngestionStep[]
+  jobRuns        JobRun[]
+  snapshots      SourceSnapshot[]
+  signals        TrendSignal[]
+  evidence       EvidenceItem[]
+
+  @@index([status, createdAt])
+  @@index([market, origin, kind])
+}
+
+model IngestionStep {
+  id          String         @id @default(cuid())
+  batchId     String
+  batch       ImportBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  name        IngestStepName
+  status      IngestStatus   @default(QUEUED)
+  sequence    Int
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?
+  notes       String?
+  createdAt   DateTime       @default(now())
+
+  @@index([batchId, sequence])
+  @@index([name, status])
 }

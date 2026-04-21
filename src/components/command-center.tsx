@@ -9,6 +9,7 @@ import {
   Bookmark,
   Command,
   Database,
+  DatabaseZap,
   FileWarning,
   Filter,
   Flame,
@@ -31,6 +32,7 @@ import {
 import { useMemo, useState, useTransition } from "react";
 
 import { toggleSavedSignalAction } from "@/app/actions";
+import { IngestionLab } from "@/components/ingestion-lab";
 import { SourcePill } from "@/components/source-pill";
 import { StatePanel, LoadingSkeleton } from "@/components/state-panels";
 import { TrendCard } from "@/components/trend-card";
@@ -58,6 +60,7 @@ const navItems = [
   { label: "Creators", icon: UserRoundCheck },
   { label: "Revival Lab", icon: History },
   { label: "Evidence Inbox", icon: Inbox },
+  { label: "Ingestion Lab", icon: DatabaseZap },
   { label: "Upload Lab", icon: LockKeyhole },
   { label: "Compliance", icon: ShieldCheck },
 ];
@@ -118,6 +121,19 @@ const fallbackPersistence: CommandCenterData["persistence"] = {
   mode: "error-fallback",
   label: "fallback demo",
   detail: "Persistencia local indisponivel; exibindo demo/mock.",
+};
+
+const fallbackIngestionLab: CommandCenterData["ingestionLab"] = {
+  connectors: [],
+  requests: [],
+  batches: [],
+  jobs: [],
+  stats: {
+    approvedConnectors: 0,
+    openRequests: 0,
+    failedBatches: 0,
+    succeededBatches: 0,
+  },
 };
 
 function SegmentButton<T extends string>({
@@ -371,6 +387,7 @@ export function CommandCenter({
   signals = demoSignals,
   sources = sourceQueue,
   persistence = fallbackPersistence,
+  ingestionLab = fallbackIngestionLab,
 }: Partial<CommandCenterData>) {
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>("demo");
   const [query, setQuery] = useState("");
@@ -590,6 +607,8 @@ export function CommandCenter({
 
               <MarketBridge signals={rankSignals(signals, "priority")} />
 
+              <IngestionLab lab={ingestionLab} signals={signals} sources={sources} />
+
               <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 md:p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
@@ -800,7 +819,7 @@ export function CommandCenter({
 
               <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
-                  Fase 3A
+                  Fase 3B
                 </p>
                 <h2 className="mt-2 text-lg font-semibold">Jobs seguros preparados</h2>
                 <div className="mt-5 grid gap-3">
@@ -828,8 +847,8 @@ export function CommandCenter({
                   Nao producao
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  A Fase 3A persiste o workspace local, mas ainda nao conecta fontes reais. Tudo aqui e
-                  demo/mock rastreavel.
+                  A Fase 3B aceita ingestao manual/oficial rastreavel, sem coleta externa automatica. Tudo que
+                  nao vier de fonte real aprovada segue marcado como demo/mock.
                 </p>
               </section>
             </aside>

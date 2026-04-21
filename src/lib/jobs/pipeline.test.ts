@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createManualIngestEnvelope, phase3AQueues } from "./pipeline";
+import { createManualIngestEnvelope, phase3BQueues } from "./pipeline";
 
-describe("phase3AQueues", () => {
+describe("phase3BQueues", () => {
   it("mantem filas locais sem rede externa automatica", () => {
     const envelope = createManualIngestEnvelope("src-demo-trends-br", "Teste manual aprovado.");
 
-    expect(phase3AQueues.map((item) => item.queue)).toEqual([
+    expect(phase3BQueues.map((item) => item.queue)).toEqual([
       "manual-ingest",
       "normalize",
       "score",

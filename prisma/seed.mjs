@@ -54,6 +54,97 @@ function scoreValue(input) {
   return Math.max(0, Math.min(100, Math.round(weighted - input.riskPenalty)));
 }
 
+function normalizeForDedupe(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function sourceKey(source) {
+  return [
+    "source",
+    source.origin.toLowerCase(),
+    source.kind.toLowerCase(),
+    source.market.toLowerCase(),
+    normalizeForDedupe(source.title),
+  ].join(":");
+}
+
+function signalKey(signal) {
+  return ["signal", signal.market.toLowerCase(), signal.type.toLowerCase(), normalizeForDedupe(signal.title)].join(":");
+}
+
+function evidenceKey(signal, evidence) {
+  return ["evidence", signalKey(signal), normalizeForDedupe(evidence.title)].join(":");
+}
+
+const connectors = [
+  {
+    id: "connector-demo-creative-center",
+    slug: "demo-creative-center-br",
+    title: "Demo Creative Center BR intake",
+    kind: "DEMO",
+    origin: "DEMO",
+    status: "APPROVED",
+    market: "BR",
+    officialSurface: "TikTok Creative Center",
+  },
+  {
+    id: "connector-demo-us-review",
+    slug: "demo-us-early-review",
+    title: "Demo US early-signal review",
+    kind: "DEMO",
+    origin: "DEMO",
+    status: "APPROVED",
+    market: "US",
+    officialSurface: "Manual US review",
+  },
+  {
+    id: "connector-demo-cml",
+    slug: "demo-commercial-music-library",
+    title: "Demo Commercial Music Library intake",
+    kind: "DEMO",
+    origin: "DEMO",
+    status: "APPROVED",
+    market: "BR",
+    officialSurface: "Commercial Music Library",
+  },
+  {
+    id: "connector-manual-safe-intake",
+    slug: "manual-safe-intake",
+    title: "Manual safe intake",
+    kind: "MANUAL_RESEARCH",
+    origin: "MANUAL",
+    status: "APPROVED",
+    market: "BR",
+    officialSurface: "Operator entry",
+  },
+  {
+    id: "connector-official-placeholder",
+    slug: "official-placeholder-approved",
+    title: "Official source placeholder",
+    kind: "CREATIVE_CENTER_TRENDS",
+    origin: "OFFICIAL",
+    status: "NEEDS_REVIEW",
+    market: "BR",
+    officialSurface: "Approved official surface pending credentials",
+  },
+];
+
+const connectorBySourceId = {
+  "src-demo-trends-br": "connector-demo-creative-center",
+  "src-demo-top-ads-us": "connector-demo-us-review",
+  "src-demo-cml": "connector-demo-cml",
+  "src-demo-creator-watch": "connector-manual-safe-intake",
+};
+
+const sourceIngestion = new Map();
+const ingestionStepNames = ["RECEIVE", "VALIDATE", "NORMALIZE", "DEDUPE", "PERSIST", "SCORE", "AUDIT"];
+
 const sources = [
   {
     id: "src-demo-trends-br",
@@ -479,8 +570,24 @@ async function reset() {
   await prisma.trendObservation.deleteMany();
   await prisma.trendSignal.deleteMany();
   await prisma.sourceSnapshot.deleteMany();
-  await prisma.source.deleteMany();
   await prisma.jobRun.deleteMany();
+  await prisma.ingestionStep.deleteMany();
+  await prisma.importBatch.deleteMany();
+  await prisma.ingestRequest.deleteMany();
+  await prisma.source.deleteMany();
+  await prisma.sourceConnector.deleteMany();
+}
+
+async function seedConnectors() {
+  for (const connector of connectors) {
+    await prisma.sourceConnector.create({
+      data: {
+        ...connector,
+        manualEntryEnabled: true,
+        policyNotes: "Seed Fase 3B: connector aprovado/pendente sem rede externa automatica.",
+      },
+    });
+  }
 }
 
 async function seedSources() {
@@ -496,18 +603,122 @@ async function seedSources() {
         coverage: source.coverage,
         freshness: source.freshness,
         gap: source.gap,
-        notes: "Seed demo/mock para Fase 3A; nao representa dado de producao.",
-        snapshots: {
-          create: {
-            id: `${source.id}-snapshot-20260421`,
-            collectedAt: source.collectedAt,
-            rawPayloadHash: source.rawPayloadHash,
-            recordCount: source.evidenceCount,
-            isDemo: true,
-          },
-        },
+        connectorId: connectorBySourceId[source.id],
+        dedupeKey: sourceKey(source),
+        notes: "Seed demo/mock para Fase 3B; nao representa dado de producao.",
       },
     });
+  }
+}
+
+async function createSteps(batchId, status, failedStep) {
+  for (const [index, name] of ingestionStepNames.entries()) {
+    const stepStatus =
+      failedStep && ingestionStepNames.indexOf(name) > ingestionStepNames.indexOf(failedStep)
+        ? "SKIPPED"
+        : failedStep === name
+          ? "FAILED"
+          : status;
+
+    await prisma.ingestionStep.create({
+      data: {
+        batchId,
+        name,
+        status: stepStatus,
+        sequence: index + 1,
+        startedAt: collectedAt.trendsBr,
+        completedAt: collectedAt.trendsBr,
+        notes: stepStatus === "SUCCEEDED" ? "Seed local concluido sem rede externa." : "Seed de falha visivel.",
+        error: stepStatus === "FAILED" ? "Credencial oficial ausente no ambiente demo." : undefined,
+      },
+    });
+  }
+}
+
+async function seedImportBatches() {
+  for (const source of sources) {
+    const request = await prisma.ingestRequest.create({
+      data: {
+        id: `${source.id}-request-20260421`,
+        requestKey: `demo-seed-request:${source.id}`,
+        type: "OFFICIAL_SNAPSHOT",
+        status: "SUCCEEDED",
+        market: source.market,
+        origin: source.origin,
+        connectorId: connectorBySourceId[source.id],
+        sourceId: source.id,
+        title: `Seed request: ${source.title}`,
+        submittedBy: "seed",
+        submittedAt: source.collectedAt,
+        collectedAt: source.collectedAt,
+        processedAt: source.collectedAt,
+        completedAt: source.collectedAt,
+        payload: {
+          mode: "demo/mock",
+          externalIntegrations: false,
+          sourceId: source.id,
+        },
+        isDemo: true,
+      },
+    });
+    const batch = await prisma.importBatch.create({
+      data: {
+        id: `${source.id}-batch-20260421`,
+        idempotencyKey: `demo-seed-batch:${source.id}`,
+        kind: "DEMO_SEED",
+        status: "SUCCEEDED",
+        market: source.market,
+        origin: source.origin,
+        connectorId: connectorBySourceId[source.id],
+        requestId: request.id,
+        sourceId: source.id,
+        title: `Seed batch: ${source.title}`,
+        itemCount: source.evidenceCount,
+        payloadHash: source.rawPayloadHash,
+        payload: {
+          mode: "demo/mock",
+          externalIntegrations: false,
+          sourceId: source.id,
+        },
+        collectedAt: source.collectedAt,
+        processedAt: source.collectedAt,
+        completedAt: source.collectedAt,
+        isDemo: true,
+      },
+    });
+    const job = await prisma.jobRun.create({
+      data: {
+        id: `${source.id}-job-20260421`,
+        name: "demo-seed-ingest",
+        status: "SUCCEEDED",
+        stage: "AUDIT",
+        requestId: request.id,
+        importBatchId: batch.id,
+        payload: {
+          phase: "3B",
+          source: "prisma/seed.mjs",
+          mode: "demo/mock",
+          externalIntegrations: false,
+        },
+        startedAt: source.collectedAt,
+        finishedAt: source.collectedAt,
+      },
+    });
+    const snapshot = await prisma.sourceSnapshot.create({
+      data: {
+        id: `${source.id}-snapshot-20260421`,
+        sourceId: source.id,
+        importBatchId: batch.id,
+        jobRunId: job.id,
+        collectedAt: source.collectedAt,
+        rawPayloadHash: source.rawPayloadHash,
+        recordCount: source.evidenceCount,
+        isDemo: true,
+      },
+    });
+
+    await createSteps(batch.id, "SUCCEEDED");
+    sourceIngestion.set(source.id, { request, batch, job, snapshot });
   }
 }
 
@@ -515,6 +726,8 @@ async function seedSignals() {
   for (const signal of signals) {
     const score = scoreValue(signal.scoreInput);
     const confidence = band(score);
+    const ingestion = sourceIngestion.get(signal.sourceId);
+    const signalDedupeKey = signalKey(signal);
 
     await prisma.trendSignal.create({
       data: {
@@ -534,6 +747,10 @@ async function seedSignals() {
         nextAction: signal.nextAction,
         tags: signal.tags,
         scoreDrivers: signal.scoreDrivers,
+        dedupeKey: signalDedupeKey,
+        importBatchId: ingestion?.batch.id,
+        lastIngestedAt: ingestion?.batch.completedAt,
+        processedAt: ingestion?.batch.completedAt,
         origin: "DEMO",
         sourceId: signal.sourceId,
         confidence,
@@ -541,6 +758,7 @@ async function seedSignals() {
         isDemo: true,
         observations: {
           create: {
+            snapshotId: ingestion?.snapshot.id,
             observedAt: sources.find((source) => source.id === signal.sourceId)?.collectedAt ?? collectedAt.trendsBr,
             rank: signal.priority === "NOW" ? 1 : signal.priority === "NEXT" ? 2 : 4,
             postCount: signal.evidence.length,
@@ -573,6 +791,10 @@ async function seedSignals() {
           create: signal.evidence.map((item) => ({
             id: item.id,
             sourceId: signal.sourceId,
+            importBatchId: ingestion?.batch.id,
+            jobRunId: ingestion?.job.id,
+            snapshotId: ingestion?.snapshot.id,
+            dedupeKey: evidenceKey(signal, item),
             title: item.title,
             excerpt: item.sourceLabel,
             note: item.note,
@@ -603,49 +825,124 @@ async function seedSignals() {
 }
 
 async function seedJobRuns() {
-  await prisma.jobRun.create({
+  const request = await prisma.ingestRequest.create({
     data: {
-      id: "job-demo-manual-ingest-20260421",
-      name: "manual-demo-ingest",
-      status: "SUCCEEDED",
+      id: "req-demo-official-blocked-20260421",
+      requestKey: "demo-failed-official:creative-center-missing-credential",
+      type: "OFFICIAL_SNAPSHOT",
+      status: "FAILED",
+      market: "BR",
+      origin: "OFFICIAL",
+      connectorId: "connector-official-placeholder",
+      title: "Official connector blocked: credential missing",
+      submittedBy: "seed",
+      submittedAt: new Date("2026-04-21T09:00:00-03:00"),
+      collectedAt: new Date("2026-04-21T09:00:00-03:00"),
+      processedAt: new Date("2026-04-21T09:01:00-03:00"),
+      completedAt: new Date("2026-04-21T09:01:00-03:00"),
+      error: "Credencial oficial ausente; nenhuma coleta externa executada.",
       payload: {
-        phase: "3A",
+        phase: "3B",
         source: "prisma/seed.mjs",
-        mode: "demo/mock",
         externalIntegrations: false,
+        blockedBeforeNetwork: true,
       },
-      startedAt: collectedAt.trendsBr,
-      finishedAt: new Date("2026-04-21T08:46:00-03:00"),
     },
   });
+  const batch = await prisma.importBatch.create({
+    data: {
+      id: "batch-demo-official-blocked-20260421",
+      idempotencyKey: "demo-failed-official:creative-center-missing-credential",
+      kind: "OFFICIAL_SNAPSHOT",
+      status: "FAILED",
+      market: "BR",
+      origin: "OFFICIAL",
+      connectorId: "connector-official-placeholder",
+      requestId: request.id,
+      title: "Blocked official snapshot",
+      itemCount: 0,
+      payloadHash: "sha256-demo-blocked-official-20260421",
+      payload: {
+        externalIntegrations: false,
+        blockedBeforeNetwork: true,
+      },
+      collectedAt: new Date("2026-04-21T09:00:00-03:00"),
+      processedAt: new Date("2026-04-21T09:01:00-03:00"),
+      completedAt: new Date("2026-04-21T09:01:00-03:00"),
+      error: "Credencial oficial ausente; nenhuma coleta externa executada.",
+      isDemo: true,
+    },
+  });
+
+  await prisma.jobRun.create({
+    data: {
+      id: "job-demo-official-blocked-20260421",
+      name: "official-connector-preflight",
+      status: "FAILED",
+      stage: "VALIDATE",
+      requestId: request.id,
+      importBatchId: batch.id,
+      payload: {
+        phase: "3B",
+        externalIntegrations: false,
+        blockedBeforeNetwork: true,
+      },
+      startedAt: new Date("2026-04-21T09:00:00-03:00"),
+      finishedAt: new Date("2026-04-21T09:01:00-03:00"),
+      error: "Credencial oficial ausente; nenhuma coleta externa executada.",
+    },
+  });
+  await createSteps(batch.id, "SUCCEEDED", "VALIDATE");
 }
 
 async function main() {
   await reset();
+  await seedConnectors();
   await seedSources();
+  await seedImportBatches();
   await seedSignals();
   await seedJobRuns();
 
-  const [sourceCount, signalCount, evidenceCount, savedCount, historyCount, snapshotCount, jobCount] =
+  const [
+    connectorCount,
+    sourceCount,
+    signalCount,
+    evidenceCount,
+    savedCount,
+    historyCount,
+    snapshotCount,
+    requestCount,
+    batchCount,
+    stepCount,
+    jobCount,
+  ] =
     await Promise.all([
+      prisma.sourceConnector.count(),
       prisma.source.count(),
       prisma.trendSignal.count(),
       prisma.evidenceItem.count(),
       prisma.workspaceSavedSignal.count(),
       prisma.signalHistoryEvent.count(),
       prisma.sourceSnapshot.count(),
+      prisma.ingestRequest.count(),
+      prisma.importBatch.count(),
+      prisma.ingestionStep.count(),
       prisma.jobRun.count(),
     ]);
 
   console.log(
     JSON.stringify(
       {
+        connectorCount,
         sourceCount,
         signalCount,
         evidenceCount,
         savedCount,
         historyCount,
         snapshotCount,
+        requestCount,
+        batchCount,
+        stepCount,
         jobCount,
         mode: "demo/mock",
       },

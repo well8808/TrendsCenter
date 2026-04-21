@@ -30,6 +30,7 @@ Este repo constrói um app premium de inteligência de mercado TikTok focado em 
 
 - Preferir Next.js App Router, TypeScript, Tailwind, Motion, Postgres/Prisma e jobs separados para ingestão, normalização, scoring e auditoria.
 - A Fase 3A usa SQLite local via Prisma (`file:./dev.db`) para persistencia verificavel no Windows/Codex; antes de producao, planejar migracao para Postgres mantendo o contrato de proveniencia.
+- A Fase 3B adiciona ingestao manual/oficial rastreavel; jobs locais nao devem fazer rede externa nem scraping, e falhas de conector devem ficar visiveis como falhas.
 - Manter scoring e proveniência testáveis fora da UI.
 - Separar demo data de conectores reais.
 - Componentes de app devem ser densos, escaneáveis, responsivos e acessíveis.
