@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 enum Market {
@@ -100,6 +100,9 @@ model Source {
   market      Market
   confidence  ConfidenceBand  @default(LOW)
   notes       String?
+  coverage    String?
+  freshness   String?
+  gap         String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   snapshots   SourceSnapshot[]
@@ -135,6 +138,8 @@ model TrendSignal {
   trendWindow    String?
   decision       String?
   nextAction     String?
+  tags           Json?
+  scoreDrivers   Json?
   origin         DataOrigin
   sourceId       String
   source         Source             @relation(fields: [sourceId], references: [id])
@@ -206,6 +211,8 @@ model EvidenceItem {
   title       String
   url         String?
   excerpt     String?
+  note        String?
+  quality     ConfidenceBand @default(LOW)
   capturedAt  DateTime
   isDemo      Boolean      @default(false)
   createdAt   DateTime     @default(now())
@@ -215,7 +222,7 @@ model EvidenceItem {
 
 model WorkspaceSavedSignal {
   id        String      @id @default(cuid())
-  signalId  String
+  signalId  String      @unique
   signal    TrendSignal @relation(fields: [signalId], references: [id], onDelete: Cascade)
   label     String?
   notes     String?

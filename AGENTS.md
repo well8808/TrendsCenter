@@ -29,6 +29,7 @@ Este repo constrói um app premium de inteligência de mercado TikTok focado em 
 ## Arquitetura
 
 - Preferir Next.js App Router, TypeScript, Tailwind, Motion, Postgres/Prisma e jobs separados para ingestão, normalização, scoring e auditoria.
+- A Fase 3A usa SQLite local via Prisma (`file:./dev.db`) para persistencia verificavel no Windows/Codex; antes de producao, planejar migracao para Postgres mantendo o contrato de proveniencia.
 - Manter scoring e proveniência testáveis fora da UI.
 - Separar demo data de conectores reais.
 - Componentes de app devem ser densos, escaneáveis, responsivos e acessíveis.
@@ -52,3 +53,4 @@ Este repo constrói um app premium de inteligência de mercado TikTok focado em 
 - Evitar `cmd /c start /B` com redirecionamento para dev server persistente; ele pode deixar um `cmd.exe` preso sem iniciar o Next de forma verificavel.
 - Se `next dev` falhar com `spawn EPERM`, o problema e permissao de spawn no sandbox, nao necessariamente bug do app; repetir fora do sandbox com justificativa clara.
 - Para validação local, preferir `npm run dev -- --hostname 127.0.0.1 --port 3000` em foreground ou um processo .NET controlado com PID registrado, porta checada e logs ignorados pelo Git.
+- Com SQLite/Prisma 7 no Windows, garanta que o arquivo `dev.db` exista antes de `prisma migrate deploy`; use `npm run db:migrate`, que roda `prisma/ensure-sqlite.mjs` antes do deploy.

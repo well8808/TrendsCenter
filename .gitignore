@@ -7,6 +7,14 @@ coverage
 .env
 .env.*
 !.env.example
+dev.db
+dev.db-journal
+dev.db-shm
+dev.db-wal
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db-shm
+prisma/dev.db-wal
 *.log
 .next-dev*.log
 .DS_Store

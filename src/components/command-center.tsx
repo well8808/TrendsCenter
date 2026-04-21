@@ -28,12 +28,14 @@ import {
   UserRoundCheck,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 
+import { toggleSavedSignalAction } from "@/app/actions";
 import { SourcePill } from "@/components/source-pill";
 import { StatePanel, LoadingSkeleton } from "@/components/state-panels";
 import { TrendCard } from "@/components/trend-card";
 import { demoSignals, sourceQueue } from "@/lib/demo-data";
+import type { CommandCenterData } from "@/lib/persistence/command-center";
 import {
   filterSignals,
   rankSignals,
@@ -110,6 +112,12 @@ const priorityLabel: Record<SignalPriority, string> = {
   next: "proximo",
   watch: "watch",
   hold: "hold",
+};
+
+const fallbackPersistence: CommandCenterData["persistence"] = {
+  mode: "error-fallback",
+  label: "fallback demo",
+  detail: "Persistencia local indisponivel; exibindo demo/mock.",
 };
 
 function SegmentButton<T extends string>({
@@ -221,9 +229,11 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
 function EvidenceInspector({
   signal,
   savedCount,
+  storageLabel,
 }: {
   signal?: TrendSignal;
   savedCount: number;
+  storageLabel: string;
 }) {
   if (!signal) {
     return (
@@ -296,7 +306,7 @@ function EvidenceInspector({
           workspace flow
         </p>
         <p className="mt-2 text-sm leading-5 text-[color:var(--muted-strong)]">
-          {savedCount} sinais salvos neste mock. Proxima acao sugerida: {signal.nextAction}
+          {savedCount} sinais salvos em {storageLabel}. Proxima acao sugerida: {signal.nextAction}
         </p>
       </div>
     </section>
@@ -357,15 +367,20 @@ function SavedAndHistory({
   );
 }
 
-export function CommandCenter() {
+export function CommandCenter({
+  signals = demoSignals,
+  sources = sourceQueue,
+  persistence = fallbackPersistence,
+}: Partial<CommandCenterData>) {
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>("demo");
   const [query, setQuery] = useState("");
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("ALL");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
   const [sortMode, setSortMode] = useState<SortMode>("priority");
-  const [selectedSignalId, setSelectedSignalId] = useState(demoSignals[0]?.id);
-  const [savedIds, setSavedIds] = useState(() => new Set(demoSignals.filter((signal) => signal.saved).map((signal) => signal.id)));
+  const [selectedSignalId, setSelectedSignalId] = useState(signals[0]?.id);
+  const [savedIds, setSavedIds] = useState(() => new Set(signals.filter((signal) => signal.saved).map((signal) => signal.id)));
+  const [isSaving, startSavingTransition] = useTransition();
 
   const filters = useMemo(
     () => ({
@@ -379,22 +394,24 @@ export function CommandCenter() {
   );
 
   const filteredSignals = useMemo(() => {
-    return rankSignals(filterSignals(demoSignals, filters), sortMode);
-  }, [filters, sortMode]);
+    return rankSignals(filterSignals(signals, filters), sortMode);
+  }, [filters, signals, sortMode]);
 
-  const summary = useMemo(() => summarizeSignals(demoSignals), []);
+  const summary = useMemo(() => summarizeSignals(signals), [signals]);
   const selectedSignal =
-    demoSignals.find((signal) => signal.id === selectedSignalId) ?? filteredSignals[0] ?? demoSignals[0];
+    signals.find((signal) => signal.id === selectedSignalId) ?? filteredSignals[0] ?? signals[0];
   const savedSignals = useMemo(
-    () => rankSignals(demoSignals.filter((signal) => savedIds.has(signal.id)), "priority"),
-    [savedIds],
+    () => rankSignals(signals.filter((signal) => savedIds.has(signal.id)), "priority"),
+    [savedIds, signals],
   );
   const revivalSignals = useMemo(
-    () => demoSignals.filter((signal) => signal.type === "REVIVAL" || signal.stage === "revival"),
-    [],
+    () => signals.filter((signal) => signal.type === "REVIVAL" || signal.stage === "revival"),
+    [signals],
   );
 
   function toggleSaved(signalId: string) {
+    const wasSaved = savedIds.has(signalId);
+
     setSavedIds((current) => {
       const next = new Set(current);
 
@@ -405,6 +422,28 @@ export function CommandCenter() {
       }
 
       return next;
+    });
+
+    if (persistence.mode !== "database") {
+      return;
+    }
+
+    startSavingTransition(async () => {
+      const result = await toggleSavedSignalAction(signalId);
+
+      if (!result.ok) {
+        setSavedIds((current) => {
+          const next = new Set(current);
+
+          if (wasSaved) {
+            next.add(signalId);
+          } else {
+            next.delete(signalId);
+          }
+
+          return next;
+        });
+      }
     });
   }
 
@@ -418,13 +457,13 @@ export function CommandCenter() {
     {
       label: "BR / US radar",
       value: `${summary.brCount}/${summary.usCount}`,
-      delta: "mock mix",
+      delta: persistence.mode === "database" ? "seed local" : "mock mix",
       tone: "aqua" as const,
     },
     {
       label: "Evidencias",
       value: String(summary.evidenceCount).padStart(2, "0"),
-      delta: "demo auditavel",
+      delta: persistence.mode === "database" ? "persistidas" : "demo auditavel",
       tone: "gold" as const,
     },
     {
@@ -502,9 +541,19 @@ export function CommandCenter() {
                     <span className="rounded-full border border-[rgba(199,255,93,0.36)] bg-[rgba(199,255,93,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                       demo/mock
                     </span>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
+                        persistence.mode === "database"
+                          ? "border-[rgba(64,224,208,0.34)] bg-[rgba(64,224,208,0.1)] text-[color:var(--aqua)]"
+                          : "border-[rgba(243,201,105,0.34)] bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]",
+                      )}
+                    >
+                      {isSaving ? "gravando..." : persistence.label}
+                    </span>
                   </div>
                   <p className="mt-1 text-sm text-[color:var(--muted)]">
-                    Signal desk operacional para priorizar trends sem dados reais conectados.
+                    {persistence.detail}
                   </p>
                 </div>
               </div>
@@ -539,7 +588,7 @@ export function CommandCenter() {
                 ))}
               </section>
 
-              <MarketBridge signals={rankSignals(demoSignals, "priority")} />
+              <MarketBridge signals={rankSignals(signals, "priority")} />
 
               <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 md:p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -660,7 +709,7 @@ export function CommandCenter() {
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-xs text-[color:var(--muted)]">
                     <span className="inline-flex items-center gap-2">
                       <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                      {filteredSignals.length} de {demoSignals.length} sinais visiveis
+                      {filteredSignals.length} de {signals.length} sinais visiveis
                     </span>
                     <button
                       type="button"
@@ -709,7 +758,11 @@ export function CommandCenter() {
             </div>
 
             <aside className="grid content-start gap-4">
-              <EvidenceInspector signal={selectedSignal} savedCount={savedIds.size} />
+              <EvidenceInspector
+                signal={selectedSignal}
+                savedCount={savedIds.size}
+                storageLabel={persistence.mode === "database" ? "SQLite local demo/mock" : "fallback demo/mock"}
+              />
 
               <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
 
@@ -724,7 +777,7 @@ export function CommandCenter() {
                   <Database className="h-5 w-5 text-[color:var(--muted)]" aria-hidden="true" />
                 </div>
                 <div className="mt-5 grid gap-3">
-                  {sourceQueue.map((source) => (
+                  {sources.map((source) => (
                     <div
                       key={source.id}
                       className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-3"
@@ -747,9 +800,9 @@ export function CommandCenter() {
 
               <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
-                  Fase 2
+                  Fase 3A
                 </p>
-                <h2 className="mt-2 text-lg font-semibold">Pipeline operacional</h2>
+                <h2 className="mt-2 text-lg font-semibold">Jobs seguros preparados</h2>
                 <div className="mt-5 grid gap-3">
                   {pipelineItems.map((item) => {
                     const Icon = item.icon;
@@ -775,8 +828,8 @@ export function CommandCenter() {
                   Nao producao
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  A Fase 2 melhora leitura e decisao, mas ainda nao conecta fontes reais. Tudo aqui e
-                  simulado e marcado como demo/mock.
+                  A Fase 3A persiste o workspace local, mas ainda nao conecta fontes reais. Tudo aqui e
+                  demo/mock rastreavel.
                 </p>
               </section>
             </aside>
