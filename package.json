@@ -5,7 +5,7 @@
   "description": "Premium TikTok market intelligence command center focused on Brazil with US early-signal monitoring.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",

@@ -19,3 +19,5 @@ prisma/dev.db-wal
 .next-dev*.log
 .DS_Store
 Thumbs.db
+
+.vercel
