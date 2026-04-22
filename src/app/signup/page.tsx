@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { signupAction } from "@/app/(auth)/actions";
 import { authButtonClass, authInputClass, AuthShell } from "@/app/(auth)/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
 import { getTenantContext } from "@/lib/auth/session";
 
 export default async function SignupPage({
@@ -39,10 +40,7 @@ export default async function SignupPage({
           workspace
           <input className={authInputClass} name="workspaceName" type="text" defaultValue="Radar BR" required />
         </label>
-        <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-          senha
-          <input className={authInputClass} name="password" type="password" autoComplete="new-password" minLength={10} required />
-        </label>
+        <PasswordInput label="senha" autoComplete="new-password" minLength={10} />
         <button className={authButtonClass} type="submit">
           criar workspace
         </button>

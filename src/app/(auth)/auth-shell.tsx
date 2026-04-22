@@ -13,10 +13,10 @@ const errorCopy: Record<string, string> = {
 };
 
 const statusCopy: Record<string, string> = {
-  sent: "Link de verificacao enfileirado com seguranca.",
-  resent: "Novo link gerado. Use o mais recente.",
+  sent: "Verificacao pronta neste navegador.",
+  resent: "Novo link de verificacao criado para este navegador.",
   cooldown: "Reenvio controlado. Aguarde antes de solicitar outro link.",
-  unverified: "Conta criada, mas ainda pendente de verificacao.",
+  unverified: "Conta pendente de verificacao. Confirme abaixo para liberar o acesso.",
   success: "Operacao concluida com seguranca.",
 };
 

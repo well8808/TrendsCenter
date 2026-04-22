@@ -8,8 +8,10 @@ import { getPrisma } from "@/lib/db";
 import { sessionCookieName } from "@/lib/auth/constants";
 import { hashToken } from "@/lib/auth/tokens";
 
-const sessionDays = 30;
-const sessionMaxAge = sessionDays * 24 * 60 * 60;
+const persistentSessionDays = 30;
+const persistentSessionMaxAge = persistentSessionDays * 24 * 60 * 60;
+const transientSessionHours = 12;
+const transientSessionMaxAge = transientSessionHours * 60 * 60;
 
 export interface TenantContext {
   userId: string;
@@ -24,11 +26,11 @@ export interface TenantContext {
   membershipStatus: MembershipStatus;
 }
 
-function expiresAt() {
-  return new Date(Date.now() + sessionMaxAge * 1000);
+function expiresAt(maxAgeSeconds: number) {
+  return new Date(Date.now() + maxAgeSeconds * 1000);
 }
 
-function shouldUseSecureCookie(host: string | null, proto: string | null) {
+export function shouldUseSecureCookie(host: string | null, proto: string | null) {
   const normalizedHost = host ?? "";
   const isLocalHost = normalizedHost.startsWith("127.0.0.1") || normalizedHost.startsWith("localhost");
 
@@ -52,7 +54,9 @@ async function readSessionToken() {
   return rawCookie ? decodeURIComponent(rawCookie.slice(sessionCookieName.length + 1)) : undefined;
 }
 
-export async function createAuthSession(userId: string, workspaceId: string) {
+export async function createAuthSession(userId: string, workspaceId: string, options: { remember?: boolean } = {}) {
+  const remember = options.remember ?? true;
+  const maxAge = remember ? persistentSessionMaxAge : transientSessionMaxAge;
   const token = randomBytes(32).toString("base64url");
   const headerStore = await headers();
   const cookieStore = await cookies();
@@ -63,7 +67,7 @@ export async function createAuthSession(userId: string, workspaceId: string) {
       userId,
       workspaceId,
       userAgent: headerStore.get("user-agent"),
-      expiresAt: expiresAt(),
+      expiresAt: expiresAt(maxAge),
     },
   });
 
@@ -72,7 +76,7 @@ export async function createAuthSession(userId: string, workspaceId: string) {
     sameSite: "lax",
     secure: shouldUseSecureCookie(headerStore.get("x-forwarded-host") ?? headerStore.get("host"), headerStore.get("x-forwarded-proto")),
     path: "/",
-    maxAge: sessionMaxAge,
+    maxAge: remember ? maxAge : undefined,
   });
 }
 

@@ -10,6 +10,7 @@ import { formValue, normalizeEmail, writeAuthEvent } from "@/lib/auth/events";
 import { createPlainToken, expiresInMinutes, hashIdentifier, hashToken } from "@/lib/auth/tokens";
 import { buildActionUrl, getRequestBaseUrl } from "@/lib/auth/url";
 import { queueAuthEmail } from "@/lib/auth/outbox";
+import { getPendingVerificationToken, setPendingVerificationToken } from "@/lib/auth/pending-verification";
 import { getPrisma } from "@/lib/db";
 import { provisionWorkspaceBaseline } from "@/lib/tenant/provisioning";
 
@@ -84,12 +85,13 @@ async function createVerificationToken({
     workspaceId,
   });
 
-  return actionUrl;
+  return { actionUrl, token };
 }
 
 export async function loginAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
   const password = formValue(formData, "password");
+  const remember = formValue(formData, "remember") === "on";
 
   try {
     await assertRateLimit({ bucket: "login", identifier: email || "missing", limit: 8, windowSeconds: 15 * 60 });
@@ -130,6 +132,23 @@ export async function loginAction(formData: FormData) {
   }
 
   if (user.status !== "ACTIVE" || !user.emailVerifiedAt) {
+    const baseUrl = await getRequestBaseUrl();
+    const verification = await getPrisma().$transaction(async (tx) => {
+      await tx.emailVerificationToken.updateMany({
+        where: { userId: user.id, consumedAt: null },
+        data: { consumedAt: new Date() },
+      });
+
+      return createVerificationToken({
+        client: tx,
+        userId: user.id,
+        email,
+        workspaceId: user.memberships[0]?.workspaceId,
+        baseUrl,
+      });
+    });
+
+    await setPendingVerificationToken(verification.token);
     await writeAuthEvent({
       type: "LOGIN_BLOCKED",
       success: false,
@@ -146,7 +165,7 @@ export async function loginAction(formData: FormData) {
     redirectWithError("/login", "workspace");
   }
 
-  await createAuthSession(user.id, membership.workspaceId);
+  await createAuthSession(user.id, membership.workspaceId, { remember });
   await writeAuthEvent({
     type: "LOGIN_SUCCEEDED",
     email,
@@ -180,6 +199,7 @@ export async function signupAction(formData: FormData) {
   const baseSlug = slugify(workspaceName) || slugify(email.split("@")[0] ?? "workspace") || "workspace";
   const suffix = createPlainToken().replace(/[^a-z0-9]/gi, "").slice(0, 8).toLowerCase();
   const baseUrl = await getRequestBaseUrl();
+  let verificationToken: string | undefined;
 
   try {
     await getPrisma().$transaction(async (tx) => {
@@ -210,13 +230,14 @@ export async function signupAction(formData: FormData) {
         workspaceId: workspace.id,
         actor: email,
       });
-      await createVerificationToken({
+      const verification = await createVerificationToken({
         client: tx,
         userId: user.id,
         email,
         workspaceId: workspace.id,
         baseUrl,
       });
+      verificationToken = verification.token;
       await writeAuthEvent({
         client: tx,
         type: "SIGNUP_CREATED",
@@ -234,11 +255,16 @@ export async function signupAction(formData: FormData) {
     redirectWithError("/signup", "failed");
   }
 
+  if (verificationToken) {
+    await setPendingVerificationToken(verificationToken);
+  }
+
   redirectVerificationPending(email);
 }
 
 export async function resendVerificationAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
+  let verificationToken: string | undefined;
 
   try {
     await assertRateLimit({
@@ -268,18 +294,52 @@ export async function resendVerificationAction(formData: FormData) {
           where: { userId: user.id, consumedAt: null },
           data: { consumedAt: new Date() },
         });
-        await createVerificationToken({
+        const verification = await createVerificationToken({
           client: tx,
           userId: user.id,
           email,
           workspaceId: user.memberships[0]?.workspaceId,
           baseUrl,
         });
+        verificationToken = verification.token;
       });
     }
   }
 
+  if (verificationToken) {
+    await setPendingVerificationToken(verificationToken);
+  }
+
   redirectVerificationPending(email, "resent");
+}
+
+export async function getPendingVerificationLink(email: string) {
+  const token = await getPendingVerificationToken();
+
+  if (!token) {
+    return null;
+  }
+
+  const record = await getPrisma().emailVerificationToken.findUnique({
+    where: { tokenHash: hashToken(token) },
+    include: { user: true },
+  });
+
+  if (!record || record.consumedAt || record.expiresAt <= new Date()) {
+    return null;
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+
+  if (normalizedEmail && normalizeEmail(record.user.email) !== normalizedEmail) {
+    return null;
+  }
+
+  return {
+    actionUrl: buildActionUrl(await getRequestBaseUrl(), "/verify-email", token),
+    email: record.user.email,
+    expiresAt: record.expiresAt,
+  };
 }
 
 export async function consumeEmailVerificationToken(token: string) {
