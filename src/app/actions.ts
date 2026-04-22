@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requirePermission } from "@/lib/auth/authorization";
 import { requireTenantContextForAction } from "@/lib/auth/session";
 import { attachManualEvidence, createManualSignalWithEvidence } from "@/lib/ingestion/service";
 import { toggleSavedSignal } from "@/lib/persistence/command-center";
@@ -15,6 +16,7 @@ function formValue(formData: FormData, key: string) {
 
 export async function toggleSavedSignalAction(signalId: string) {
   const context = await requireTenantContextForAction();
+  requirePermission(context, "operateSignals");
   const result = await toggleSavedSignal(signalId, context);
   revalidatePath("/");
 
@@ -24,6 +26,7 @@ export async function toggleSavedSignalAction(signalId: string) {
 export async function createManualSignalAction(formData: FormData) {
   try {
     const context = await requireTenantContextForAction();
+    requirePermission(context, "operateSignals");
     const result = await createManualSignalWithEvidence(
       {
         title: formValue(formData, "signalTitle"),
@@ -55,6 +58,7 @@ export async function createManualSignalAction(formData: FormData) {
 export async function attachManualEvidenceAction(formData: FormData) {
   try {
     const context = await requireTenantContextForAction();
+    requirePermission(context, "operateSignals");
     const result = await attachManualEvidence(
       {
         signalId: formValue(formData, "signalId"),

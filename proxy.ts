@@ -2,7 +2,31 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { sessionCookieName } from "@/lib/auth/constants";
 
-const publicPaths = new Set(["/login", "/signup", "/icon.svg"]);
+const publicPaths = new Set([
+  "/login",
+  "/signup",
+  "/verify-pending",
+  "/verify-email",
+  "/forgot-password",
+  "/forgot-password/sent",
+  "/reset-password",
+  "/reset-password/success",
+  "/invite",
+  "/icon.svg",
+]);
+
+function requestHasSessionCookie(request: NextRequest) {
+  if (request.cookies.get(sessionCookieName)?.value) {
+    return true;
+  }
+
+  const cookieHeader = request.headers.get("cookie") ?? "";
+
+  return cookieHeader
+    .split(";")
+    .map((item) => item.trim())
+    .some((item) => item.startsWith(`${sessionCookieName}=`));
+}
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,7 +40,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasSessionCookie = Boolean(request.cookies.get(sessionCookieName)?.value);
+  const hasSessionCookie = requestHasSessionCookie(request);
 
   if (!hasSessionCookie) {
     const loginUrl = new URL("/login", request.url);

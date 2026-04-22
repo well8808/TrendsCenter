@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Activity,
@@ -567,6 +568,12 @@ export function CommandCenter({
                 >
                   sair
                 </button>
+                <Link
+                  className="ml-2 inline-flex rounded-full border border-[rgba(64,224,208,0.28)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.08)]"
+                  href="/workspace"
+                >
+                  settings
+                </Link>
               </div>
             </div>
           </div>
@@ -633,6 +640,12 @@ export function CommandCenter({
                 >
                   sair
                 </button>
+                <Link
+                  className="inline-flex h-10 items-center rounded-full border border-[rgba(64,224,208,0.28)] bg-[rgba(64,224,208,0.06)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.1)]"
+                  href="/workspace"
+                >
+                  workspace
+                </Link>
               </div>
             </div>
           </header>

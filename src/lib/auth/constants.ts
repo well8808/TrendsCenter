@@ -1,1 +1,1 @@
-export const sessionCookieName = "__tmcc_session";
+export const sessionCookieName = "tmcc_session";

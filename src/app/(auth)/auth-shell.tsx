@@ -7,12 +7,24 @@ const errorCopy: Record<string, string> = {
   exists: "Ja existe uma conta com este e-mail.",
   failed: "Nao foi possivel concluir a autenticacao agora.",
   workspace: "Esta conta nao possui workspace ativo.",
+  unverified: "Verifique seu e-mail antes de entrar no app operacional.",
+  rate_limited: "Muitas tentativas. Aguarde um pouco e tente novamente.",
+  invalid_token: "Este link nao e valido ou ja foi usado.",
+};
+
+const statusCopy: Record<string, string> = {
+  sent: "Link de verificacao enfileirado com seguranca.",
+  resent: "Novo link gerado. Use o mais recente.",
+  cooldown: "Reenvio controlado. Aguarde antes de solicitar outro link.",
+  unverified: "Conta criada, mas ainda pendente de verificacao.",
+  success: "Operacao concluida com seguranca.",
 };
 
 export function AuthShell({
   title,
   subtitle,
   error,
+  status,
   children,
   footerHref,
   footerLabel,
@@ -21,10 +33,11 @@ export function AuthShell({
   title: string;
   subtitle: string;
   error?: string;
+  status?: string;
   children: ReactNode;
-  footerHref: string;
-  footerLabel: string;
-  footerText: string;
+  footerHref?: string;
+  footerLabel?: string;
+  footerText?: string;
 }) {
   return (
     <main className="relative min-h-svh overflow-hidden px-4 py-6 text-[color:var(--foreground)] sm:px-6">
@@ -72,15 +85,22 @@ export function AuthShell({
                 {errorCopy[error] ?? errorCopy.failed}
               </p>
             )}
+            {status && !error && (
+              <p className="mb-5 rounded-[var(--radius-md)] border border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)] px-4 py-3 text-sm text-[color:var(--aqua)]">
+                {statusCopy[status] ?? statusCopy.success}
+              </p>
+            )}
 
             {children}
 
-            <p className="mt-6 text-sm text-[color:var(--muted)]">
-              {footerText}{" "}
-              <Link className="font-semibold text-[color:var(--acid)]" href={footerHref}>
-                {footerLabel}
-              </Link>
-            </p>
+            {footerHref && footerLabel && footerText && (
+              <p className="mt-6 text-sm text-[color:var(--muted)]">
+                {footerText}{" "}
+                <Link className="font-semibold text-[color:var(--acid)]" href={footerHref}>
+                  {footerLabel}
+                </Link>
+              </p>
+            )}
           </div>
         </section>
       </div>

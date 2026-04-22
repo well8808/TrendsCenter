@@ -99,6 +99,7 @@ enum ConnectorStatus {
 }
 
 enum UserStatus {
+  PENDING_VERIFICATION
   ACTIVE
   DISABLED
 }
@@ -106,8 +107,7 @@ enum UserStatus {
 enum WorkspaceRole {
   OWNER
   ADMIN
-  ANALYST
-  VIEWER
+  MEMBER
 }
 
 enum MembershipStatus {
@@ -133,6 +133,45 @@ enum AuditEventType {
   JOB_RECORDED
   COMPLIANCE_BLOCKED
   SYSTEM
+}
+
+enum AuthEmailKind {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  WORKSPACE_INVITE
+}
+
+enum AuthEmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  SUPPRESSED
+}
+
+enum WorkspaceInviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum AuthEventType {
+  SIGNUP_CREATED
+  LOGIN_SUCCEEDED
+  LOGIN_FAILED
+  LOGIN_BLOCKED
+  LOGOUT
+  EMAIL_VERIFICATION_SENT
+  EMAIL_VERIFIED
+  EMAIL_VERIFICATION_FAILED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  PASSWORD_RESET_FAILED
+  WORKSPACE_INVITE_SENT
+  WORKSPACE_INVITE_ACCEPTED
+  WORKSPACE_INVITE_FAILED
+  MEMBER_ROLE_CHANGED
+  RATE_LIMITED
 }
 
 enum IngestRequestType {
@@ -170,15 +209,22 @@ enum ImportBatchKind {
 }
 
 model User {
-  id           String            @id @default(cuid())
-  email        String            @unique
-  name         String?
-  passwordHash String
-  status       UserStatus        @default(ACTIVE)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  memberships  WorkspaceMember[]
-  sessions     AuthSession[]
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  name                    String?
+  passwordHash            String
+  status                  UserStatus               @default(PENDING_VERIFICATION)
+  emailVerifiedAt         DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  memberships             WorkspaceMember[]
+  sessions                AuthSession[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  sentInvites             WorkspaceInvite[]        @relation("WorkspaceInviteInviter")
+  acceptedInvites         WorkspaceInvite[]        @relation("WorkspaceInviteAcceptedBy")
+  authEvents              AuthEvent[]              @relation("AuthEventUser")
+  actedAuthEvents         AuthEvent[]              @relation("AuthEventActor")
 }
 
 model Workspace {
@@ -205,6 +251,9 @@ model Workspace {
   ingestRequests     IngestRequest[]
   importBatches      ImportBatch[]
   ingestionSteps     IngestionStep[]
+  invites            WorkspaceInvite[]
+  authEmailOutbox    AuthEmailOutbox[]
+  authEvents         AuthEvent[]
 }
 
 model WorkspaceMember {
@@ -213,13 +262,119 @@ model WorkspaceMember {
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  role        WorkspaceRole    @default(ANALYST)
+  role        WorkspaceRole    @default(MEMBER)
   status      MembershipStatus @default(ACTIVE)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@unique([userId, workspaceId])
   @@index([workspaceId, role, status])
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  sendCount  Int       @default(1)
+  lastSentAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId, consumedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, consumedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model WorkspaceInvite {
+  id           String                @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email        String
+  role         WorkspaceRole         @default(MEMBER)
+  status       WorkspaceInviteStatus @default(PENDING)
+  tokenHash    String                @unique
+  invitedById  String
+  invitedBy    User                  @relation("WorkspaceInviteInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+  acceptedById String?
+  acceptedBy   User?                 @relation("WorkspaceInviteAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([workspaceId, status, expiresAt])
+  @@index([email, status, expiresAt])
+}
+
+model AuthEmailOutbox {
+  id          String          @id @default(cuid())
+  kind        AuthEmailKind
+  status      AuthEmailStatus @default(QUEUED)
+  toEmail     String
+  subject     String
+  body        String
+  actionUrl   String?
+  workspaceId String?
+  workspace   Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String?
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime        @default(now())
+
+  @@index([kind, status, createdAt])
+  @@index([toEmail, createdAt])
+  @@index([workspaceId, createdAt])
+}
+
+model AuthRateLimit {
+  id        String   @id @default(cuid())
+  bucket    String
+  key       String
+  count     Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bucket, key])
+  @@index([resetAt])
+}
+
+model AuthEvent {
+  id          String        @id @default(cuid())
+  type        AuthEventType
+  success     Boolean       @default(true)
+  emailHash   String?
+  userId      String?
+  user        User?         @relation("AuthEventUser", fields: [userId], references: [id], onDelete: SetNull)
+  actorUserId String?
+  actorUser   User?         @relation("AuthEventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  workspaceId String?
+  workspace   Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ipHash      String?
+  reason      String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+
+  @@index([type, createdAt])
+  @@index([emailHash, createdAt])
+  @@index([workspaceId, type, createdAt])
+  @@index([userId, createdAt])
 }
 
 model AuthSession {

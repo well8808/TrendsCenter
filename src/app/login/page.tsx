@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { loginAction } from "@/app/(auth)/actions";
 import { authButtonClass, authInputClass, AuthShell } from "@/app/(auth)/auth-shell";
@@ -38,6 +39,9 @@ export default async function LoginPage({
         <button className={authButtonClass} type="submit">
           entrar
         </button>
+        <Link className="text-sm font-semibold text-[color:var(--aqua)]" href="/forgot-password">
+          Esqueci minha senha
+        </Link>
       </form>
     </AuthShell>
   );

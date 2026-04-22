@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,6 +6,7 @@ import type { MembershipStatus, UserStatus, WorkspaceRole } from "@prisma/client
 
 import { getPrisma } from "@/lib/db";
 import { sessionCookieName } from "@/lib/auth/constants";
+import { hashToken } from "@/lib/auth/tokens";
 
 const sessionDays = 30;
 const sessionMaxAge = sessionDays * 24 * 60 * 60;
@@ -15,6 +16,7 @@ export interface TenantContext {
   userEmail: string;
   userName: string | null;
   userStatus: UserStatus;
+  emailVerifiedAt: Date;
   workspaceId: string;
   workspaceName: string;
   workspaceSlug: string;
@@ -22,12 +24,32 @@ export interface TenantContext {
   membershipStatus: MembershipStatus;
 }
 
-function hashSessionToken(token: string) {
-  return createHash("sha256").update(token).digest("hex");
-}
-
 function expiresAt() {
   return new Date(Date.now() + sessionMaxAge * 1000);
+}
+
+function shouldUseSecureCookie(host: string | null, proto: string | null) {
+  const normalizedHost = host ?? "";
+  const isLocalHost = normalizedHost.startsWith("127.0.0.1") || normalizedHost.startsWith("localhost");
+
+  return proto === "https" || Boolean(normalizedHost && process.env.NODE_ENV === "production" && !isLocalHost);
+}
+
+async function readSessionToken() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(sessionCookieName)?.value;
+
+  if (token) {
+    return token;
+  }
+
+  const cookieHeader = (await headers()).get("cookie") ?? "";
+  const rawCookie = cookieHeader
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(`${sessionCookieName}=`));
+
+  return rawCookie ? decodeURIComponent(rawCookie.slice(sessionCookieName.length + 1)) : undefined;
 }
 
 export async function createAuthSession(userId: string, workspaceId: string) {
@@ -37,7 +59,7 @@ export async function createAuthSession(userId: string, workspaceId: string) {
 
   await getPrisma().authSession.create({
     data: {
-      tokenHash: hashSessionToken(token),
+      tokenHash: hashToken(token),
       userId,
       workspaceId,
       userAgent: headerStore.get("user-agent"),
@@ -48,7 +70,7 @@ export async function createAuthSession(userId: string, workspaceId: string) {
   cookieStore.set(sessionCookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(headerStore.get("x-forwarded-host") ?? headerStore.get("host"), headerStore.get("x-forwarded-proto")),
     path: "/",
     maxAge: sessionMaxAge,
   });
@@ -56,11 +78,11 @@ export async function createAuthSession(userId: string, workspaceId: string) {
 
 export async function clearAuthSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(sessionCookieName)?.value;
+  const token = await readSessionToken();
 
   if (token) {
     await getPrisma().authSession.deleteMany({
-      where: { tokenHash: hashSessionToken(token) },
+      where: { tokenHash: hashToken(token) },
     });
   }
 
@@ -68,14 +90,14 @@ export async function clearAuthSession() {
 }
 
 export async function getTenantContext(): Promise<TenantContext | null> {
-  const token = (await cookies()).get(sessionCookieName)?.value;
+  const token = await readSessionToken();
 
   if (!token) {
     return null;
   }
 
   const session = await getPrisma().authSession.findUnique({
-    where: { tokenHash: hashSessionToken(token) },
+    where: { tokenHash: hashToken(token) },
     include: {
       workspace: true,
       user: {
@@ -86,7 +108,7 @@ export async function getTenantContext(): Promise<TenantContext | null> {
     },
   });
 
-  if (!session || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") {
+  if (!session || session.expiresAt <= new Date() || session.user.status !== "ACTIVE" || !session.user.emailVerifiedAt) {
     if (session) {
       await getPrisma().authSession.deleteMany({ where: { id: session.id } });
     }
@@ -107,6 +129,7 @@ export async function getTenantContext(): Promise<TenantContext | null> {
     userEmail: session.user.email,
     userName: session.user.name,
     userStatus: session.user.status,
+    emailVerifiedAt: session.user.emailVerifiedAt,
     workspaceId: session.workspace.id,
     workspaceName: session.workspace.name,
     workspaceSlug: session.workspace.slug,
