@@ -4,7 +4,7 @@ import { createManualIngestEnvelope, phase3BQueues } from "./pipeline";
 
 describe("phase3BQueues", () => {
   it("mantem filas locais sem rede externa automatica", () => {
-    const envelope = createManualIngestEnvelope("src-demo-trends-br", "Teste manual aprovado.");
+    const envelope = createManualIngestEnvelope("src-manual-intake-br", "Teste manual aprovado.");
 
     expect(phase3BQueues.map((item) => item.queue)).toEqual([
       "manual-ingest",
@@ -13,6 +13,6 @@ describe("phase3BQueues", () => {
       "audit",
     ]);
     expect(envelope.externalNetwork).toBe(false);
-    expect(envelope.sourceId).toBe("src-demo-trends-br");
+    expect(envelope.sourceId).toBe("src-manual-intake-br");
   });
 });

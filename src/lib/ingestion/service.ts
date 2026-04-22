@@ -48,13 +48,27 @@ function requireText(value: string, field: string) {
   return trimmed;
 }
 
+function assertOperationalOrigin(origin: DataOrigin) {
+  if (origin === "DEMO") {
+    throw new Error("Origem demo/mock nao pode ser usada em fluxos reais. Use MANUAL, OWNED ou OFFICIAL.");
+  }
+}
+
+function assertSafeText(...values: string[]) {
+  const unsafeMinorPattern = /\b(menor|menores|crianca|criança|infantil|adolescente|teen|underage|minor)\b/i;
+
+  if (values.some((value) => unsafeMinorPattern.test(value))) {
+    throw new Error("Conteudo com menor ou idade ambigua bloqueado pelo safe mode.");
+  }
+}
+
 function connectorSlug(kind: SourceKind, origin: DataOrigin) {
   if (origin === "OFFICIAL") {
     return `official-${kind.toLowerCase()}`;
   }
 
   if (origin === "DEMO") {
-    return "demo-seed-ingest";
+    throw new Error("Origem nao operacional nao possui connector de ingestao.");
   }
 
   return "manual-safe-intake";
@@ -85,7 +99,7 @@ async function ensureConnector(
 ) {
   const slug = connectorSlug(input.kind, input.origin);
 
-  return tx.sourceConnector.upsert({
+  return tx.connector.upsert({
     where: { slug },
     update: {
       status: input.origin === "OFFICIAL" || input.origin === "MANUAL" ? "APPROVED" : "NEEDS_REVIEW",
@@ -168,6 +182,10 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
   const sourceTitle = requireText(input.sourceTitle, "Fonte");
   const evidenceTitle = requireText(input.evidenceTitle, "Titulo da evidencia");
   const evidenceNote = requireText(input.evidenceNote, "Nota da evidencia");
+
+  assertOperationalOrigin(input.sourceOrigin);
+  assertSafeText(title, input.summary, input.audience, sourceTitle, evidenceTitle, evidenceNote);
+
   const signalKey = buildSignalDedupeKey({ market: input.market, type: input.type, title });
   const sourceKey = buildSourceDedupeKey({
     origin: input.sourceOrigin,
@@ -282,12 +300,12 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
     });
     const scoreInput = initialScoreInput(input.type, input.market);
     const score = calculateTrendScore(scoreInput);
-    const existingSignal = await tx.trendSignal.findUnique({
+    const existingSignal = await tx.signal.findUnique({
       where: { dedupeKey: signalKey },
       select: { id: true },
     });
     const signal = existingSignal
-      ? await tx.trendSignal.update({
+      ? await tx.signal.update({
           where: { id: existingSignal.id },
           data: {
             sourceId: source.id,
@@ -297,7 +315,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
             updatedAt: new Date(),
           },
         })
-      : await tx.trendSignal.create({
+      : await tx.signal.create({
           data: {
             title,
             summary: input.summary.trim() || "Sinal criado manualmente; aguarda evidencias adicionais.",
@@ -343,12 +361,12 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
             },
           },
         });
-    const evidenceExists = await tx.evidenceItem.findUnique({
+    const evidenceExists = await tx.evidence.findUnique({
       where: { dedupeKey: evidenceKey },
       select: { id: true },
     });
     const evidence = evidenceExists
-      ? await tx.evidenceItem.update({
+      ? await tx.evidence.update({
           where: { id: evidenceExists.id },
           data: {
             importBatchId: batch.id,
@@ -357,7 +375,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
             capturedAt: new Date(),
           },
         })
-      : await tx.evidenceItem.create({
+      : await tx.evidence.create({
           data: {
             signalId: signal.id,
             sourceId: source.id,
@@ -375,7 +393,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
           },
         });
 
-    await tx.trendObservation.create({
+    await tx.signalObservation.create({
       data: {
         signalId: signal.id,
         snapshotId: snapshot.id,
@@ -388,31 +406,49 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         },
       },
     });
-    const evidenceCount = await tx.evidenceItem.count({ where: { signalId: signal.id } });
+    const evidenceCount = await tx.evidence.count({ where: { signalId: signal.id } });
 
-    await tx.trendSignal.update({
+    await tx.signal.update({
       where: { id: signal.id },
       data: { evidenceCount, updatedAt: new Date() },
     });
-    await tx.signalHistoryEvent.createMany({
+    await tx.auditEvent.createMany({
       data: [
         {
+          type: existingSignal ? "SIGNAL_UPDATED" : "SIGNAL_CREATED",
           signalId: signal.id,
+          sourceId: source.id,
+          importBatchId: batch.id,
+          jobRunId: job.id,
           label: existingSignal ? "dedupe" : "ingest",
           value: existingSignal ? "atualizado" : "manual",
           tone: existingSignal ? "gold" : "acid",
+          message: existingSignal ? "Sinal atualizado por ingestao idempotente." : "Sinal criado por ingestao manual real.",
+          actor: input.submittedBy ?? "operator",
         },
         {
+          type: "EVIDENCE_ATTACHED",
           signalId: signal.id,
+          sourceId: source.id,
+          importBatchId: batch.id,
+          jobRunId: job.id,
           label: "evid.",
           value: evidenceExists ? "dedupe" : "+1",
           tone: evidenceExists ? "violet" : "aqua",
+          message: evidenceExists ? "Evidencia idempotente reutilizada." : "Evidencia anexada ao sinal.",
+          actor: input.submittedBy ?? "operator",
         },
         {
+          type: "SOURCE_REGISTERED",
           signalId: signal.id,
+          sourceId: source.id,
+          importBatchId: batch.id,
+          jobRunId: job.id,
           label: "fonte",
           value: input.sourceOrigin.toLowerCase(),
           tone: input.sourceOrigin === "OFFICIAL" ? "gold" : "violet",
+          message: "Fonte registrada com connector aprovado.",
+          actor: input.submittedBy ?? "operator",
         },
       ],
     });
@@ -453,8 +489,10 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
   const evidenceTitle = requireText(input.evidenceTitle, "Titulo da evidencia");
   const evidenceNote = requireText(input.evidenceNote, "Nota da evidencia");
 
+  assertSafeText(evidenceTitle, evidenceNote);
+
   return getPrisma().$transaction(async (tx) => {
-    const signal = await tx.trendSignal.findUnique({
+    const signal = await tx.signal.findUnique({
       where: { id: input.signalId },
       include: { source: true },
     });
@@ -466,6 +504,8 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
     if (!signal || !source) {
       throw new Error("Sinal ou fonte nao encontrados");
     }
+
+    assertOperationalOrigin(source.origin);
 
     const signalKey = signal.dedupeKey ?? buildSignalDedupeKey({
       market: signal.market,
@@ -547,12 +587,12 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
         isDemo: source.origin === "DEMO",
       },
     });
-    const existingEvidence = await tx.evidenceItem.findUnique({
+    const existingEvidence = await tx.evidence.findUnique({
       where: { dedupeKey: evidenceKey },
       select: { id: true },
     });
     const evidence = existingEvidence
-      ? await tx.evidenceItem.update({
+      ? await tx.evidence.update({
           where: { id: existingEvidence.id },
           data: {
             importBatchId: batch.id,
@@ -561,7 +601,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
             capturedAt: new Date(),
           },
         })
-      : await tx.evidenceItem.create({
+      : await tx.evidence.create({
           data: {
             signalId: signal.id,
             sourceId: source.id,
@@ -578,9 +618,9 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
             isDemo: source.origin === "DEMO",
           },
         });
-    const evidenceCount = await tx.evidenceItem.count({ where: { signalId: signal.id } });
+    const evidenceCount = await tx.evidence.count({ where: { signalId: signal.id } });
 
-    await tx.trendSignal.update({
+    await tx.signal.update({
       where: { id: signal.id },
       data: {
         evidenceCount,
@@ -589,12 +629,18 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
         processedAt: new Date(),
       },
     });
-    await tx.signalHistoryEvent.create({
+    await tx.auditEvent.create({
       data: {
+        type: "EVIDENCE_ATTACHED",
         signalId: signal.id,
+        sourceId: source.id,
+        importBatchId: batch.id,
+        jobRunId: job.id,
         label: "evid.",
         value: existingEvidence ? "dedupe" : "+1",
         tone: existingEvidence ? "violet" : "aqua",
+        message: existingEvidence ? "Evidencia idempotente reutilizada." : "Evidencia anexada ao sinal.",
+        actor: input.submittedBy ?? "operator",
       },
     });
     await createSteps(tx, batch.id, "SUCCEEDED");

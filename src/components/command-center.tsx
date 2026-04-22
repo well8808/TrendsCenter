@@ -36,7 +36,6 @@ import { IngestionLab } from "@/components/ingestion-lab";
 import { SourcePill } from "@/components/source-pill";
 import { StatePanel, LoadingSkeleton } from "@/components/state-panels";
 import { TrendCard } from "@/components/trend-card";
-import { demoSignals, sourceQueue } from "@/lib/demo-data";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
 import {
   filterSignals,
@@ -66,7 +65,7 @@ const navItems = [
 ];
 
 const stateOptions: { value: WorkspaceState; label: string }[] = [
-  { value: "demo", label: "Demo" },
+  { value: "ready", label: "Live" },
   { value: "loading", label: "Loading" },
   { value: "empty", label: "Empty" },
   { value: "error", label: "Error" },
@@ -117,10 +116,21 @@ const priorityLabel: Record<SignalPriority, string> = {
   hold: "hold",
 };
 
+const sourceDateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "America/Sao_Paulo",
+});
+
+function formatSourceDate(dateIso: string) {
+  return sourceDateFormatter.format(new Date(dateIso));
+}
+
 const fallbackPersistence: CommandCenterData["persistence"] = {
   mode: "error-fallback",
-  label: "fallback demo",
-  detail: "Persistencia local indisponivel; exibindo demo/mock.",
+  label: "banco indisponivel",
+  detail: "Postgres nao respondeu; nenhum insight ficticio foi carregado.",
 };
 
 const fallbackIngestionLab: CommandCenterData["ingestionLab"] = {
@@ -235,7 +245,7 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
         </div>
         <p className="mt-3 font-mono text-3xl font-semibold">{transfer}</p>
         <p className="mt-1 text-xs leading-5 text-[color:var(--muted-strong)]">
-          Transferencia simulada. So vira acao real com fonte oficial ou evidencia BR.
+          Transferencia calculada a partir dos sinais persistidos. So vira acao com fonte oficial ou evidencia BR.
         </p>
       </div>
     </section>
@@ -274,8 +284,8 @@ function EvidenceInspector({
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        {signal.history.map((item) => (
-          <div key={item.label} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] p-2">
+        {signal.history.map((item, index) => (
+          <div key={`${item.label}-${item.value}-${index}`} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] p-2">
             <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">{item.label}</p>
             <p
               className={cn(
@@ -384,12 +394,12 @@ function SavedAndHistory({
 }
 
 export function CommandCenter({
-  signals = demoSignals,
-  sources = sourceQueue,
+  signals,
+  sources,
   persistence = fallbackPersistence,
   ingestionLab = fallbackIngestionLab,
-}: Partial<CommandCenterData>) {
-  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>("demo");
+}: CommandCenterData) {
+  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(signals.length > 0 ? "ready" : "empty");
   const [query, setQuery] = useState("");
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("ALL");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
@@ -474,13 +484,13 @@ export function CommandCenter({
     {
       label: "BR / US radar",
       value: `${summary.brCount}/${summary.usCount}`,
-      delta: persistence.mode === "database" ? "seed local" : "mock mix",
+      delta: persistence.mode === "database" ? "Postgres" : "aguardando DB",
       tone: "aqua" as const,
     },
     {
       label: "Evidencias",
       value: String(summary.evidenceCount).padStart(2, "0"),
-      delta: persistence.mode === "database" ? "persistidas" : "demo auditavel",
+      delta: persistence.mode === "database" ? "persistidas" : "sem fixture",
       tone: "gold" as const,
     },
     {
@@ -538,7 +548,7 @@ export function CommandCenter({
                   Safe mode
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-                  Nenhum dado de producao conectado. O app bloqueia insight sem fonte e marca mock na UI.
+                  Postgres gerenciado conectado. O app bloqueia insight sem fonte, sem evidencia e sem safe mode.
                 </p>
               </div>
             </div>
@@ -558,7 +568,7 @@ export function CommandCenter({
                       Command Center v2
                     </h1>
                     <span className="rounded-full border border-[rgba(199,255,93,0.36)] bg-[rgba(199,255,93,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
-                      demo/mock
+                      {persistence.mode === "database" ? "live data" : "safe fallback"}
                     </span>
                     <span
                       className={cn(
@@ -601,7 +611,7 @@ export function CommandCenter({
 
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 px-4 py-5 md:px-6">
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
-              <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="Metricas demo">
+              <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="Metricas operacionais">
                 {metricTiles.map((metric) => (
                   <MetricTile key={metric.label} {...metric} />
                 ))}
@@ -661,8 +671,8 @@ export function CommandCenter({
                     </p>
                     <h2 className="mt-2 text-xl font-semibold">Ranking para decisao rapida</h2>
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                      Todos os sinais sao demo/mock. A tela agora prioriza leitura, comparacao,
-                      risco, evidencia e proxima acao.
+                      Sinais carregados do Postgres. A tela prioriza leitura, comparacao,
+                      risco, evidencia e proxima acao sem fixtures mascaradas.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
@@ -787,7 +797,7 @@ export function CommandCenter({
               <EvidenceInspector
                 signal={selectedSignal}
                 savedCount={savedIds.size}
-                storageLabel={persistence.mode === "database" ? "SQLite local demo/mock" : "fallback demo/mock"}
+                storageLabel={persistence.mode === "database" ? "Postgres gerenciado" : "fallback isolado"}
               />
 
               <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
@@ -817,7 +827,7 @@ export function CommandCenter({
                       </p>
                       <div className="mt-3 flex items-center justify-between text-xs text-[color:var(--muted)]">
                         <span>{source.market}</span>
-                        <span>{new Date(source.collectedAt).toLocaleDateString("pt-BR")}</span>
+                        <span>{formatSourceDate(source.collectedAt)}</span>
                       </div>
                     </div>
                   ))}
@@ -826,9 +836,9 @@ export function CommandCenter({
 
               <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
-                  Fase 3B
+                  Pipeline
                 </p>
-                <h2 className="mt-2 text-lg font-semibold">Jobs seguros preparados</h2>
+                <h2 className="mt-2 text-lg font-semibold">Jobs seguros registrados</h2>
                 <div className="mt-5 grid gap-3">
                   {pipelineItems.map((item) => {
                     const Icon = item.icon;
@@ -851,11 +861,11 @@ export function CommandCenter({
               <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.22)] bg-[rgba(199,255,93,0.075)] p-5">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
                   <Flame className="h-4 w-4" aria-hidden="true" />
-                  Nao producao
+                  Safe mode
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  A Fase 3B aceita ingestao manual/oficial rastreavel, sem coleta externa automatica. Tudo que
-                  nao vier de fonte real aprovada segue marcado como demo/mock.
+                  O app aceita ingestao manual, propria/licenciada ou oficial rastreavel. Falhas seguem como falhas,
+                  e entradas sem fonte aprovada nao viram insight.
                 </p>
               </section>
             </div>

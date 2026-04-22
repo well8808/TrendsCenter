@@ -47,7 +47,23 @@ const sourceKinds = [
   ["TOP_ADS", "Top Ads"],
   ["KEYWORD_INSIGHTS", "Keyword Insights"],
   ["COMMERCIAL_MUSIC_LIBRARY", "Commercial Music"],
+  ["OWNED_UPLOAD", "Owned upload"],
 ] as const;
+
+const operationDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+  timeZone: "America/Sao_Paulo",
+});
+
+function formatOperationDateTime(dateIso: string | null | undefined) {
+  return dateIso ? operationDateTimeFormatter.format(new Date(dateIso)) : "sem fim";
+}
 
 function statusTone(status: string) {
   if (status === "SUCCEEDED" || status === "APPROVED") {
@@ -198,7 +214,7 @@ export function IngestionLab({
           </div>
           <h2 className="mt-2 text-xl font-semibold">Operacao manual/oficial rastreavel</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-            Entrada local segura para sinais, evidencias e fontes aprovadas. Sem scraping, sem conector externo e sem transformar falha em insight.
+            Entrada segura para sinais, evidencias e fontes aprovadas. Sem scraping, sem conector externo fragil e sem transformar falha em insight.
           </p>
         </div>
         <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 2xl:min-w-[460px]">
@@ -266,7 +282,7 @@ export function IngestionLab({
               <select className={fieldClass} name="sourceOrigin" defaultValue="MANUAL">
                 <option value="MANUAL">manual</option>
                 <option value="OFFICIAL">oficial registrado</option>
-                <option value="DEMO">demo/mock</option>
+                <option value="OWNED">proprio/licenciado</option>
               </select>
             </Field>
             <Field label="evidencia">
@@ -406,7 +422,7 @@ export function IngestionLab({
                     <div>
                       <p className="text-sm font-semibold">{batch.title}</p>
                       <p className="mt-1 text-xs text-[color:var(--muted)]">
-                        {batch.kind} - {batch.market} - {new Date(batch.createdAt).toLocaleString("pt-BR")}
+                        {batch.kind} - {batch.market} - {formatOperationDateTime(batch.createdAt)}
                       </p>
                     </div>
                     <span className={cn("rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(batch.status))}>
@@ -461,7 +477,7 @@ export function IngestionLab({
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-[color:var(--muted)]">
-                      {job.stage ?? "stage"} - {job.finishedAt ? new Date(job.finishedAt).toLocaleString("pt-BR") : "sem fim"}
+                      {job.stage ?? "stage"} - {formatOperationDateTime(job.finishedAt)}
                     </p>
                     {job.error && <p className="mt-1 text-xs text-[color:var(--coral)]">{job.error}</p>}
                   </div>

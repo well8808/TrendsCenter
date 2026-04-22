@@ -26,7 +26,7 @@ export type SignalType =
 
 export type ConfidenceBand = "low" | "medium" | "high";
 
-export type WorkspaceState = "demo" | "loading" | "empty" | "error";
+export type WorkspaceState = "ready" | "loading" | "empty" | "error";
 
 export type SignalPriority = "now" | "next" | "watch" | "hold";
 

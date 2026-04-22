@@ -7,11 +7,11 @@ import type { WorkspaceState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const stateCopy = {
-  demo: {
+  ready: {
     icon: Sparkles,
-    title: "Modo demo/mock ativo",
-    body: "A interface esta usando sinais simulados para validar layout, scoring e proveniencia antes de qualquer fonte oficial conectada.",
-    action: "Pronto para importar fonte rastreavel",
+    title: "Postgres operacional",
+    body: "A interface esta lendo sinais, evidencias, lineage, jobs e fila de decisao do banco gerenciado.",
+    action: "Fluxo real ativo",
   },
   loading: {
     icon: Loader2,
@@ -57,7 +57,7 @@ export function StatePanel({ state }: { state: WorkspaceState }) {
               state === "loading" && "animate-spin text-[color:var(--aqua)]",
               state === "error" && "text-[color:var(--coral)]",
               state === "empty" && "text-[color:var(--gold)]",
-              state === "demo" && "text-[color:var(--acid)]",
+              state === "ready" && "text-[color:var(--acid)]",
             )}
             aria-hidden="true"
           />

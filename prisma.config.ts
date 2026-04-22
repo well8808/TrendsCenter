@@ -1,9 +1,14 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
 
+config({ path: ".env.local" });
+config({ path: ".env" });
+
 const databaseUrl =
+  process.env.DATABASE_URL_UNPOOLED ??
+  process.env.POSTGRES_URL_NON_POOLING ??
   process.env.DATABASE_URL ??
-  "file:./dev.db";
+  process.env.POSTGRES_URL;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -11,6 +16,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: databaseUrl,
+    url: databaseUrl ?? "postgresql://missing:missing@localhost:5432/missing",
   },
 });

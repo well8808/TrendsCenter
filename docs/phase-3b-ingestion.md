@@ -1,22 +1,27 @@
-# Fase 3B: ingestao manual/oficial rastreavel
+# Ingestao rastreavel
 
-Esta fase adiciona uma base operacional para registrar sinais e evidencias de forma auditavel, sem scraping e sem conectores externos automaticos.
+A ingestao atual e manual/oficial registrada e persistida no Postgres. Ela nao executa scraping nem coleta externa fragil.
 
-## Fluxo suportado
+## Entidades principais
 
-- `SourceConnector`: superficie aprovada ou pendente, com origem `MANUAL`, `OFFICIAL` ou `DEMO`.
-- `IngestRequest`: pedido de entrada criado pela UI ou seed.
-- `ImportBatch`: lote idempotente que agrupa request, fonte, snapshot, job, sinal e evidencias.
-- `IngestionStep`: status por etapa (`RECEIVE`, `VALIDATE`, `NORMALIZE`, `DEDUPE`, `PERSIST`, `SCORE`, `AUDIT`).
-- `JobRun`: execucao local ligada ao batch e ao request.
+- `Connector`: superficie aprovada ou pendente.
+- `Source`: fonte registrada com mercado, origem, confianca e gap.
+- `Signal`: sinal persistido para ranking e decisao.
+- `Evidence`: prova vinculada a signal/source/snapshot/job.
+- `DecisionQueueItem`: fila de decisao acionada pelo botao salvar.
+- `JobRun`: execucao rastreavel do fluxo manual.
+- `AuditEvent`: lineage legivel para criacao, evidencia, fonte, job e fila.
 
-## Limites de seguranca
+## Fluxos
 
-- Nenhum job faz rede externa nesta fase.
-- Falhas de conector oficial ficam registradas como falhas; nao viram insight.
-- Dedupe usa chaves estaveis para evitar duplicar signal/evidence em submissao repetida.
-- Dados `DEMO` continuam marcados como demo/mock; dados `MANUAL` dependem de entrada do operador.
+- Criar sinal manual com evidencia inicial.
+- Anexar evidencia a sinal existente.
+- Salvar/remover sinal da fila de decisao.
+- Listar lineage recente via batches, steps, jobs e audit events.
 
-## Banco
+## Compliance
 
-O runtime atual usa SQLite local via Prisma e adapter `@prisma/adapter-better-sqlite3`. A troca futura para Postgres deve ficar concentrada na configuracao Prisma/adapter e em nova migration de producao; os servicos de ingestao usam Prisma e nao SQL especifico de SQLite.
+- Sem menores ou idade ambigua.
+- Sem conteudo explicito como asset de demo.
+- Sem remocao de watermark de terceiros.
+- Upload/media pipeline permanece restrito a arquivos proprios ou licenciados.

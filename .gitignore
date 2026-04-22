@@ -21,3 +21,4 @@ prisma/dev.db-wal
 Thumbs.db
 
 .vercel
+.env*.local

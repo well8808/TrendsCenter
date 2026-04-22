@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client";
 
-import { demoSignals, sourceQueue } from "@/lib/demo-data";
 import { getPrisma } from "@/lib/db";
 import { calculateTrendScore } from "@/lib/scoring";
 import type {
@@ -27,18 +26,21 @@ const signalInclude = {
   evidence: {
     orderBy: { capturedAt: "desc" as const },
   },
-  history: {
+  auditEvents: {
     orderBy: { eventAt: "desc" as const },
+    take: 6,
   },
   scores: {
     orderBy: { calculatedAt: "desc" as const },
     take: 1,
   },
-  savedBy: true,
-} satisfies Prisma.TrendSignalInclude;
+  decisionQueueItems: {
+    where: { status: "ACTIVE" as const },
+  },
+} satisfies Prisma.SignalInclude;
 
 type SourceRecordPayload = Prisma.SourceGetPayload<{ include: typeof sourceInclude }>;
-type SignalRecordPayload = Prisma.TrendSignalGetPayload<{ include: typeof signalInclude }>;
+type SignalRecordPayload = Prisma.SignalGetPayload<{ include: typeof signalInclude }>;
 
 const batchInclude = {
   source: true,
@@ -148,25 +150,16 @@ export interface CommandCenterData {
   ingestionLab: IngestionLabData;
 }
 
-const fallbackData: CommandCenterData = {
-  signals: demoSignals,
-  sources: sourceQueue,
-  persistence: {
-    mode: "error-fallback",
-    label: "fallback demo",
-    detail: "Banco persistente indisponivel; exibindo fixtures demo/mock.",
-  },
-  ingestionLab: {
-    connectors: [],
-    requests: [],
-    batches: [],
-    jobs: [],
-    stats: {
-      approvedConnectors: 0,
-      openRequests: 0,
-      failedBatches: 0,
-      succeededBatches: 0,
-    },
+const emptyIngestionLab: IngestionLabData = {
+  connectors: [],
+  requests: [],
+  batches: [],
+  jobs: [],
+  stats: {
+    approvedConnectors: 0,
+    openRequests: 0,
+    failedBatches: 0,
+    succeededBatches: 0,
   },
 };
 
@@ -217,7 +210,7 @@ function mapSource(source: SourceRecordPayload): SourceRecord {
   };
 }
 
-function mapHistoryItem(item: SignalRecordPayload["history"][number]): SignalHistoryItem {
+function mapHistoryItem(item: SignalRecordPayload["auditEvents"][number]): SignalHistoryItem {
   const tone = ["acid", "aqua", "coral", "gold", "violet"].includes(item.tone)
     ? (item.tone as SignalHistoryItem["tone"])
     : "violet";
@@ -300,7 +293,7 @@ export function mapSignal(signal: SignalRecordPayload): TrendSignal {
     trendWindow: signal.trendWindow ?? "sem janela definida",
     decision: signal.decision ?? "Aguardar evidencia adicional antes de acionar.",
     nextAction: signal.nextAction ?? "Registrar proxima acao manual.",
-    saved: signal.savedBy.length > 0,
+    saved: signal.decisionQueueItems.length > 0,
     origin: signal.origin,
     scoreInput,
     score: {
@@ -319,7 +312,7 @@ export function mapSignal(signal: SignalRecordPayload): TrendSignal {
       timestamp: item.capturedAt.toISOString(),
       note: item.note ?? item.excerpt ?? "Evidencia sem nota adicional.",
     })),
-    history: signal.history.map(mapHistoryItem),
+    history: signal.auditEvents.map(mapHistoryItem),
     scoreDrivers: stringArray(signal.scoreDrivers),
   };
 }
@@ -328,7 +321,7 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
   try {
     const prisma = getPrisma();
     const [signals, sources, connectors, requests, batches, jobs] = await Promise.all([
-      prisma.trendSignal.findMany({
+      prisma.signal.findMany({
         include: signalInclude,
         orderBy: [{ priority: "asc" }, { strength: "desc" }, { updatedAt: "desc" }],
       }),
@@ -336,7 +329,7 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
         include: sourceInclude,
         orderBy: [{ market: "asc" }, { updatedAt: "desc" }],
       }),
-      prisma.sourceConnector.findMany({
+      prisma.connector.findMany({
         orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
         take: 8,
       }),
@@ -395,12 +388,12 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
 
     if (signals.length === 0) {
       return {
-        signals: demoSignals,
-        sources: sourceQueue,
+        signals: [],
+        sources: sources.map(mapSource),
         persistence: {
-          mode: "empty-fallback",
-          label: "banco vazio",
-          detail: "SQLite local ativo, sem sinais persistidos; exibindo demo/mock.",
+          mode: "database",
+          label: "Postgres vazio",
+          detail: "Postgres gerenciado ativo, sem sinais persistidos ainda. Use o Ingestion Lab para criar o primeiro sinal real.",
         },
         ingestionLab,
       };
@@ -411,20 +404,29 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
       sources: sources.map(mapSource),
       persistence: {
         mode: "database",
-        label: "SQLite local",
-        detail: "Sinais, evidencias, historico e saved carregados do banco local.",
+        label: "Postgres real",
+        detail: "Sinais, evidencias, fila de decisao, jobs e auditoria carregados do Postgres gerenciado.",
       },
       ingestionLab,
     };
   } catch (error) {
-    console.error("[persistence] command center fallback", error);
-    return fallbackData;
+    console.error("[persistence] command center unavailable", error);
+    return {
+      signals: [],
+      sources: [],
+      persistence: {
+        mode: "error-fallback",
+        label: "banco indisponivel",
+        detail: "Postgres nao respondeu. Fallback isolado: nenhum insight ficticio foi carregado.",
+      },
+      ingestionLab: emptyIngestionLab,
+    };
   }
 }
 
 export async function toggleSavedSignal(signalId: string) {
   const prisma = getPrisma();
-  const signal = await prisma.trendSignal.findUnique({
+  const signal = await prisma.signal.findUnique({
     where: { id: signalId },
     select: { id: true },
   });
@@ -433,21 +435,24 @@ export async function toggleSavedSignal(signalId: string) {
     return { ok: false, saved: false, reason: "signal_not_found" };
   }
 
-  const existing = await prisma.workspaceSavedSignal.findUnique({
+  const existing = await prisma.decisionQueueItem.findUnique({
     where: { signalId },
   });
 
   if (existing) {
     await prisma.$transaction([
-      prisma.workspaceSavedSignal.delete({
+      prisma.decisionQueueItem.delete({
         where: { signalId },
       }),
-      prisma.signalHistoryEvent.create({
+      prisma.auditEvent.create({
         data: {
+          type: "DECISION_REMOVED",
           signalId,
           label: "workspace",
           value: "removido",
           tone: "violet",
+          message: "Sinal removido da fila de decisao.",
+          actor: "operator",
         },
       }),
     ]);
@@ -456,19 +461,22 @@ export async function toggleSavedSignal(signalId: string) {
   }
 
   await prisma.$transaction([
-    prisma.workspaceSavedSignal.create({
+    prisma.decisionQueueItem.create({
       data: {
         signalId,
-        label: "Saved local",
-        notes: "Criado pela UI local da Fase 3B.",
+        label: "Fila de decisao",
+        notes: "Criado pela UI com persistencia Postgres.",
       },
     }),
-    prisma.signalHistoryEvent.create({
+    prisma.auditEvent.create({
       data: {
+        type: "DECISION_QUEUED",
         signalId,
         label: "workspace",
         value: "salvo",
         tone: "acid",
+        message: "Sinal salvo na fila de decisao.",
+        actor: "operator",
       },
     }),
   ]);

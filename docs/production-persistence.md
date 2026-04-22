@@ -1,20 +1,33 @@
 # Persistencia de producao
 
-O deploy atual da Vercel pode exibir `fallback demo/mock` porque a Fase 3B usa SQLite local (`file:./dev.db`) com Prisma. Esse banco e adequado para validacao local no Windows/Codex, mas nao deve ser tratado como persistencia de producao em runtime serverless.
+O app agora usa Postgres gerenciado via Neon no Vercel Marketplace. `DATABASE_URL` e `DATABASE_URL_UNPOOLED` sao injetadas pelo Vercel e tambem foram puxadas para `.env.local` para validacao local.
 
-## Diagnostico
+## Runtime
 
-- O App Router chama `getCommandCenterData()` a cada request.
-- `getPrisma()` usa `DATABASE_URL` ou `file:./dev.db` como default.
-- Em producao, a Vercel nao tem o `dev.db` local seedado como banco persistente compartilhado.
-- Quando o Prisma/adapter nao consegue abrir ou consultar esse arquivo, o app retorna o fallback seguro com fixtures `demo/mock`.
+- Prisma usa `provider = "postgresql"`.
+- O runtime Next.js instancia `PrismaClient` com `@prisma/adapter-neon`.
+- `DATABASE_URL` e usada pelo app/server actions.
+- `DATABASE_URL_UNPOOLED` ou `POSTGRES_URL_NON_POOLING` e usada pelo Prisma CLI em `prisma.config.ts` para migrations.
 
-## Caminho recomendado
+## Fluxo de dados
 
-1. Provisionar Postgres pelo Vercel Marketplace, como Neon, Supabase ou Prisma Postgres.
-2. Criar uma migration planejada de SQLite para Postgres, mantendo os modelos de provenance, ingestion e scoring.
-3. Trocar a configuracao Prisma/adapter para Postgres em uma fase propria, usando as variaveis injetadas pela integracao escolhida.
-4. Rodar `prisma migrate deploy` e seed controlado no banco de producao/staging.
-5. Manter fallback demo/mock como degradacao segura quando o banco estiver indisponivel.
+- A dashboard le `Signal`, `Evidence`, `Source`, `DecisionQueueItem`, `JobRun`, `Connector` e `AuditEvent` do Postgres.
+- O seed de producao registra apenas baseline operacional: connectors, fonte manual, job e auditoria.
+- O seed nao cria tendencias ficticias.
+- Se o banco falhar, o fallback e isolado e vazio; nenhum insight mock e misturado no fluxo principal.
 
-Nao conectar scraping ou fontes externas nessa transicao. A mudanca e apenas de persistencia publicada.
+## Comandos
+
+```bash
+npm run prisma:generate
+npm run db:migrate
+npm run db:seed
+npm run build
+```
+
+## Fronteiras
+
+- Sem scraping.
+- Sem dados falsos mascarados como reais.
+- Sem SQLite como persistencia de producao.
+- Entradas `DEMO` continuam existindo no schema apenas para isolamento/legado, mas a UI operacional bloqueia origem demo em criacao manual.

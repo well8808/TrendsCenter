@@ -11,13 +11,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
-    "db:migrate": "node prisma/ensure-sqlite.mjs && prisma migrate deploy",
-    "db:migrate:dev": "node prisma/ensure-sqlite.mjs && prisma migrate dev",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
     "db:seed": "node prisma/seed.mjs",
     "db:status": "prisma migrate status"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.7.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.7.0",
     "@prisma/client": "latest",
     "@tanstack/react-query": "latest",
     "clsx": "latest",
