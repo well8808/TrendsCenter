@@ -8,6 +8,7 @@ import {
 } from "@/lib/ingestion/dedupe";
 import { getPrisma } from "@/lib/db";
 import { calculateTrendScore } from "@/lib/scoring";
+import type { TenantContext } from "@/lib/auth/session";
 import type { DataOrigin, Market, SignalType, SourceKind } from "@/lib/types";
 
 type Tx = Prisma.TransactionClient;
@@ -91,6 +92,7 @@ function initialScoreInput(type: SignalType, market: Market) {
 
 async function ensureConnector(
   tx: Tx,
+  context: TenantContext,
   input: {
     kind: SourceKind;
     origin: DataOrigin;
@@ -100,13 +102,14 @@ async function ensureConnector(
   const slug = connectorSlug(input.kind, input.origin);
 
   return tx.connector.upsert({
-    where: { slug },
+    where: { workspaceId_slug: { workspaceId: context.workspaceId, slug } },
     update: {
       status: input.origin === "OFFICIAL" || input.origin === "MANUAL" ? "APPROVED" : "NEEDS_REVIEW",
       manualEntryEnabled: true,
       market: input.market,
     },
     create: {
+      workspaceId: context.workspaceId,
       slug,
       title: input.origin === "OFFICIAL" ? `Official manual intake: ${input.kind}` : "Manual safe intake",
       kind: input.kind,
@@ -122,6 +125,7 @@ async function ensureConnector(
 
 async function createSteps(
   tx: Tx,
+  context: TenantContext,
   batchId: string,
   status: "SUCCEEDED" | "FAILED" | "SKIPPED",
   failedStep?: (typeof ingestionStepNames)[number],
@@ -137,6 +141,7 @@ async function createSteps(
           : status;
 
       return {
+        workspaceId: context.workspaceId,
         batchId,
         name,
         status: stepStatus,
@@ -156,6 +161,7 @@ async function createSteps(
 
 async function createJob(
   tx: Tx,
+  context: TenantContext,
   input: {
     name: string;
     requestId: string;
@@ -165,6 +171,7 @@ async function createJob(
 ) {
   return tx.jobRun.create({
     data: {
+      workspaceId: context.workspaceId,
       name: input.name,
       status: "SUCCEEDED",
       stage: "AUDIT",
@@ -177,7 +184,7 @@ async function createJob(
   });
 }
 
-export async function createManualSignalWithEvidence(input: ManualSignalInput) {
+export async function createManualSignalWithEvidence(input: ManualSignalInput, context: TenantContext) {
   const title = requireText(input.title, "Titulo do sinal");
   const sourceTitle = requireText(input.sourceTitle, "Fonte");
   const evidenceTitle = requireText(input.evidenceTitle, "Titulo da evidencia");
@@ -210,18 +217,19 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
   };
 
   return getPrisma().$transaction(async (tx) => {
-    const connector = await ensureConnector(tx, {
+    const connector = await ensureConnector(tx, context, {
       kind: input.sourceKind,
       origin: input.sourceOrigin,
       market: input.market,
     });
     const source = await tx.source.upsert({
-      where: { dedupeKey: sourceKey },
+      where: { workspaceId_dedupeKey: { workspaceId: context.workspaceId, dedupeKey: sourceKey } },
       update: {
         connectorId: connector.id,
         updatedAt: new Date(),
       },
       create: {
+        workspaceId: context.workspaceId,
         title: sourceTitle,
         kind: input.sourceKind,
         origin: input.sourceOrigin,
@@ -236,13 +244,14 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
       },
     });
     const request = await tx.ingestRequest.upsert({
-      where: { requestKey },
+      where: { workspaceId_requestKey: { workspaceId: context.workspaceId, requestKey } },
       update: {
         status: "RUNNING",
         sourceId: source.id,
         processedAt: new Date(),
       },
       create: {
+        workspaceId: context.workspaceId,
         requestKey,
         type: "SIGNAL_CREATE",
         status: "RUNNING",
@@ -259,12 +268,13 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
       },
     });
     const batch = await tx.importBatch.upsert({
-      where: { idempotencyKey: requestKey },
+      where: { workspaceId_idempotencyKey: { workspaceId: context.workspaceId, idempotencyKey: requestKey } },
       update: {
         status: "RUNNING",
         processedAt: new Date(),
       },
       create: {
+        workspaceId: context.workspaceId,
         idempotencyKey: requestKey,
         kind: "MANUAL_SIGNAL",
         status: "RUNNING",
@@ -281,7 +291,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         isDemo: input.sourceOrigin === "DEMO",
       },
     });
-    const job = await createJob(tx, {
+    const job = await createJob(tx, context, {
       name: "manual-signal-ingest",
       requestId: request.id,
       importBatchId: batch.id,
@@ -289,6 +299,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
     });
     const snapshot = await tx.sourceSnapshot.create({
       data: {
+        workspaceId: context.workspaceId,
         sourceId: source.id,
         importBatchId: batch.id,
         jobRunId: job.id,
@@ -301,12 +312,12 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
     const scoreInput = initialScoreInput(input.type, input.market);
     const score = calculateTrendScore(scoreInput);
     const existingSignal = await tx.signal.findUnique({
-      where: { dedupeKey: signalKey },
+      where: { workspaceId_dedupeKey: { workspaceId: context.workspaceId, dedupeKey: signalKey } },
       select: { id: true },
     });
     const signal = existingSignal
       ? await tx.signal.update({
-          where: { id: existingSignal.id },
+          where: { id: existingSignal.id, workspaceId: context.workspaceId },
           data: {
             sourceId: source.id,
             importBatchId: batch.id,
@@ -317,6 +328,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         })
       : await tx.signal.create({
           data: {
+            workspaceId: context.workspaceId,
             title,
             summary: input.summary.trim() || "Sinal criado manualmente; aguarda evidencias adicionais.",
             type: input.type,
@@ -343,6 +355,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
             isDemo: input.sourceOrigin === "DEMO",
             scores: {
               create: {
+                workspaceId: context.workspaceId,
                 score: score.value,
                 confidence: "LOW",
                 velocity7d: scoreInput.velocity7d,
@@ -362,12 +375,12 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
           },
         });
     const evidenceExists = await tx.evidence.findUnique({
-      where: { dedupeKey: evidenceKey },
+      where: { workspaceId_dedupeKey: { workspaceId: context.workspaceId, dedupeKey: evidenceKey } },
       select: { id: true },
     });
     const evidence = evidenceExists
       ? await tx.evidence.update({
-          where: { id: evidenceExists.id },
+          where: { id: evidenceExists.id, workspaceId: context.workspaceId },
           data: {
             importBatchId: batch.id,
             jobRunId: job.id,
@@ -377,6 +390,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         })
       : await tx.evidence.create({
           data: {
+            workspaceId: context.workspaceId,
             signalId: signal.id,
             sourceId: source.id,
             importBatchId: batch.id,
@@ -395,6 +409,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
 
     await tx.signalObservation.create({
       data: {
+        workspaceId: context.workspaceId,
         signalId: signal.id,
         snapshotId: snapshot.id,
         observedAt: new Date(),
@@ -406,16 +421,17 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         },
       },
     });
-    const evidenceCount = await tx.evidence.count({ where: { signalId: signal.id } });
+    const evidenceCount = await tx.evidence.count({ where: { workspaceId: context.workspaceId, signalId: signal.id } });
 
     await tx.signal.update({
-      where: { id: signal.id },
+      where: { id: signal.id, workspaceId: context.workspaceId },
       data: { evidenceCount, updatedAt: new Date() },
     });
     await tx.auditEvent.createMany({
       data: [
         {
           type: existingSignal ? "SIGNAL_UPDATED" : "SIGNAL_CREATED",
+          workspaceId: context.workspaceId,
           signalId: signal.id,
           sourceId: source.id,
           importBatchId: batch.id,
@@ -428,6 +444,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         },
         {
           type: "EVIDENCE_ATTACHED",
+          workspaceId: context.workspaceId,
           signalId: signal.id,
           sourceId: source.id,
           importBatchId: batch.id,
@@ -440,6 +457,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         },
         {
           type: "SOURCE_REGISTERED",
+          workspaceId: context.workspaceId,
           signalId: signal.id,
           sourceId: source.id,
           importBatchId: batch.id,
@@ -452,9 +470,9 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
         },
       ],
     });
-    await createSteps(tx, batch.id, "SUCCEEDED");
+    await createSteps(tx, context, batch.id, "SUCCEEDED");
     await tx.importBatch.update({
-      where: { id: batch.id },
+      where: { id: batch.id, workspaceId: context.workspaceId },
       data: {
         status: "SUCCEEDED",
         itemCount: evidenceCount,
@@ -463,7 +481,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
       },
     });
     await tx.ingestRequest.update({
-      where: { id: request.id },
+      where: { id: request.id, workspaceId: context.workspaceId },
       data: {
         status: "SUCCEEDED",
         sourceId: source.id,
@@ -485,7 +503,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput) {
   });
 }
 
-export async function attachManualEvidence(input: ManualEvidenceInput) {
+export async function attachManualEvidence(input: ManualEvidenceInput, context: TenantContext) {
   const evidenceTitle = requireText(input.evidenceTitle, "Titulo da evidencia");
   const evidenceNote = requireText(input.evidenceNote, "Nota da evidencia");
 
@@ -493,11 +511,11 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
 
   return getPrisma().$transaction(async (tx) => {
     const signal = await tx.signal.findUnique({
-      where: { id: input.signalId },
+      where: { id: input.signalId, workspaceId: context.workspaceId },
       include: { source: true },
     });
     const source = await tx.source.findUnique({
-      where: { id: input.sourceId },
+      where: { id: input.sourceId, workspaceId: context.workspaceId },
       include: { connector: true },
     });
 
@@ -525,15 +543,16 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
       evidenceTitle,
       externalNetwork: false,
     };
-    const connector = source.connector ?? (await ensureConnector(tx, {
+    const connector = source.connector ?? (await ensureConnector(tx, context, {
       kind: source.kind,
       origin: source.origin,
       market: source.market,
     }));
     const request = await tx.ingestRequest.upsert({
-      where: { requestKey },
+      where: { workspaceId_requestKey: { workspaceId: context.workspaceId, requestKey } },
       update: { status: "RUNNING", processedAt: new Date() },
       create: {
+        workspaceId: context.workspaceId,
         requestKey,
         type: "EVIDENCE_APPEND",
         status: "RUNNING",
@@ -551,9 +570,10 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
       },
     });
     const batch = await tx.importBatch.upsert({
-      where: { idempotencyKey: requestKey },
+      where: { workspaceId_idempotencyKey: { workspaceId: context.workspaceId, idempotencyKey: requestKey } },
       update: { status: "RUNNING", processedAt: new Date() },
       create: {
+        workspaceId: context.workspaceId,
         idempotencyKey: requestKey,
         kind: "MANUAL_EVIDENCE",
         status: "RUNNING",
@@ -570,7 +590,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
         isDemo: source.origin === "DEMO",
       },
     });
-    const job = await createJob(tx, {
+    const job = await createJob(tx, context, {
       name: "manual-evidence-append",
       requestId: request.id,
       importBatchId: batch.id,
@@ -578,6 +598,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
     });
     const snapshot = await tx.sourceSnapshot.create({
       data: {
+        workspaceId: context.workspaceId,
         sourceId: source.id,
         importBatchId: batch.id,
         jobRunId: job.id,
@@ -588,12 +609,12 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
       },
     });
     const existingEvidence = await tx.evidence.findUnique({
-      where: { dedupeKey: evidenceKey },
+      where: { workspaceId_dedupeKey: { workspaceId: context.workspaceId, dedupeKey: evidenceKey } },
       select: { id: true },
     });
     const evidence = existingEvidence
       ? await tx.evidence.update({
-          where: { id: existingEvidence.id },
+          where: { id: existingEvidence.id, workspaceId: context.workspaceId },
           data: {
             importBatchId: batch.id,
             jobRunId: job.id,
@@ -603,6 +624,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
         })
       : await tx.evidence.create({
           data: {
+            workspaceId: context.workspaceId,
             signalId: signal.id,
             sourceId: source.id,
             importBatchId: batch.id,
@@ -618,10 +640,10 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
             isDemo: source.origin === "DEMO",
           },
         });
-    const evidenceCount = await tx.evidence.count({ where: { signalId: signal.id } });
+    const evidenceCount = await tx.evidence.count({ where: { workspaceId: context.workspaceId, signalId: signal.id } });
 
     await tx.signal.update({
-      where: { id: signal.id },
+      where: { id: signal.id, workspaceId: context.workspaceId },
       data: {
         evidenceCount,
         importBatchId: batch.id,
@@ -632,6 +654,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
     await tx.auditEvent.create({
       data: {
         type: "EVIDENCE_ATTACHED",
+        workspaceId: context.workspaceId,
         signalId: signal.id,
         sourceId: source.id,
         importBatchId: batch.id,
@@ -643,9 +666,9 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
         actor: input.submittedBy ?? "operator",
       },
     });
-    await createSteps(tx, batch.id, "SUCCEEDED");
+    await createSteps(tx, context, batch.id, "SUCCEEDED");
     await tx.importBatch.update({
-      where: { id: batch.id },
+      where: { id: batch.id, workspaceId: context.workspaceId },
       data: {
         status: "SUCCEEDED",
         itemCount: evidenceCount,
@@ -654,7 +677,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput) {
       },
     });
     await tx.ingestRequest.update({
-      where: { id: request.id },
+      where: { id: request.id, workspaceId: context.workspaceId },
       data: {
         status: "SUCCEEDED",
         completedAt: new Date(),

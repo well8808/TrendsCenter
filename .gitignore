@@ -4,6 +4,7 @@ node_modules
 out
 dist
 coverage
+tsconfig.tsbuildinfo
 .env
 .env.*
 !.env.example
@@ -17,6 +18,7 @@ prisma/dev.db-shm
 prisma/dev.db-wal
 *.log
 .next-dev*.log
+.next-dev.pid
 .DS_Store
 Thumbs.db
 

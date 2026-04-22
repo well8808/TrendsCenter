@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
 import { calculateTrendScore } from "@/lib/scoring";
 import type {
@@ -148,6 +149,13 @@ export interface CommandCenterData {
   sources: SourceRecord[];
   persistence: PersistenceState;
   ingestionLab: IngestionLabData;
+  tenant: {
+    userEmail: string;
+    userName: string | null;
+    workspaceName: string;
+    workspaceSlug: string;
+    role: string;
+  };
 }
 
 const emptyIngestionLab: IngestionLabData = {
@@ -317,32 +325,48 @@ export function mapSignal(signal: SignalRecordPayload): TrendSignal {
   };
 }
 
-export async function getCommandCenterData(): Promise<CommandCenterData> {
+function mapTenant(context: TenantContext): CommandCenterData["tenant"] {
+  return {
+    userEmail: context.userEmail,
+    userName: context.userName,
+    workspaceName: context.workspaceName,
+    workspaceSlug: context.workspaceSlug,
+    role: context.role,
+  };
+}
+
+export async function getCommandCenterData(context: TenantContext): Promise<CommandCenterData> {
   try {
     const prisma = getPrisma();
     const [signals, sources, connectors, requests, batches, jobs] = await Promise.all([
       prisma.signal.findMany({
+        where: { workspaceId: context.workspaceId },
         include: signalInclude,
         orderBy: [{ priority: "asc" }, { strength: "desc" }, { updatedAt: "desc" }],
       }),
       prisma.source.findMany({
+        where: { workspaceId: context.workspaceId },
         include: sourceInclude,
         orderBy: [{ market: "asc" }, { updatedAt: "desc" }],
       }),
       prisma.connector.findMany({
+        where: { workspaceId: context.workspaceId },
         orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
         take: 8,
       }),
       prisma.ingestRequest.findMany({
+        where: { workspaceId: context.workspaceId },
         orderBy: { submittedAt: "desc" },
         take: 6,
       }),
       prisma.importBatch.findMany({
+        where: { workspaceId: context.workspaceId },
         include: batchInclude,
         orderBy: { createdAt: "desc" },
         take: 6,
       }),
       prisma.jobRun.findMany({
+        where: { workspaceId: context.workspaceId },
         orderBy: { createdAt: "desc" },
         take: 6,
       }),
@@ -396,6 +420,7 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
           detail: "Postgres gerenciado ativo, sem sinais persistidos ainda. Use o Ingestion Lab para criar o primeiro sinal real.",
         },
         ingestionLab,
+        tenant: mapTenant(context),
       };
     }
 
@@ -405,9 +430,10 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
       persistence: {
         mode: "database",
         label: "Postgres real",
-        detail: "Sinais, evidencias, fila de decisao, jobs e auditoria carregados do Postgres gerenciado.",
+        detail: `Sinais, evidencias, fila de decisao, jobs e auditoria carregados do workspace ${context.workspaceName}.`,
       },
       ingestionLab,
+      tenant: mapTenant(context),
     };
   } catch (error) {
     console.error("[persistence] command center unavailable", error);
@@ -420,14 +446,15 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
         detail: "Postgres nao respondeu. Fallback isolado: nenhum insight ficticio foi carregado.",
       },
       ingestionLab: emptyIngestionLab,
+      tenant: mapTenant(context),
     };
   }
 }
 
-export async function toggleSavedSignal(signalId: string) {
+export async function toggleSavedSignal(signalId: string, context: TenantContext) {
   const prisma = getPrisma();
-  const signal = await prisma.signal.findUnique({
-    where: { id: signalId },
+  const signal = await prisma.signal.findFirst({
+    where: { id: signalId, workspaceId: context.workspaceId },
     select: { id: true },
   });
 
@@ -436,23 +463,24 @@ export async function toggleSavedSignal(signalId: string) {
   }
 
   const existing = await prisma.decisionQueueItem.findUnique({
-    where: { signalId },
+    where: { workspaceId_signalId: { workspaceId: context.workspaceId, signalId } },
   });
 
   if (existing) {
     await prisma.$transaction([
       prisma.decisionQueueItem.delete({
-        where: { signalId },
+        where: { workspaceId_signalId: { workspaceId: context.workspaceId, signalId } },
       }),
       prisma.auditEvent.create({
         data: {
           type: "DECISION_REMOVED",
+          workspaceId: context.workspaceId,
           signalId,
           label: "workspace",
           value: "removido",
           tone: "violet",
           message: "Sinal removido da fila de decisao.",
-          actor: "operator",
+          actor: context.userEmail,
         },
       }),
     ]);
@@ -463,6 +491,7 @@ export async function toggleSavedSignal(signalId: string) {
   await prisma.$transaction([
     prisma.decisionQueueItem.create({
       data: {
+        workspaceId: context.workspaceId,
         signalId,
         label: "Fila de decisao",
         notes: "Criado pela UI com persistencia Postgres.",
@@ -471,12 +500,13 @@ export async function toggleSavedSignal(signalId: string) {
     prisma.auditEvent.create({
       data: {
         type: "DECISION_QUEUED",
+        workspaceId: context.workspaceId,
         signalId,
         label: "workspace",
         value: "salvo",
         tone: "acid",
         message: "Sinal salvo na fila de decisao.",
-        actor: "operator",
+        actor: context.userEmail,
       },
     }),
   ]);

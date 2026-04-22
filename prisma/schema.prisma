@@ -98,6 +98,24 @@ enum ConnectorStatus {
   BLOCKED
 }
 
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
 enum DecisionQueueStatus {
   ACTIVE
   SNOOZED
@@ -151,9 +169,80 @@ enum ImportBatchKind {
   CONNECTOR_BASELINE
 }
 
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  name         String?
+  passwordHash String
+  status       UserStatus        @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  memberships  WorkspaceMember[]
+  sessions     AuthSession[]
+}
+
+model Workspace {
+  id                 String              @id @default(cuid())
+  slug               String              @unique
+  name               String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  members            WorkspaceMember[]
+  sessions           AuthSession[]
+  connectors         Connector[]
+  sources            Source[]
+  sourceSnapshots    SourceSnapshot[]
+  signals            Signal[]
+  observations       SignalObservation[]
+  scores             SignalScore[]
+  evidence           Evidence[]
+  decisionQueueItems DecisionQueueItem[]
+  auditEvents        AuditEvent[]
+  complianceFlags    ComplianceFlag[]
+  mediaAssets        MediaAsset[]
+  mediaDerivatives   MediaDerivative[]
+  jobRuns            JobRun[]
+  ingestRequests     IngestRequest[]
+  importBatches      ImportBatch[]
+  ingestionSteps     IngestionStep[]
+}
+
+model WorkspaceMember {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role        WorkspaceRole    @default(ANALYST)
+  status      MembershipStatus @default(ACTIVE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId, role, status])
+}
+
+model AuthSession {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userAgent   String?
+  expiresAt   DateTime
+  lastSeenAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([workspaceId, expiresAt])
+}
+
 model Connector {
   id                 String          @id @default(cuid())
-  slug               String          @unique
+  workspaceId        String
+  workspace          Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  slug               String
   title              String
   kind               SourceKind
   origin             DataOrigin
@@ -168,11 +257,15 @@ model Connector {
   ingestRequests     IngestRequest[]
   importBatches      ImportBatch[]
 
+  @@unique([workspaceId, slug])
   @@index([origin, kind, status])
+  @@index([workspaceId, origin, kind, status])
 }
 
 model Source {
   id             String           @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   title          String
   kind           SourceKind
   origin         DataOrigin
@@ -183,7 +276,7 @@ model Source {
   coverage       String?
   freshness      String?
   gap            String?
-  dedupeKey      String?          @unique
+  dedupeKey      String?
   connectorId    String?
   connector      Connector?       @relation(fields: [connectorId], references: [id], onDelete: SetNull)
   createdAt      DateTime         @default(now())
@@ -195,11 +288,15 @@ model Source {
   importBatches  ImportBatch[]
   auditEvents    AuditEvent[]
 
+  @@unique([workspaceId, dedupeKey])
   @@index([origin, kind, market])
+  @@index([workspaceId, origin, kind, market])
 }
 
 model SourceSnapshot {
   id             String              @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   sourceId       String
   source         Source              @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   importBatchId  String?
@@ -214,10 +311,14 @@ model SourceSnapshot {
   createdAt      DateTime            @default(now())
   observations   SignalObservation[]
   evidence       Evidence[]
+
+  @@index([workspaceId, collectedAt])
 }
 
 model Signal {
   id                 String              @id @default(cuid())
+  workspaceId        String
+  workspace          Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   title              String
   summary            String
   type               SignalType
@@ -233,7 +334,7 @@ model Signal {
   nextAction         String?
   tags               Json?
   scoreDrivers       Json?
-  dedupeKey          String?             @unique
+  dedupeKey          String?
   importBatchId      String?
   importBatch        ImportBatch?        @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
   lastIngestedAt     DateTime?
@@ -254,13 +355,18 @@ model Signal {
   auditEvents        AuditEvent[]
   ingestRequests     IngestRequest[]
 
+  @@unique([workspaceId, dedupeKey])
   @@index([market, type, status])
   @@index([priority, riskLevel, stage])
   @@index([origin, isDemo])
+  @@index([workspaceId, market, type, status])
+  @@index([workspaceId, priority, riskLevel, stage])
 }
 
 model SignalObservation {
   id           String          @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   signalId     String
   signal       Signal          @relation(fields: [signalId], references: [id], onDelete: Cascade)
   snapshotId   String?
@@ -276,10 +382,13 @@ model SignalObservation {
   createdAt    DateTime        @default(now())
 
   @@index([signalId, observedAt])
+  @@index([workspaceId, observedAt])
 }
 
 model SignalScore {
   id                    String         @id @default(cuid())
+  workspaceId           String
+  workspace             Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   signalId              String
   signal                Signal         @relation(fields: [signalId], references: [id], onDelete: Cascade)
   calculatedAt          DateTime       @default(now())
@@ -299,10 +408,13 @@ model SignalScore {
   explanation           String?
 
   @@index([signalId, calculatedAt])
+  @@index([workspaceId, calculatedAt])
 }
 
 model Evidence {
   id            String          @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   signalId      String?
   signal        Signal?         @relation(fields: [signalId], references: [id], onDelete: SetNull)
   sourceId      String
@@ -313,7 +425,7 @@ model Evidence {
   jobRun        JobRun?         @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
   snapshotId    String?
   snapshot      SourceSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
-  dedupeKey     String?         @unique
+  dedupeKey     String?
   title         String
   url           String?
   excerpt       String?
@@ -323,25 +435,33 @@ model Evidence {
   isDemo        Boolean         @default(false)
   createdAt     DateTime        @default(now())
 
+  @@unique([workspaceId, dedupeKey])
   @@index([sourceId, capturedAt])
   @@index([signalId, capturedAt])
+  @@index([workspaceId, capturedAt])
 }
 
 model DecisionQueueItem {
-  id        String              @id @default(cuid())
-  signalId  String              @unique
-  signal    Signal              @relation(fields: [signalId], references: [id], onDelete: Cascade)
-  status    DecisionQueueStatus @default(ACTIVE)
-  label     String?
-  notes     String?
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  id          String              @id @default(cuid())
+  workspaceId String
+  workspace   Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  signalId    String
+  signal      Signal              @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  status      DecisionQueueStatus @default(ACTIVE)
+  label       String?
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
+  @@unique([workspaceId, signalId])
   @@index([status, createdAt])
+  @@index([workspaceId, status, createdAt])
 }
 
 model AuditEvent {
   id            String         @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   type          AuditEventType
   signalId      String?
   signal        Signal?        @relation(fields: [signalId], references: [id], onDelete: SetNull)
@@ -362,24 +482,30 @@ model AuditEvent {
 
   @@index([signalId, eventAt])
   @@index([type, eventAt])
+  @@index([workspaceId, type, eventAt])
 }
 
 model ComplianceFlag {
-  id         String             @id @default(cuid())
-  signalId   String?
-  signal     Signal?            @relation(fields: [signalId], references: [id], onDelete: SetNull)
-  severity   ComplianceSeverity
-  code       String
-  message    String
-  policyRef  String?
-  resolvedAt DateTime?
-  createdAt  DateTime           @default(now())
+  id          String             @id @default(cuid())
+  workspaceId String
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  signalId    String?
+  signal      Signal?            @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  severity    ComplianceSeverity
+  code        String
+  message     String
+  policyRef   String?
+  resolvedAt  DateTime?
+  createdAt   DateTime           @default(now())
 
   @@index([severity, resolvedAt])
+  @@index([workspaceId, severity, resolvedAt])
 }
 
 model MediaAsset {
   id             String            @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   ownerLabel     String
   origin         DataOrigin
   storagePath    String
@@ -389,20 +515,28 @@ model MediaAsset {
   metadataReport Json?
   createdAt      DateTime          @default(now())
   derivatives    MediaDerivative[]
+
+  @@index([workspaceId, origin, createdAt])
 }
 
 model MediaDerivative {
   id          String     @id @default(cuid())
+  workspaceId String
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   mediaId     String
   media       MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   purpose     String
   storagePath String
   fileHash    String
   createdAt   DateTime   @default(now())
+
+  @@index([workspaceId, createdAt])
 }
 
 model JobRun {
   id            String           @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name          String
   status        JobStatus        @default(QUEUED)
   stage         IngestStepName?
@@ -421,11 +555,14 @@ model JobRun {
 
   @@index([name, status, createdAt])
   @@index([importBatchId, status])
+  @@index([workspaceId, status, createdAt])
 }
 
 model IngestRequest {
   id            String            @id @default(cuid())
-  requestKey    String            @unique
+  workspaceId   String
+  workspace     Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  requestKey    String
   type          IngestRequestType
   status        IngestStatus      @default(QUEUED)
   market        Market
@@ -448,13 +585,17 @@ model IngestRequest {
   importBatches ImportBatch[]
   jobRuns       JobRun[]
 
+  @@unique([workspaceId, requestKey])
   @@index([status, submittedAt])
   @@index([market, origin, type])
+  @@index([workspaceId, status, submittedAt])
 }
 
 model ImportBatch {
   id             String           @id @default(cuid())
-  idempotencyKey String           @unique
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  idempotencyKey String
   kind           ImportBatchKind
   status         IngestStatus     @default(QUEUED)
   market         Market
@@ -483,12 +624,16 @@ model ImportBatch {
   evidence       Evidence[]
   auditEvents    AuditEvent[]
 
+  @@unique([workspaceId, idempotencyKey])
   @@index([status, createdAt])
   @@index([market, origin, kind])
+  @@index([workspaceId, status, createdAt])
 }
 
 model IngestionStep {
   id          String         @id @default(cuid())
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   batchId     String
   batch       ImportBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
   name        IngestStepName
@@ -502,4 +647,5 @@ model IngestionStep {
 
   @@index([batchId, sequence])
   @@index([name, status])
+  @@index([workspaceId, name, status])
 }

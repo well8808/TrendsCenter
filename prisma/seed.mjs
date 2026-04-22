@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { config } from "dotenv";
 
 config({ path: ".env.local" });
@@ -19,6 +20,7 @@ const prisma = new PrismaClient({
 });
 
 const now = new Date();
+const workspaceId = "workspace-default-command-center";
 
 const connectors = [
   {
@@ -70,31 +72,56 @@ const manualSource = {
   market: "BR",
 };
 
+const ingestionStepNames = ["RECEIVE", "VALIDATE", "NORMALIZE", "DEDUPE", "PERSIST", "SCORE", "AUDIT"];
+
+function slug(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function stableHash(value) {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
 function sourceKey(source) {
   return [
     "source",
     source.origin.toLowerCase(),
     source.kind.toLowerCase(),
     source.market.toLowerCase(),
-    source.title
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, ""),
+    slug(source.title),
   ].join(":");
 }
 
 async function main() {
+  const workspace = await prisma.workspace.upsert({
+    where: { id: workspaceId },
+    update: {
+      name: "Default Command Center",
+      slug: "default-command-center",
+      updatedAt: now,
+    },
+    create: {
+      id: workspaceId,
+      name: "Default Command Center",
+      slug: "default-command-center",
+    },
+  });
+
   const manualConnector = await prisma.connector.upsert({
-    where: { slug: "manual-safe-intake" },
+    where: { workspaceId_slug: { workspaceId: workspace.id, slug: "manual-safe-intake" } },
     update: {
       status: "APPROVED",
       manualEntryEnabled: true,
       updatedAt: now,
     },
     create: {
+      workspaceId: workspace.id,
       ...connectors[0],
       manualEntryEnabled: true,
     },
@@ -102,7 +129,7 @@ async function main() {
 
   for (const connector of connectors.slice(1)) {
     await prisma.connector.upsert({
-      where: { slug: connector.slug },
+      where: { workspaceId_slug: { workspaceId: workspace.id, slug: connector.slug } },
       update: {
         status: connector.status,
         manualEntryEnabled: true,
@@ -110,23 +137,26 @@ async function main() {
         updatedAt: now,
       },
       create: {
+        workspaceId: workspace.id,
         ...connector,
         manualEntryEnabled: true,
       },
     });
   }
 
+  const sourceDedupeKey = sourceKey(manualSource);
   const source = await prisma.source.upsert({
-    where: { dedupeKey: sourceKey(manualSource) },
+    where: { workspaceId_dedupeKey: { workspaceId: workspace.id, dedupeKey: sourceDedupeKey } },
     update: {
       connectorId: manualConnector.id,
       updatedAt: now,
     },
     create: {
+      workspaceId: workspace.id,
       ...manualSource,
       confidence: "LOW",
       connectorId: manualConnector.id,
-      dedupeKey: sourceKey(manualSource),
+      dedupeKey: sourceDedupeKey,
       coverage: "entrada operacional manual",
       freshness: "ao vivo via Postgres",
       gap: "sem coleta externa automatica",
@@ -135,13 +165,14 @@ async function main() {
   });
 
   const request = await prisma.ingestRequest.upsert({
-    where: { requestKey: "baseline:connector-registry" },
+    where: { workspaceId_requestKey: { workspaceId: workspace.id, requestKey: "baseline:connector-registry" } },
     update: {
       status: "SUCCEEDED",
       completedAt: now,
       processedAt: now,
     },
     create: {
+      workspaceId: workspace.id,
       requestKey: "baseline:connector-registry",
       type: "SOURCE_REGISTER",
       status: "SUCCEEDED",
@@ -155,20 +186,21 @@ async function main() {
       processedAt: now,
       completedAt: now,
       payload: {
-        mode: "production-baseline",
+        mode: "tenant-baseline",
         externalIntegrations: false,
       },
     },
   });
 
   const batch = await prisma.importBatch.upsert({
-    where: { idempotencyKey: "baseline:connector-registry" },
+    where: { workspaceId_idempotencyKey: { workspaceId: workspace.id, idempotencyKey: "baseline:connector-registry" } },
     update: {
       status: "SUCCEEDED",
       completedAt: now,
       processedAt: now,
     },
     create: {
+      workspaceId: workspace.id,
       idempotencyKey: "baseline:connector-registry",
       kind: "CONNECTOR_BASELINE",
       status: "SUCCEEDED",
@@ -179,7 +211,7 @@ async function main() {
       sourceId: source.id,
       title: "Baseline connector registry",
       itemCount: connectors.length,
-      payloadHash: "baseline-connector-registry-v1",
+      payloadHash: stableHash({ connectors: connectors.map((connector) => connector.slug) }),
       payload: {
         connectorSlugs: connectors.map((connector) => connector.slug),
         externalIntegrations: false,
@@ -190,35 +222,37 @@ async function main() {
     },
   });
 
-  await prisma.ingestionStep.deleteMany({ where: { batchId: batch.id } });
+  await prisma.ingestionStep.deleteMany({ where: { workspaceId: workspace.id, batchId: batch.id } });
   await prisma.ingestionStep.createMany({
-    data: ["RECEIVE", "VALIDATE", "NORMALIZE", "DEDUPE", "PERSIST", "SCORE", "AUDIT"].map((name, index) => ({
+    data: ingestionStepNames.map((name, index) => ({
+      workspaceId: workspace.id,
       batchId: batch.id,
       name,
       status: "SUCCEEDED",
       sequence: index + 1,
       startedAt: now,
       completedAt: now,
-      notes: "Baseline operacional aplicado ao Postgres.",
+      notes: "Baseline operacional aplicado ao workspace.",
     })),
   });
 
   const job = await prisma.jobRun.upsert({
-    where: { id: "job-baseline-postgres-seed" },
+    where: { id: `job-${workspace.id}-baseline` },
     update: {
       status: "SUCCEEDED",
       finishedAt: now,
       importBatchId: batch.id,
     },
     create: {
-      id: "job-baseline-postgres-seed",
-      name: "postgres-baseline-seed",
+      id: `job-${workspace.id}-baseline`,
+      workspaceId: workspace.id,
+      name: "tenant-baseline-seed",
       status: "SUCCEEDED",
       stage: "AUDIT",
       requestId: request.id,
       importBatchId: batch.id,
       payload: {
-        mode: "production-baseline",
+        mode: "tenant-baseline",
         externalIntegrations: false,
       },
       startedAt: now,
@@ -227,7 +261,7 @@ async function main() {
   });
 
   await prisma.auditEvent.upsert({
-    where: { id: "audit-baseline-postgres-seed" },
+    where: { id: `audit-${workspace.id}-baseline` },
     update: {
       eventAt: now,
       sourceId: source.id,
@@ -235,15 +269,16 @@ async function main() {
       jobRunId: job.id,
     },
     create: {
-      id: "audit-baseline-postgres-seed",
+      id: `audit-${workspace.id}-baseline`,
+      workspaceId: workspace.id,
       type: "SYSTEM",
       sourceId: source.id,
       importBatchId: batch.id,
       jobRunId: job.id,
       label: "baseline",
-      value: "Postgres",
+      value: "tenant",
       tone: "aqua",
-      message: "Banco gerenciado inicializado com connectors reais e sem dados de tendencia ficticios.",
+      message: "Workspace inicializado com connectors reais e sem dados de tendencia ficticios.",
       actor: "seed",
       metadata: {
         connectorCount: connectors.length,
@@ -252,19 +287,23 @@ async function main() {
     },
   });
 
-  const [connectorCount, sourceCount, signalCount, evidenceCount, queueCount, auditCount, jobCount] = await Promise.all([
-    prisma.connector.count(),
-    prisma.source.count(),
-    prisma.signal.count(),
-    prisma.evidence.count(),
-    prisma.decisionQueueItem.count(),
-    prisma.auditEvent.count(),
-    prisma.jobRun.count(),
-  ]);
+  const [workspaceCount, connectorCount, sourceCount, signalCount, evidenceCount, queueCount, auditCount, jobCount] =
+    await Promise.all([
+      prisma.workspace.count(),
+      prisma.connector.count({ where: { workspaceId: workspace.id } }),
+      prisma.source.count({ where: { workspaceId: workspace.id } }),
+      prisma.signal.count({ where: { workspaceId: workspace.id } }),
+      prisma.evidence.count({ where: { workspaceId: workspace.id } }),
+      prisma.decisionQueueItem.count({ where: { workspaceId: workspace.id } }),
+      prisma.auditEvent.count({ where: { workspaceId: workspace.id } }),
+      prisma.jobRun.count({ where: { workspaceId: workspace.id } }),
+    ]);
 
   console.log(
     JSON.stringify(
       {
+        workspaceCount,
+        workspaceId: workspace.id,
         connectorCount,
         sourceCount,
         signalCount,
@@ -272,7 +311,7 @@ async function main() {
         queueCount,
         auditCount,
         jobCount,
-        mode: "postgres-production-baseline",
+        mode: "postgres-tenant-baseline",
       },
       null,
       2,

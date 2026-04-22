@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
+import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
 import { IngestionLab } from "@/components/ingestion-lab";
 import { SourcePill } from "@/components/source-pill";
@@ -398,6 +399,7 @@ export function CommandCenter({
   sources,
   persistence = fallbackPersistence,
   ingestionLab = fallbackIngestionLab,
+  tenant,
 }: CommandCenterData) {
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(signals.length > 0 ? "ready" : "empty");
   const [query, setQuery] = useState("");
@@ -408,6 +410,7 @@ export function CommandCenter({
   const [selectedSignalId, setSelectedSignalId] = useState(signals[0]?.id);
   const [savedIds, setSavedIds] = useState(() => new Set(signals.filter((signal) => signal.saved).map((signal) => signal.id)));
   const [isSaving, startSavingTransition] = useTransition();
+  const [isLoggingOut, startLogoutTransition] = useTransition();
 
   const filters = useMemo(
     () => ({
@@ -471,6 +474,12 @@ export function CommandCenter({
           return next;
         });
       }
+    });
+  }
+
+  function logout() {
+    startLogoutTransition(async () => {
+      await logoutAction();
     });
   }
 
@@ -545,11 +554,19 @@ export function CommandCenter({
               <div className="mt-auto rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
                   <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                  Safe mode
+                  {tenant.workspaceName}
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-                  Postgres gerenciado conectado. O app bloqueia insight sem fonte, sem evidencia e sem safe mode.
+                  {tenant.userEmail} - {tenant.role.toLowerCase()}. Dados isolados por workspace e sessao obrigatoria.
                 </p>
+                <button
+                  className="mt-4 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)]"
+                  type="button"
+                  onClick={logout}
+                  disabled={isLoggingOut}
+                >
+                  sair
+                </button>
               </div>
             </div>
           </div>
@@ -584,6 +601,9 @@ export function CommandCenter({
                   <p className="mt-1 text-sm text-[color:var(--muted)]">
                     {persistence.detail}
                   </p>
+                  <p className="mt-1 text-xs text-[color:var(--muted)]">
+                    Workspace: {tenant.workspaceName} - {tenant.role.toLowerCase()}
+                  </p>
                 </div>
               </div>
 
@@ -604,6 +624,14 @@ export function CommandCenter({
                 <button className="grid h-10 w-10 place-items-center rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
                   <Bell className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Alertas</span>
+                </button>
+                <button
+                  className="h-10 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)]"
+                  type="button"
+                  onClick={logout}
+                  disabled={isLoggingOut}
+                >
+                  sair
                 </button>
               </div>
             </div>

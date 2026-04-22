@@ -12,7 +12,8 @@ O app agora usa Postgres gerenciado via Neon no Vercel Marketplace. `DATABASE_UR
 ## Fluxo de dados
 
 - A dashboard le `Signal`, `Evidence`, `Source`, `DecisionQueueItem`, `JobRun`, `Connector` e `AuditEvent` do Postgres.
-- O seed de producao registra apenas baseline operacional: connectors, fonte manual, job e auditoria.
+- Todas as leituras e escritas operacionais sao escopadas por `workspaceId`.
+- O seed de producao registra apenas baseline operacional por workspace: connectors, fonte manual, job e auditoria.
 - O seed nao cria tendencias ficticias.
 - Se o banco falhar, o fallback e isolado e vazio; nenhum insight mock e misturado no fluxo principal.
 

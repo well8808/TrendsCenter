@@ -18,6 +18,7 @@ A ingestao atual e manual/oficial registrada e persistida no Postgres. Ela nao e
 - Anexar evidencia a sinal existente.
 - Salvar/remover sinal da fila de decisao.
 - Listar lineage recente via batches, steps, jobs e audit events.
+- Todas as operacoes exigem sessao valida e `workspaceId` do tenant ativo.
 
 ## Compliance
 
