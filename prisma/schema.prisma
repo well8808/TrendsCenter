@@ -208,6 +208,13 @@ enum ImportBatchKind {
   CONNECTOR_BASELINE
 }
 
+enum TrendEntityType {
+  VIDEO
+  CREATOR
+  SOUND
+  HASHTAG
+}
+
 model User {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
@@ -225,6 +232,7 @@ model User {
   acceptedInvites         WorkspaceInvite[]        @relation("WorkspaceInviteAcceptedBy")
   authEvents              AuthEvent[]              @relation("AuthEventUser")
   actedAuthEvents         AuthEvent[]              @relation("AuthEventActor")
+  searchQueryLogs         SearchQueryLog[]
 }
 
 model Workspace {
@@ -254,6 +262,13 @@ model Workspace {
   invites            WorkspaceInvite[]
   authEmailOutbox    AuthEmailOutbox[]
   authEvents         AuthEvent[]
+  creators           Creator[]
+  sounds             Sound[]
+  hashtags           Hashtag[]
+  videos             Video[]
+  trendSnapshots     TrendSnapshot[]
+  trendEvidence      TrendEvidence[]
+  searchQueryLogs    SearchQueryLog[]
 }
 
 model WorkspaceMember {
@@ -442,6 +457,12 @@ model Source {
   ingestRequests IngestRequest[]
   importBatches  ImportBatch[]
   auditEvents    AuditEvent[]
+  creators       Creator[]
+  sounds         Sound[]
+  hashtags       Hashtag[]
+  videos         Video[]
+  trendSnapshots TrendSnapshot[]
+  trendEvidence  TrendEvidence[]
 
   @@unique([workspaceId, dedupeKey])
   @@index([origin, kind, market])
@@ -689,24 +710,27 @@ model MediaDerivative {
 }
 
 model JobRun {
-  id            String           @id @default(cuid())
-  workspaceId   String
-  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name          String
-  status        JobStatus        @default(QUEUED)
-  stage         IngestStepName?
-  requestId     String?
-  request       IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
-  importBatchId String?
-  importBatch   ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  payload       Json?
-  startedAt     DateTime?
-  finishedAt    DateTime?
-  error         String?
-  createdAt     DateTime         @default(now())
-  snapshots     SourceSnapshot[]
-  evidence      Evidence[]
-  auditEvents   AuditEvent[]
+  id             String           @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name           String
+  status         JobStatus        @default(QUEUED)
+  stage          IngestStepName?
+  requestId      String?
+  request        IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  importBatchId  String?
+  importBatch    ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  payload        Json?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  error          String?
+  createdAt      DateTime         @default(now())
+  snapshots      SourceSnapshot[]
+  evidence       Evidence[]
+  videos         Video[]
+  trendSnapshots TrendSnapshot[]
+  trendEvidence  TrendEvidence[]
+  auditEvents    AuditEvent[]
 
   @@index([name, status, createdAt])
   @@index([importBatchId, status])
@@ -777,6 +801,9 @@ model ImportBatch {
   snapshots      SourceSnapshot[]
   signals        Signal[]
   evidence       Evidence[]
+  videos         Video[]
+  trendSnapshots TrendSnapshot[]
+  trendEvidence  TrendEvidence[]
   auditEvents    AuditEvent[]
 
   @@unique([workspaceId, idempotencyKey])
@@ -803,4 +830,251 @@ model IngestionStep {
   @@index([batchId, sequence])
   @@index([name, status])
   @@index([workspaceId, name, status])
+}
+
+model Creator {
+  id            String          @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId      String?
+  source        Source?         @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  handle        String
+  displayName   String?
+  profileUrl    String?
+  market        Market
+  origin        DataOrigin
+  followerCount BigInt?
+  averageViews  BigInt?
+  currentScore  Int             @default(0)
+  dedupeKey     String
+  firstSeenAt   DateTime        @default(now())
+  lastSeenAt    DateTime        @default(now())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  videos        Video[]
+  snapshots     TrendSnapshot[]
+  evidence      TrendEvidence[]
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, market, currentScore])
+  @@index([workspaceId, handle])
+}
+
+model Sound {
+  id                     String          @id @default(cuid())
+  workspaceId            String
+  workspace              Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId               String?
+  source                 Source?         @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  title                  String
+  authorName             String?
+  soundUrl               String?
+  market                 Market
+  origin                 DataOrigin
+  isCommerciallyUsable   Boolean?
+  commercialRightsStatus String?
+  videoCount             Int?
+  currentScore           Int             @default(0)
+  dedupeKey              String
+  firstSeenAt            DateTime        @default(now())
+  lastSeenAt             DateTime        @default(now())
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  videos                 Video[]
+  snapshots              TrendSnapshot[]
+  evidence               TrendEvidence[]
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, market, currentScore])
+  @@index([workspaceId, title])
+}
+
+model Hashtag {
+  id           String          @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId     String?
+  source       Source?         @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  tag          String
+  displayTag   String
+  market       Market
+  origin       DataOrigin
+  postCount    BigInt?
+  viewCount    BigInt?
+  currentScore Int             @default(0)
+  dedupeKey    String
+  firstSeenAt  DateTime        @default(now())
+  lastSeenAt   DateTime        @default(now())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  videos       VideoHashtag[]
+  snapshots    TrendSnapshot[]
+  evidence     TrendEvidence[]
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, market, currentScore])
+  @@index([workspaceId, tag])
+}
+
+model Video {
+  id                  String          @id @default(cuid())
+  workspaceId         String
+  workspace           Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId            String
+  source              Source          @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  creatorId           String?
+  creator             Creator?        @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  soundId             String?
+  sound               Sound?          @relation(fields: [soundId], references: [id], onDelete: SetNull)
+  importBatchId       String?
+  importBatch         ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  jobRunId            String?
+  jobRun              JobRun?         @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
+  platformVideoId     String?
+  url                 String?
+  title               String
+  caption             String?
+  market              Market
+  origin              DataOrigin
+  postedAt            DateTime?
+  collectedAt         DateTime
+  firstSeenAt         DateTime        @default(now())
+  lastSeenAt          DateTime        @default(now())
+  currentViewCount    BigInt          @default(0)
+  currentLikeCount    BigInt          @default(0)
+  currentCommentCount BigInt          @default(0)
+  currentShareCount   BigInt          @default(0)
+  currentSaveCount    BigInt          @default(0)
+  growthViews         BigInt          @default(0)
+  velocityScore       Int             @default(0)
+  accelerationScore   Int             @default(0)
+  recencyScore        Int             @default(0)
+  consistencyScore    Int             @default(0)
+  trendScore          Int             @default(0)
+  scoreVersion        String          @default("video-score-v0.1")
+  confidence          ConfidenceBand  @default(LOW)
+  dedupeKey           String
+  isDemo              Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  hashtags            VideoHashtag[]
+  snapshots           TrendSnapshot[]
+  evidence            TrendEvidence[]
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, market, trendScore])
+  @@index([workspaceId, collectedAt])
+  @@index([workspaceId, sourceId])
+  @@index([workspaceId, creatorId])
+  @@index([workspaceId, soundId])
+}
+
+model VideoHashtag {
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  hashtagId String
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([videoId, hashtagId])
+  @@index([hashtagId])
+}
+
+model TrendSnapshot {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  workspace         Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entityType        TrendEntityType
+  videoId           String?
+  video             Video?          @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  creatorId         String?
+  creator           Creator?        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  soundId           String?
+  sound             Sound?          @relation(fields: [soundId], references: [id], onDelete: Cascade)
+  hashtagId         String?
+  hashtag           Hashtag?        @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  sourceId          String?
+  source            Source?         @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  importBatchId     String?
+  importBatch       ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  jobRunId          String?
+  jobRun            JobRun?         @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
+  observedAt        DateTime
+  viewCount         BigInt?
+  likeCount         BigInt?
+  commentCount      BigInt?
+  shareCount        BigInt?
+  saveCount         BigInt?
+  followerCount     BigInt?
+  videoCount        Int?
+  postCount         BigInt?
+  rawMetrics        Json?
+  growthViews       BigInt          @default(0)
+  velocityScore     Int             @default(0)
+  accelerationScore Int             @default(0)
+  recencyScore      Int             @default(0)
+  consistencyScore  Int             @default(0)
+  trendScore        Int             @default(0)
+  scoreVersion      String          @default("video-score-v0.1")
+  createdAt         DateTime        @default(now())
+  evidence          TrendEvidence[]
+
+  @@index([workspaceId, entityType, observedAt])
+  @@index([workspaceId, videoId, observedAt])
+  @@index([workspaceId, trendScore])
+}
+
+model TrendEvidence {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId      String
+  source        Source         @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  importBatchId String?
+  importBatch   ImportBatch?   @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  jobRunId      String?
+  jobRun        JobRun?        @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
+  snapshotId    String?
+  snapshot      TrendSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  videoId       String?
+  video         Video?         @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  creatorId     String?
+  creator       Creator?       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  soundId       String?
+  sound         Sound?         @relation(fields: [soundId], references: [id], onDelete: Cascade)
+  hashtagId     String?
+  hashtag       Hashtag?       @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  title         String
+  url           String?
+  excerpt       String?
+  note          String?
+  origin        DataOrigin
+  confidence    ConfidenceBand @default(LOW)
+  capturedAt    DateTime
+  dedupeKey     String?
+  isDemo        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, capturedAt])
+  @@index([workspaceId, videoId, capturedAt])
+  @@index([workspaceId, sourceId, capturedAt])
+}
+
+model SearchQueryLog {
+  id          String           @id @default(cuid())
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  query       String
+  market      Market?
+  entityType  TrendEntityType?
+  sort        String
+  filters     Json?
+  resultCount Int              @default(0)
+  createdAt   DateTime         @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, query])
 }

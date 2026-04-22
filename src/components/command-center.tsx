@@ -646,6 +646,12 @@ export function CommandCenter({
                 >
                   workspace
                 </Link>
+                <Link
+                  className="inline-flex h-10 items-center rounded-full border border-[rgba(199,255,93,0.28)] bg-[rgba(199,255,93,0.08)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.13)]"
+                  href="/trends"
+                >
+                  trend search
+                </Link>
               </div>
             </div>
           </header>
