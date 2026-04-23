@@ -25,7 +25,7 @@ const roleOptions = [
 ] as const;
 
 const controlClass =
-  "min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 text-sm text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]";
+  "app-control rounded-[var(--radius-sm)] px-3 py-3 text-sm outline-none placeholder:text-[color:var(--muted)]";
 
 export default async function WorkspacePage({
   searchParams,
@@ -39,8 +39,8 @@ export default async function WorkspacePage({
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-50" />
-      <section className="relative mx-auto grid w-full max-w-7xl items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="app-panel scrollbar-soft rounded-[var(--radius-lg)] p-5 lg:sticky lg:top-5 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto lg:overscroll-contain">
+      <section className="relative mx-auto grid w-full max-w-7xl items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[310px_minmax(0,1fr)]">
+        <aside className="app-hero scrollbar-soft rounded-[var(--radius-lg)] p-5 lg:sticky lg:top-5 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto lg:overscroll-contain">
           <Link className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href="/">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             command center
@@ -50,18 +50,18 @@ export default async function WorkspacePage({
               workspace settings
             </div>
             <h1 className="mt-5 text-3xl font-semibold leading-tight">{data.workspace.name}</h1>
-            <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+            <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
               Membros, convites e autorizacao real por tenant. Nada aqui depende apenas da UI.
             </p>
           </div>
           <div className="mt-8 grid gap-3 text-sm">
-            <div className="app-card rounded-[var(--radius-md)] p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">sua sessao</p>
+            <div className="app-rail-card rounded-[var(--radius-md)] p-4">
+              <p className="eyebrow">sua sessao</p>
               <p className="mt-2 font-semibold">{data.actor.email}</p>
               <p className="mt-1 text-[color:var(--muted)]">{data.actor.role.toLowerCase()}</p>
             </div>
-            <div className="app-card rounded-[var(--radius-md)] p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">permissoes</p>
+            <div className="app-rail-card rounded-[var(--radius-md)] p-4">
+              <p className="eyebrow">permissoes</p>
               <p className="mt-2 text-[color:var(--muted-strong)]">
                 {data.actor.canManageRoles ? "owner controls" : data.actor.canInvite ? "admin ops" : "member ops"}
               </p>
@@ -103,7 +103,7 @@ export default async function WorkspacePage({
             <div className="mt-5 grid gap-3">
               {data.members.map((member) => (
                 <div
-                  className="app-card grid gap-3 rounded-[var(--radius-md)] p-4 md:grid-cols-[minmax(0,1fr)_220px]"
+                  className="app-card-interactive grid gap-3 rounded-[var(--radius-md)] p-4 md:grid-cols-[minmax(0,1fr)_220px]"
                   key={member.id}
                 >
                   <div className="min-w-0">
@@ -188,7 +188,7 @@ export default async function WorkspacePage({
               <div className="mt-5 grid gap-3">
                 {data.invites.length ? (
                   data.invites.map((invite) => (
-                    <div className="app-card rounded-[var(--radius-md)] p-4" key={invite.id}>
+                    <div className="app-card-interactive rounded-[var(--radius-md)] p-4" key={invite.id}>
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="font-semibold">{invite.email}</p>
                         <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.14em] text-[color:var(--muted)]">

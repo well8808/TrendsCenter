@@ -69,6 +69,22 @@ function scoreTone(score: number) {
   return "var(--aqua)";
 }
 
+function priorityTone(priority: keyof typeof priorityLabel) {
+  if (priority === "now") {
+    return "border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.11)] text-[color:var(--acid)]";
+  }
+
+  if (priority === "next") {
+    return "border-[rgba(243,201,105,0.32)] bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]";
+  }
+
+  if (priority === "watch") {
+    return "border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.09)] text-[color:var(--aqua)]";
+  }
+
+  return "border-[rgba(169,140,255,0.3)] bg-[rgba(169,140,255,0.09)] text-[color:var(--violet)]";
+}
+
 const factorConfig: Array<{ key: keyof ScoreInput; label: string }> = [
   { key: "velocity7d", label: "veloc." },
   { key: "brazilFit", label: "fit BR" },
@@ -101,70 +117,74 @@ export function TrendCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "app-card group relative overflow-hidden rounded-[var(--radius-lg)] p-4 transition duration-300 hover:-translate-y-0.5",
+        "app-card-interactive group relative overflow-hidden rounded-[var(--radius-lg)] p-0",
         selected
-          ? "border-[rgba(199,255,93,0.5)] shadow-[0_18px_70px_rgba(199,255,93,0.08)]"
-          : "border-[color:var(--line)] hover:border-[rgba(199,255,93,0.32)]",
+          ? "border-[rgba(199,255,93,0.48)] shadow-[0_20px_80px_rgba(199,255,93,0.075)]"
+          : "border-[color:var(--line)]",
       )}
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(199,255,93,0.6)] to-transparent opacity-0 transition group-hover:opacity-100" />
-      <div className="grid gap-4 xl:grid-cols-[1fr_176px]">
+      <div
+        className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-[rgba(199,255,93,0.62)] to-transparent opacity-0 transition group-hover:opacity-100"
+        aria-hidden="true"
+      />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(239,233,220,0.32)] to-transparent" />
+
+      <div className="grid gap-5 p-5 xl:grid-cols-[minmax(0,1fr)_168px]">
         <button className="w-full min-w-0 whitespace-normal text-left" type="button" onClick={onSelect}>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[rgba(199,255,93,0.12)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
+            <span className="app-pill rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
               {signal.market}
             </span>
-            <span className="rounded-full border border-[color:var(--line)] px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
+            <span className="app-pill rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.16em]">
               {typeLabel[signal.type]}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(64,224,208,0.24)] px-2.5 py-1 text-[11px] text-[color:var(--aqua)]">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(64,224,208,0.22)] bg-[rgba(64,224,208,0.07)] px-2.5 py-1 text-[11px] text-[color:var(--aqua)]">
               <CircleDot className="h-3 w-3" aria-hidden="true" />
               {statusLabel[signal.status]}
             </span>
             <span
               className={cn(
-                "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]",
-                signal.priority === "now" && "bg-[rgba(199,255,93,0.14)] text-[color:var(--acid)]",
-                signal.priority === "next" && "bg-[rgba(243,201,105,0.14)] text-[color:var(--gold)]",
-                signal.priority === "watch" && "bg-[rgba(64,224,208,0.12)] text-[color:var(--aqua)]",
-                signal.priority === "hold" && "bg-[rgba(169,140,255,0.12)] text-[color:var(--violet)]",
+                "rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                priorityTone(signal.priority),
               )}
             >
               {priorityLabel[signal.priority]}
             </span>
           </div>
 
-          <h3 className="mt-3 break-words text-base font-semibold leading-snug text-[color:var(--foreground)]">
+          <h3 className="mt-4 break-words text-xl font-semibold leading-tight text-[color:var(--foreground)] md:text-2xl">
             {signal.title}
           </h3>
-          <p className="mt-2 break-words text-sm leading-6 text-[color:var(--muted)]">{signal.summary}</p>
+          <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-[color:var(--muted-strong)]">
+            {signal.summary}
+          </p>
 
-          <div className="mt-4 grid gap-3 lg:grid-cols-3">
-            <div className="min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] p-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                decisao
+          <div className="mt-5 grid gap-4 border-t border-[color:var(--line)] pt-4 lg:grid-cols-[1.15fr_1fr_0.82fr]">
+            <div className="min-w-0">
+              <p className="eyebrow">decisao</p>
+              <p className="mt-2 break-words text-sm font-medium leading-5 text-[color:var(--foreground)]">
+                {signal.decision}
               </p>
-              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">{signal.decision}</p>
             </div>
-            <div className="min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] p-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                proxima acao
+            <div className="min-w-0">
+              <p className="eyebrow">proxima acao</p>
+              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">
+                {signal.nextAction}
               </p>
-              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">{signal.nextAction}</p>
             </div>
-            <div className="min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] p-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                janela
+            <div className="min-w-0">
+              <p className="eyebrow">janela</p>
+              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">
+                {signal.trendWindow}
               </p>
-              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">{signal.trendWindow}</p>
             </div>
           </div>
         </button>
 
-        <div className="grid content-start gap-3">
-          <div className="flex items-start justify-between gap-3 xl:block xl:text-right">
+        <div className="grid content-start gap-3 xl:justify-items-end">
+          <div className="flex items-center justify-between gap-4 xl:grid xl:justify-items-end xl:text-right">
             <div
-              className="grid h-24 w-24 shrink-0 place-items-center rounded-full"
+              className="grid h-24 w-24 shrink-0 place-items-center rounded-full shadow-[0_0_40px_rgba(199,255,93,0.06)]"
               style={{
                 background: `conic-gradient(${scoreColor} ${signal.score.value * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
               }}
@@ -183,7 +203,7 @@ export function TrendCard({
             <div className="min-w-0 xl:mt-3">
               <p
                 className={cn(
-                  "inline-flex items-center gap-1 text-xs",
+                  "inline-flex items-center gap-1 text-xs font-medium",
                   signal.score.riskAdjusted ? "text-[color:var(--gold)]" : "text-[color:var(--success)]",
                 )}
               >
@@ -201,7 +221,7 @@ export function TrendCard({
             type="button"
             onClick={onToggleSave}
             className={cn(
-              "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition",
+              "inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition xl:w-[132px]",
               isSaved
                 ? "border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.1)] text-[color:var(--acid)]"
                 : "border-[color:var(--line)] text-[color:var(--muted-strong)] hover:border-[rgba(64,224,208,0.42)] hover:text-[color:var(--aqua)]",
@@ -213,7 +233,7 @@ export function TrendCard({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_190px]">
+      <div className="grid gap-4 border-t border-[color:var(--line)] px-5 pb-5 pt-4 xl:grid-cols-[minmax(0,1fr)_190px]">
         <div className="grid gap-3">
           <div className="grid gap-2 sm:grid-cols-4">
             {factorConfig.map((factor) => (
@@ -238,7 +258,7 @@ export function TrendCard({
             {signal.scoreDrivers.map((driver) => (
               <span
                 key={driver}
-                className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs text-[color:var(--muted-strong)]"
+                className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.025)] px-2.5 py-1 text-xs text-[color:var(--muted-strong)]"
               >
                 <CheckCircle2 className="h-3 w-3 text-[color:var(--acid)]" aria-hidden="true" />
                 {driver}
@@ -249,7 +269,7 @@ export function TrendCard({
         <MiniTrendLine tone={tone} />
       </div>
 
-      <div className="mt-4 grid gap-3 border-t border-[color:var(--line)] pt-4 lg:grid-cols-[1fr_1.2fr]">
+      <div className="grid gap-3 border-t border-[color:var(--line)] bg-[rgba(0,0,0,0.12)] px-5 py-4 lg:grid-cols-[1fr_1.2fr]">
         <div className="grid gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <SourcePill source={signal.source} compact />

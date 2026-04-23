@@ -59,44 +59,56 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
-      <section className="relative mx-auto grid w-full max-w-[1560px] items-start gap-6 px-4 py-4 md:px-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 space-y-6">
-          <header className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
-            <Link className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href="/trends">
+      <section className="relative mx-auto grid w-full max-w-[1620px] items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_370px]">
+        <div className="min-w-0 space-y-7">
+          <header className="app-hero overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-7">
+            <Link className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)] transition hover:text-[color:var(--foreground)]" href="/trends">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               voltar para busca
             </Link>
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div className="mt-6 flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-[rgba(199,255,93,0.32)] bg-[rgba(199,255,93,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                 {trend.market}
               </span>
-              <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
+              <span className="app-pill rounded-full px-3 py-1 text-xs uppercase tracking-[0.16em]">
                 {trend.origin}
               </span>
-              <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
+              <span className="app-pill rounded-full px-3 py-1 text-xs uppercase tracking-[0.16em]">
                 {trend.source.kind}
               </span>
             </div>
-            <h1 className="mt-4 max-w-5xl text-3xl font-semibold leading-tight md:text-5xl">{trend.title}</h1>
-            {trend.caption && <p className="mt-4 max-w-4xl text-sm leading-6 text-[color:var(--muted-strong)]">{trend.caption}</p>}
+            <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="min-w-0">
+                <h1 className="max-w-5xl text-4xl font-semibold leading-[1.02] md:text-6xl">{trend.title}</h1>
+                {trend.caption && <p className="mt-4 max-w-4xl text-sm leading-6 text-[color:var(--muted-strong)] md:text-base">{trend.caption}</p>}
+              </div>
+              <div className="rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.26)] bg-[rgba(199,255,93,0.07)] p-5">
+                <p className="eyebrow text-[color:var(--acid)]">trend score</p>
+                <p className={cn("metric-number mt-3 text-6xl font-semibold leading-none", scoreTone(trend.trendScore))}>
+                  {trend.trendScore}
+                </p>
+                <p className="mt-3 text-xs leading-5 text-[color:var(--muted-strong)]">
+                  {trend.scoreExplanation}
+                </p>
+              </div>
+            </div>
             {trend.url && (
-              <a className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href={trend.url} target="_blank" rel="noreferrer">
+              <a className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)] transition hover:text-[color:var(--foreground)]" href={trend.url} target="_blank" rel="noreferrer">
                 abrir fonte do video
                 <ExternalLink className="h-4 w-4" aria-hidden="true" />
               </a>
             )}
           </header>
 
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-3 md:grid-cols-3">
             {[
-              ["trend score", trend.trendScore, "score"],
               ["views", formatNumber(trend.metrics.views), "views"],
               ["growth", formatNumber(trend.growthViews), "growth"],
               ["snapshots", trend.snapshotCount, "snap"],
             ].map(([label, value, key]) => (
-              <div key={key} className="app-card rounded-[var(--radius-lg)] p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
-                <p className={cn("mt-3 font-mono text-3xl font-semibold", key === "score" && scoreTone(trend.trendScore))}>{value}</p>
+              <div key={key} className="app-card-interactive rounded-[var(--radius-lg)] p-5">
+                <p className="eyebrow">{label}</p>
+                <p className="metric-number mt-3 text-4xl font-semibold leading-none">{value}</p>
               </div>
             ))}
           </section>
@@ -106,25 +118,28 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               <LineChart className="h-4 w-4" aria-hidden="true" />
               timeline
             </div>
-            <div className="mt-5 grid gap-3">
+            <div className="mt-6 grid gap-3">
               {trend.timeline.map((point) => (
-                <div key={point.id} className="app-card grid gap-3 rounded-[var(--radius-md)] p-4 md:grid-cols-[180px_minmax(0,1fr)_120px]">
-                  <div className="text-sm text-[color:var(--muted)]">{formatDate(point.observedAt)}</div>
-                  <div className="grid grid-cols-3 gap-2">
+                <div key={point.id} className="app-card-interactive grid gap-4 rounded-[var(--radius-md)] p-4 md:grid-cols-[190px_minmax(0,1fr)_120px]">
+                  <div className="flex items-center gap-3 text-sm text-[color:var(--muted)]">
+                    <span className="h-2 w-2 rounded-full bg-[color:var(--aqua)] shadow-[0_0_24px_rgba(64,224,208,0.42)]" />
+                    {formatDate(point.observedAt)}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">views</p>
-                      <p className="mt-1 font-mono text-sm">{formatNumber(point.views)}</p>
+                      <p className="eyebrow text-[10px]">views</p>
+                      <p className="metric-number mt-1 text-sm">{formatNumber(point.views)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">growth</p>
-                      <p className="mt-1 font-mono text-sm">{formatNumber(point.growthViews)}</p>
+                      <p className="eyebrow text-[10px]">growth</p>
+                      <p className="metric-number mt-1 text-sm">{formatNumber(point.growthViews)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">vel/acel</p>
-                      <p className="mt-1 font-mono text-sm">{point.velocityScore}/{point.accelerationScore}</p>
+                      <p className="eyebrow text-[10px]">vel/acel</p>
+                      <p className="metric-number mt-1 text-sm">{point.velocityScore}/{point.accelerationScore}</p>
                     </div>
                   </div>
-                  <p className={cn("font-mono text-2xl font-semibold md:text-right", scoreTone(point.score))}>{point.score}</p>
+                  <p className={cn("metric-number text-3xl font-semibold md:text-right", scoreTone(point.score))}>{point.score}</p>
                 </div>
               ))}
             </div>
@@ -137,7 +152,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
             <div className="mt-5 grid gap-3">
               {trend.evidence.map((item) => (
-                <div key={item.id} className="app-card rounded-[var(--radius-md)] p-4">
+                <div key={item.id} className="app-card-interactive rounded-[var(--radius-md)] p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="font-semibold">{item.title}</h2>
                     <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.14em] text-[color:var(--muted-strong)]">
@@ -161,9 +176,9 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
           </section>
         </div>
 
-        <aside className="min-w-0 lg:sticky lg:top-4 lg:h-[calc(100dvh-32px)]">
+        <aside className="min-w-0 opacity-95 lg:sticky lg:top-5 lg:h-[calc(100dvh-40px)]">
           <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-10 pr-1">
-            <section className="rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.24)] bg-[rgba(199,255,93,0.07)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+            <section className="rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.22)] bg-[rgba(199,255,93,0.055)] p-5 shadow-[var(--shadow-lift)] backdrop-blur-2xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
                 <Gauge className="h-4 w-4" aria-hidden="true" />
                 justificativa
@@ -184,7 +199,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </div>
             </section>
 
-            <section className="app-card rounded-[var(--radius-lg)] p-5">
+            <section className="app-rail-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                 <UserRoundCheck className="h-4 w-4" aria-hidden="true" />
                 creator
@@ -194,7 +209,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               {trend.creator?.followerCount && <p className="mt-3 font-mono text-2xl">{formatNumber(trend.creator.followerCount)}</p>}
             </section>
 
-            <section className="app-card rounded-[var(--radius-lg)] p-5">
+            <section className="app-rail-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--gold)]">
                 <AudioLines className="h-4 w-4" aria-hidden="true" />
                 sound
@@ -206,7 +221,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </p>
             </section>
 
-            <section className="app-card rounded-[var(--radius-lg)] p-5">
+            <section className="app-rail-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                 <Hash className="h-4 w-4" aria-hidden="true" />
                 hashtags
@@ -218,7 +233,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </div>
             </section>
 
-            <section className="app-card rounded-[var(--radius-lg)] p-5">
+            <section className="app-rail-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
                 relacionados

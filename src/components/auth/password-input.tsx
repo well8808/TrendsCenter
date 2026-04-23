@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 const inputClass =
-  "min-h-[var(--control-height)] w-full rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 pr-24 text-sm outline-none transition focus:border-[rgba(64,224,208,0.58)]";
+  "app-control w-full rounded-[var(--radius-sm)] px-3 py-3 pr-24 text-sm outline-none";
 
 export function PasswordInput({
   label,

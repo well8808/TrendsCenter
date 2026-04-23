@@ -97,7 +97,7 @@ function Field({
 }
 
 const fieldClass =
-  "min-h-[var(--control-height)] w-full min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 text-sm normal-case tracking-normal text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]";
+  "app-control w-full min-w-0 rounded-[var(--radius-sm)] px-3 py-3 text-sm normal-case tracking-normal outline-none placeholder:text-[color:var(--muted)]";
 
 function ResultBadge({ result }: { result?: ActionResult }) {
   if (!result) {
@@ -135,11 +135,11 @@ function MetricChip({
   tone: "acid" | "aqua" | "coral" | "gold";
 }) {
   return (
-    <div className="app-card rounded-[var(--radius-md)] p-3">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
+    <div className="app-card-interactive rounded-[var(--radius-md)] p-3">
+      <p className="eyebrow text-[10px]">{label}</p>
       <p
         className={cn(
-          "mt-2 font-mono text-xl font-semibold",
+          "metric-number mt-2 text-xl font-semibold",
           tone === "acid" && "text-[color:var(--acid)]",
           tone === "aqua" && "text-[color:var(--aqua)]",
           tone === "coral" && "text-[color:var(--coral)]",
@@ -205,15 +205,15 @@ export function IngestionLab({
   const sourceOptions = sources.slice(0, 12);
 
   return (
-    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.24)] bg-[linear-gradient(135deg,rgba(64,224,208,0.085),rgba(255,255,255,0.04))] p-4 shadow-[var(--shadow-soft)] backdrop-blur-2xl md:p-5">
+    <section className="app-panel min-w-0 rounded-[var(--radius-lg)] p-4 md:p-5">
       <div className="flex min-w-0 flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
             <DatabaseZap className="h-4 w-4" aria-hidden="true" />
             Ingestion Lab
           </div>
-          <h2 className="mt-2 text-xl font-semibold">Operacao manual/oficial rastreavel</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
+          <h2 className="mt-2 text-2xl font-semibold leading-tight">Operacao rastreavel</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)]">
             Entrada segura para sinais, evidencias e fontes aprovadas. Sem scraping, sem conector externo fragil e sem transformar falha em insight.
           </p>
         </div>
@@ -229,7 +229,7 @@ export function IngestionLab({
         <motion.form
           ref={signalFormRef}
           onSubmit={submitSignal}
-          className="app-card rounded-[var(--radius-lg)] p-4"
+          className="app-card-interactive rounded-[var(--radius-lg)] p-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.28 }}
@@ -321,7 +321,7 @@ export function IngestionLab({
           <form
             ref={evidenceFormRef}
             onSubmit={submitEvidence}
-            className="app-card rounded-[var(--radius-lg)] p-4"
+            className="app-card-interactive rounded-[var(--radius-lg)] p-4"
           >
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -376,7 +376,7 @@ export function IngestionLab({
             </div>
           </form>
 
-          <div className="app-card rounded-[var(--radius-lg)] p-4">
+          <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
               <RadioTower className="h-4 w-4" aria-hidden="true" />
               connectors aprovados
@@ -405,7 +405,7 @@ export function IngestionLab({
       </div>
 
       <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="app-card rounded-[var(--radius-lg)] p-4">
+        <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
             <GitBranch className="h-4 w-4" aria-hidden="true" />
             lineage recente
@@ -457,7 +457,7 @@ export function IngestionLab({
         </div>
 
         <div className="grid gap-4">
-          <div className="app-card rounded-[var(--radius-lg)] p-4">
+          <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
               <ClipboardList className="h-4 w-4" aria-hidden="true" />
               ultimos jobs

@@ -164,10 +164,10 @@ function SegmentButton<T extends string>({
       type="button"
       onClick={() => onClick(value)}
       className={cn(
-        "rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition",
+        "rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition duration-200",
         active
-          ? "bg-[color:var(--foreground)] text-black"
-          : "text-[color:var(--muted)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[color:var(--foreground)]",
+          ? "border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.12)] text-[color:var(--acid)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+          : "border border-transparent text-[color:var(--muted)] hover:border-[color:var(--line)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[color:var(--foreground)]",
       )}
     >
       {children}
@@ -187,13 +187,13 @@ function MetricTile({
   tone: "acid" | "aqua" | "coral" | "gold";
 }) {
   return (
-    <motion.div layout className="app-card rounded-[var(--radius-md)] p-4">
-      <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
+    <motion.div layout className="app-card-interactive rounded-[var(--radius-md)] p-4">
+      <p className="eyebrow">{label}</p>
       <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="font-mono text-2xl font-semibold">{value}</p>
+        <p className="metric-number text-3xl font-semibold leading-none">{value}</p>
         <span
           className={cn(
-            "rounded-full px-2 py-1 text-[11px] font-medium",
+            "rounded-full border px-2 py-1 text-[11px] font-medium",
             tone === "acid" && "bg-[rgba(199,255,93,0.12)] text-[color:var(--acid)]",
             tone === "aqua" && "bg-[rgba(64,224,208,0.12)] text-[color:var(--aqua)]",
             tone === "coral" && "bg-[rgba(255,111,97,0.12)] text-[color:var(--coral)]",
@@ -213,11 +213,11 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
   const transfer = usTop?.scoreInput.usTransferability ?? 0;
 
   return (
-    <section className="grid min-w-0 gap-3 lg:grid-cols-2 2xl:grid-cols-[1fr_1fr_220px]">
+    <section className="app-panel grid min-w-0 gap-3 rounded-[var(--radius-lg)] p-4 lg:grid-cols-2 2xl:grid-cols-[1fr_1fr_220px]">
       {[brTop, usTop].map((signal, index) => (
         <div
           key={signal?.id ?? index}
-          className="app-card relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] p-4"
+          className="app-card-interactive relative min-w-0 overflow-hidden rounded-[var(--radius-md)] p-4"
         >
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(64,224,208,0.44)] to-transparent" />
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
@@ -237,12 +237,12 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
         </div>
       ))}
 
-      <div className="min-w-0 rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.22)] bg-[rgba(199,255,93,0.07)] p-4 lg:col-span-2 2xl:col-span-1">
+      <div className="min-w-0 rounded-[var(--radius-md)] border border-[rgba(199,255,93,0.22)] bg-[linear-gradient(180deg,rgba(199,255,93,0.1),rgba(199,255,93,0.045))] p-4 lg:col-span-2 2xl:col-span-1">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
           <TrendingUp className="h-4 w-4" aria-hidden="true" />
           ponte US &gt; BR
         </div>
-        <p className="mt-3 font-mono text-3xl font-semibold">{transfer}</p>
+        <p className="metric-number mt-3 text-4xl font-semibold leading-none">{transfer}</p>
         <p className="mt-1 text-xs leading-5 text-[color:var(--muted-strong)]">
           Transferencia calculada a partir dos sinais persistidos. So vira acao com fonte oficial ou evidencia BR.
         </p>
@@ -262,14 +262,14 @@ function EvidenceInspector({
 }) {
   if (!signal) {
     return (
-      <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
+      <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
         <p className="text-sm text-[color:var(--muted)]">Selecione um sinal para revisar evidencia.</p>
       </section>
     );
   }
 
   return (
-    <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
+      <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -513,20 +513,20 @@ export function CommandCenter({
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
-      <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[260px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[260px_minmax(0,1fr)_340px] 2xl:grid-cols-[280px_minmax(0,1fr)_390px]">
-        <aside className="scrollbar-soft hidden min-w-0 border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.88)] p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:block lg:h-[100dvh] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+      <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1840px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[244px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[244px_minmax(0,1fr)_330px] 2xl:grid-cols-[264px_minmax(0,1fr)_360px]">
+        <aside className="scrollbar-soft hidden min-w-0 border-r border-[rgba(239,233,220,0.11)] bg-[rgba(6,6,5,0.76)] p-4 backdrop-blur-2xl lg:sticky lg:top-0 lg:block lg:h-[100dvh] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
           <div className="flex min-h-full flex-col">
             <div className="flex items-center gap-3 px-2 py-2">
-              <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">
+              <div className="grid h-9 w-9 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black shadow-[0_0_34px_rgba(199,255,93,0.16)]">
                 <Command className="h-5 w-5" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Market Intel</p>
-                <p className="text-xs text-[color:var(--muted)]">TikTok Command Center</p>
+                <p className="text-sm font-semibold leading-none">Market Intel</p>
+                <p className="mt-1 text-xs text-[color:var(--muted)]">TikTok Command Center</p>
               </div>
             </div>
 
-            <nav className="mt-7 grid gap-1" aria-label="Navegacao principal">
+            <nav className="mt-8 grid gap-0.5" aria-label="Navegacao principal">
               {navItems.map((item) => {
                 const Icon = item.icon;
 
@@ -534,10 +534,10 @@ export function CommandCenter({
                   <button
                     key={item.label}
                     className={cn(
-                      "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm text-[color:var(--muted-strong)] transition",
+                      "relative flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm text-[color:var(--muted)] transition duration-200",
                       item.active
-                        ? "bg-[rgba(199,255,93,0.13)] text-[color:var(--foreground)]"
-                        : "hover:bg-[rgba(255,255,255,0.055)] hover:text-[color:var(--foreground)]",
+                        ? "bg-[rgba(255,255,255,0.055)] text-[color:var(--foreground)] before:absolute before:inset-y-2 before:left-0 before:w-px before:rounded-full before:bg-[color:var(--acid)]"
+                        : "hover:bg-[rgba(255,255,255,0.035)] hover:text-[color:var(--muted-strong)]",
                     )}
                     type="button"
                   >
@@ -548,7 +548,7 @@ export function CommandCenter({
               })}
             </nav>
 
-            <div className="app-card mt-auto rounded-[var(--radius-md)] p-4">
+            <div className="app-rail-card mt-auto rounded-[var(--radius-md)] p-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                 {tenant.workspaceName}
@@ -574,18 +574,15 @@ export function CommandCenter({
           </div>
         </aside>
 
-        <section className="min-w-0 bg-[rgba(7,7,6,0.58)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[color:var(--line)]">
-          <header className="border-b border-[color:var(--line)] bg-[var(--topbar-bg)] px-4 py-4 shadow-[0_18px_46px_rgba(0,0,0,0.24)] backdrop-blur-2xl md:px-6 lg:rounded-t-[var(--radius-lg)]">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex items-center gap-3">
+        <section className="min-w-0 bg-[rgba(7,7,6,0.44)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[rgba(239,233,220,0.12)]">
+          <header className="app-hero m-0 rounded-none border-x-0 border-t-0 px-4 py-5 md:px-6 lg:rounded-t-[var(--radius-lg)]">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div className="flex items-start gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black lg:hidden">
                   <Command className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-xl font-semibold tracking-normal md:text-2xl">
-                      Command Center v2
-                    </h1>
                     <span className="rounded-full border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.12)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                       {persistence.mode === "database" ? "live data" : "safe fallback"}
                     </span>
@@ -600,17 +597,17 @@ export function CommandCenter({
                       {isSaving ? "gravando..." : persistence.label}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-[color:var(--muted)]">
-                    {persistence.detail}
-                  </p>
-                  <p className="mt-1 text-xs text-[color:var(--muted)]">
-                    Workspace: {tenant.workspaceName} - {tenant.role.toLowerCase()}
+                  <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-normal md:text-4xl">
+                    Command Center
+                  </h1>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]">
+                    {persistence.detail} Workspace: {tenant.workspaceName} - {tenant.role.toLowerCase()}.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="flex min-h-[var(--control-height)] min-w-0 flex-1 items-center gap-2 rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] xl:w-[360px] xl:flex-none">
+              <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                <label className="app-control flex min-h-[var(--control-height)] min-w-0 flex-1 items-center gap-2 rounded-full px-3 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[320px] xl:w-[390px] xl:flex-none">
                   <Search className="h-4 w-4" aria-hidden="true" />
                   <input
                     value={query}
@@ -619,11 +616,11 @@ export function CommandCenter({
                     className="min-w-0 flex-1 bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted)]"
                   />
                 </label>
-                <button className="grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
+                <button className="app-control grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--aqua)]">
                   <Filter className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Filtros</span>
                 </button>
-                <button className="grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
+                <button className="app-control grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--aqua)]">
                   <Bell className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Alertas</span>
                 </button>
@@ -651,7 +648,7 @@ export function CommandCenter({
             </div>
           </header>
 
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 md:px-6">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-7 px-4 py-7 md:px-6">
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
               <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="Metricas operacionais">
                 {metricTiles.map((metric) => (
@@ -666,10 +663,10 @@ export function CommandCenter({
               <section className="app-panel rounded-[var(--radius-lg)] p-4 md:p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
+                    <p className="eyebrow text-[color:var(--acid)]">
                       Estado do workspace
                     </p>
-                    <h2 className="mt-2 text-lg font-semibold">Estados premium preparados</h2>
+                    <h2 className="mt-2 text-lg font-semibold">Estado operacional</h2>
                   </div>
                   <div className="scrollbar-soft inline-flex w-full overflow-x-auto rounded-full border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-1 sm:w-auto">
                     {stateOptions.map((option) => (
@@ -708,11 +705,11 @@ export function CommandCenter({
               <section>
                 <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
+                    <p className="eyebrow text-[color:var(--aqua)]">
                       Signal desk
                     </p>
-                    <h2 className="mt-2 text-xl font-semibold">Ranking para decisao rapida</h2>
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
+                    <h2 className="mt-2 text-2xl font-semibold leading-tight">Ranking para decisao rapida</h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]">
                       Sinais carregados do Postgres. A tela prioriza leitura, comparacao,
                       risco, evidencia e proxima acao sem fixtures mascaradas.
                     </p>
@@ -723,7 +720,7 @@ export function CommandCenter({
                   </div>
                 </div>
 
-                <div className="app-panel mb-4 rounded-[var(--radius-lg)] p-3">
+                <div className="app-panel mb-4 rounded-[var(--radius-lg)] p-3 shadow-[var(--shadow-lift)]">
                   <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                     <div className="flex flex-wrap gap-2">
                       {marketOptions.map((option) => (
@@ -833,7 +830,7 @@ export function CommandCenter({
           </div>
         </section>
 
-        <aside className="mt-6 min-w-0 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
+        <aside className="mt-6 min-w-0 opacity-95 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
           <div className="xl:sticky xl:top-3 xl:h-[calc(100dvh-24px)] xl:self-start">
             <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-10 xl:pr-1">
               <EvidenceInspector
@@ -844,7 +841,7 @@ export function CommandCenter({
 
               <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
 
-              <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
+              <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -876,7 +873,7 @@ export function CommandCenter({
                 </div>
               </section>
 
-              <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
+              <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                   Pipeline
                 </p>
