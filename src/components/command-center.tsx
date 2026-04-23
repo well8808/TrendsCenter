@@ -262,14 +262,16 @@ function EvidenceInspector({
 }) {
   if (!signal) {
     return (
-      <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
-        <p className="text-sm text-[color:var(--muted)]">Selecione um sinal para revisar evidencia.</p>
+      <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] px-4 py-3.5">
+        <p className="text-xs font-medium leading-5 text-[color:var(--muted-strong)]">
+          Selecione um sinal para revisar evidencia.
+        </p>
       </section>
     );
   }
 
   return (
-      <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
+    <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -346,46 +348,58 @@ function SavedAndHistory({
   revivalSignals: TrendSignal[];
 }) {
   return (
-    <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
+    <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--aqua)]">
             Saved / revival
           </p>
-          <h2 className="mt-2 text-lg font-semibold">Fila de decisao</h2>
+          <h2 className="mt-1.5 text-base font-semibold">Fila de decisao</h2>
         </div>
-        <Bookmark className="h-5 w-5 text-[color:var(--muted)]" aria-hidden="true" />
+        <Bookmark className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
       </div>
 
-      <div className="mt-5 grid gap-3">
-        {savedSignals.slice(0, 4).map((signal) => (
-          <div
-            key={signal.id}
-            className="rounded-[var(--radius-md)] border border-[rgba(199,255,93,0.18)] bg-[rgba(199,255,93,0.055)] p-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium leading-5">{signal.title}</p>
-              <span className="font-mono text-sm">{signal.score.value}</span>
+      <div className="mt-3.5 grid gap-2.5">
+        {savedSignals.length > 0 ? (
+          savedSignals.slice(0, 4).map((signal) => (
+            <div
+              key={signal.id}
+              className="app-rail-item rounded-[var(--radius-md)] border-[rgba(199,255,93,0.18)] bg-[rgba(199,255,93,0.05)] p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-sm font-medium leading-5">{signal.title}</p>
+                <span className="metric-number shrink-0 text-sm text-[color:var(--acid)]">{signal.score.value}</span>
+              </div>
+              <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[color:var(--muted)]">{signal.nextAction}</p>
             </div>
-            <p className="mt-2 text-xs text-[color:var(--muted)]">{signal.nextAction}</p>
+          ))
+        ) : (
+          <div className="app-rail-empty rounded-[var(--radius-md)] px-3 py-2.5 text-xs leading-5">
+            Nenhum sinal salvo ainda. Use o marcador dos cards para montar a fila.
           </div>
-        ))}
+        )}
       </div>
 
-      <div className="mt-5 border-t border-[color:var(--line)] pt-4">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--gold)]">
+      <div className="mt-4 border-t border-[color:var(--line)] pt-3.5">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
           <RotateCcw className="h-4 w-4" aria-hidden="true" />
           revival watch
         </div>
-        <div className="mt-3 grid gap-2">
-          {revivalSignals.map((signal) => (
-            <div key={signal.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
-              <span className="min-w-0 truncate text-[color:var(--muted-strong)]">{signal.title}</span>
-              <span className="shrink-0 rounded-full border border-[color:var(--line)] px-2 py-1 text-xs text-[color:var(--muted)]">
-                {signal.stage}
-              </span>
+        <div className="mt-2.5 grid gap-2">
+          {revivalSignals.length > 0 ? (
+            revivalSignals.map((signal) => (
+              <div key={signal.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate text-[color:var(--muted-strong)]">{signal.title}</span>
+                <span className="app-pill shrink-0 rounded-full px-2 py-1 text-[11px]">
+                  {signal.stage}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="app-rail-empty rounded-[var(--radius-md)] px-3 py-2.5 text-xs leading-5">
+              Sem revival ativo nesta leitura.
             </div>
-          ))}
+          )}
         </div>
       </div>
     </section>
@@ -832,7 +846,7 @@ export function CommandCenter({
 
         <aside className="mt-6 min-w-0 opacity-95 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
           <div className="xl:sticky xl:top-3 xl:h-[calc(100dvh-24px)] xl:self-start">
-            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-10 xl:pr-1">
+            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3.5 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-10 xl:pr-1">
               <EvidenceInspector
                 signal={selectedSignal}
                 savedCount={savedIds.size}
@@ -841,30 +855,30 @@ export function CommandCenter({
 
               <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
 
-              <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
+              <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--acid)]">
                       Proveniencia
                     </p>
-                    <h2 className="mt-2 text-lg font-semibold">Fila de fontes</h2>
+                    <h2 className="mt-1.5 text-base font-semibold">Fila de fontes</h2>
                   </div>
-                  <Database className="h-5 w-5 text-[color:var(--muted)]" aria-hidden="true" />
+                  <Database className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                 </div>
-                <div className="mt-5 grid gap-3">
+                <div className="mt-3.5 grid gap-2.5">
                   {sources.map((source) => (
                     <div
                       key={source.id}
-                      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-3"
+                      className="app-rail-item rounded-[var(--radius-md)] p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <p className="min-w-0 break-words text-sm font-medium leading-5">{source.title}</p>
                         <SourcePill source={source} compact />
                       </div>
-                      <p className="mt-3 text-xs leading-5 text-[color:var(--muted)]">
+                      <p className="mt-2.5 text-xs leading-5 text-[color:var(--muted)]">
                         {source.coverage}. {source.gap}.
                       </p>
-                      <div className="mt-3 flex items-center justify-between text-xs text-[color:var(--muted)]">
+                      <div className="mt-2.5 flex items-center justify-between text-[11px] text-[color:var(--muted)]">
                         <span>{source.market}</span>
                         <span>{formatSourceDate(source.collectedAt)}</span>
                       </div>
@@ -873,21 +887,21 @@ export function CommandCenter({
                 </div>
               </section>
 
-              <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
+              <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--aqua)]">
                   Pipeline
                 </p>
-                <h2 className="mt-2 text-lg font-semibold">Jobs seguros registrados</h2>
-                <div className="mt-5 grid gap-3">
+                <h2 className="mt-1.5 text-base font-semibold">Jobs seguros registrados</h2>
+                <div className="mt-3.5 grid gap-2.5">
                   {pipelineItems.map((item) => {
                     const Icon = item.icon;
 
                     return (
-                      <div key={item.title} className="flex items-center gap-3">
-                        <div className="grid h-9 w-9 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)]">
+                      <div key={item.title} className="flex items-center gap-3 rounded-[var(--radius-md)] px-1 py-0.5">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-[rgba(239,233,220,0.13)] bg-[rgba(0,0,0,0.2)]">
                           <Icon className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-medium">{item.title}</p>
                           <p className="text-xs text-[color:var(--muted)]">{item.body}</p>
                         </div>
@@ -897,12 +911,12 @@ export function CommandCenter({
                 </div>
               </section>
 
-              <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.22)] bg-[rgba(199,255,93,0.075)] p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
+              <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.2)] bg-[linear-gradient(180deg,rgba(199,255,93,0.09),rgba(199,255,93,0.04))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--acid)]">
                   <Flame className="h-4 w-4" aria-hidden="true" />
                   Safe mode
                 </div>
-                <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
+                <p className="mt-2.5 text-sm leading-6 text-[color:var(--muted-strong)]">
                   O app aceita ingestao manual, propria/licenciada ou oficial rastreavel. Falhas seguem como falhas,
                   e entradas sem fonte aprovada nao viram insight.
                 </p>
