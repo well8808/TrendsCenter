@@ -514,7 +514,7 @@ export function CommandCenter({
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
       <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[260px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[260px_minmax(0,1fr)_340px] 2xl:grid-cols-[280px_minmax(0,1fr)_390px]">
-        <aside className="hidden min-w-0 border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.88)] p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:block lg:h-[100dvh] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+        <aside className="scrollbar-soft hidden min-w-0 border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.88)] p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:block lg:h-[100dvh] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
           <div className="flex min-h-full flex-col">
             <div className="flex items-center gap-3 px-2 py-2">
               <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">

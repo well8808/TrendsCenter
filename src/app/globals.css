@@ -130,7 +130,30 @@ select option {
 }
 
 .scrollbar-soft {
-  scrollbar-color: rgba(239, 233, 220, 0.24) transparent;
+  scrollbar-color: rgba(239, 233, 220, 0.18) transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-soft::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-soft::-webkit-scrollbar-thumb {
+  background: rgba(239, 233, 220, 0.16);
+  border-radius: 999px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-thumb:hover {
+  background: rgba(239, 233, 220, 0.28);
+}
+
+.scrollbar-soft::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 @layer components {
