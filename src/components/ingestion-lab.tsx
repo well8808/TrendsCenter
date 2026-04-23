@@ -97,7 +97,7 @@ function Field({
 }
 
 const fieldClass =
-  "min-h-10 w-full min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-sm normal-case tracking-normal text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.42)]";
+  "min-h-[var(--control-height)] w-full min-w-0 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 text-sm normal-case tracking-normal text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]";
 
 function ResultBadge({ result }: { result?: ActionResult }) {
   if (!result) {
@@ -135,7 +135,7 @@ function MetricChip({
   tone: "acid" | "aqua" | "coral" | "gold";
 }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] p-3">
+    <div className="app-card rounded-[var(--radius-md)] p-3">
       <p className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
       <p
         className={cn(
@@ -205,7 +205,7 @@ export function IngestionLab({
   const sourceOptions = sources.slice(0, 12);
 
   return (
-    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.22)] bg-[linear-gradient(135deg,rgba(64,224,208,0.08),rgba(255,255,255,0.035))] p-4 md:p-5">
+    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.24)] bg-[linear-gradient(135deg,rgba(64,224,208,0.085),rgba(255,255,255,0.04))] p-4 shadow-[var(--shadow-soft)] backdrop-blur-2xl md:p-5">
       <div className="flex min-w-0 flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
@@ -229,7 +229,7 @@ export function IngestionLab({
         <motion.form
           ref={signalFormRef}
           onSubmit={submitSignal}
-          className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-4"
+          className="app-card rounded-[var(--radius-lg)] p-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.28 }}
@@ -309,7 +309,7 @@ export function IngestionLab({
             <button
               type="submit"
               disabled={isCreating}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.16)] disabled:opacity-60"
+              className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.16)] disabled:opacity-60"
             >
               {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               registrar ingestao
@@ -321,7 +321,7 @@ export function IngestionLab({
           <form
             ref={evidenceFormRef}
             onSubmit={submitEvidence}
-            className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-4"
+            className="app-card rounded-[var(--radius-lg)] p-4"
           >
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -368,7 +368,7 @@ export function IngestionLab({
               <button
                 type="submit"
                 disabled={isAttaching || signalOptions.length === 0 || sourceOptions.length === 0}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(243,201,105,0.38)] bg-[rgba(243,201,105,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--gold)] transition hover:bg-[rgba(243,201,105,0.16)] disabled:opacity-60"
+                className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-[rgba(243,201,105,0.38)] bg-[rgba(243,201,105,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--gold)] transition hover:bg-[rgba(243,201,105,0.16)] disabled:opacity-60"
               >
                 {isAttaching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
                 anexar
@@ -376,7 +376,7 @@ export function IngestionLab({
             </div>
           </form>
 
-          <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-4">
+          <div className="app-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
               <RadioTower className="h-4 w-4" aria-hidden="true" />
               connectors aprovados
@@ -388,7 +388,7 @@ export function IngestionLab({
                 </p>
               ) : (
                 lab.connectors.slice(0, 4).map((connector) => (
-                  <div key={connector.id} className="flex min-w-0 items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] px-3 py-2">
+                  <div key={connector.id} className="flex min-w-0 items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{connector.title}</p>
                       <p className="mt-1 text-xs text-[color:var(--muted)]">{connector.kind} - {connector.origin}</p>
@@ -405,7 +405,7 @@ export function IngestionLab({
       </div>
 
       <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-4">
+        <div className="app-card rounded-[var(--radius-lg)] p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
             <GitBranch className="h-4 w-4" aria-hidden="true" />
             lineage recente
@@ -417,7 +417,7 @@ export function IngestionLab({
               </p>
             ) : (
               lab.batches.slice(0, 4).map((batch) => (
-                <div key={batch.id} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.035)] p-3">
+                <div key={batch.id} className="app-card rounded-[var(--radius-md)] p-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold">{batch.title}</p>
@@ -457,7 +457,7 @@ export function IngestionLab({
         </div>
 
         <div className="grid gap-4">
-          <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-4">
+          <div className="app-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
               <ClipboardList className="h-4 w-4" aria-hidden="true" />
               ultimos jobs
@@ -469,7 +469,7 @@ export function IngestionLab({
                 </p>
               ) : (
                 lab.jobs.slice(0, 5).map((job) => (
-                  <div key={job.id} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] px-3 py-2">
+                  <div key={job.id} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] px-3 py-2">
                     <div className="flex items-center justify-between gap-3">
                       <p className="truncate text-sm font-medium">{job.name}</p>
                       <span className={cn("rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(job.status))}>

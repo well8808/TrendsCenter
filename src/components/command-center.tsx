@@ -187,10 +187,7 @@ function MetricTile({
   tone: "acid" | "aqua" | "coral" | "gold";
 }) {
   return (
-    <motion.div
-      layout
-      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4"
-    >
+    <motion.div layout className="app-card rounded-[var(--radius-md)] p-4">
       <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
       <div className="mt-3 flex items-end justify-between gap-3">
         <p className="font-mono text-2xl font-semibold">{value}</p>
@@ -220,7 +217,7 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
       {[brTop, usTop].map((signal, index) => (
         <div
           key={signal?.id ?? index}
-          className="relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4"
+          className="app-card relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] p-4"
         >
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(64,224,208,0.44)] to-transparent" />
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
@@ -265,14 +262,14 @@ function EvidenceInspector({
 }) {
   if (!signal) {
     return (
-      <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+      <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
         <p className="text-sm text-[color:var(--muted)]">Selecione um sinal para revisar evidencia.</p>
       </section>
     );
   }
 
   return (
-    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+    <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -349,7 +346,7 @@ function SavedAndHistory({
   revivalSignals: TrendSignal[];
 }) {
   return (
-    <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+    <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
@@ -512,75 +509,73 @@ export function CommandCenter({
   ];
 
   return (
-    <main className="relative min-h-screen">
+    <main className="relative min-h-dvh">
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
-      <div className="relative z-0 mx-auto grid min-h-screen w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:py-0 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_340px] 2xl:grid-cols-[280px_minmax(0,1fr)_390px]">
-        <aside className="hidden min-w-0 lg:block">
-          <div className="sticky top-0 h-[100dvh] overflow-y-auto overscroll-contain border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.74)] p-4 backdrop-blur-xl">
-            <div className="flex min-h-full flex-col">
-              <div className="flex items-center gap-3 px-2 py-2">
-                <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">
-                  <Command className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Market Intel</p>
-                  <p className="text-xs text-[color:var(--muted)]">TikTok Command Center</p>
-                </div>
+      <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1760px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[260px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[260px_minmax(0,1fr)_340px] 2xl:grid-cols-[280px_minmax(0,1fr)_390px]">
+        <aside className="hidden min-w-0 border-r border-[color:var(--line)] bg-[rgba(10,10,8,0.88)] p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:block lg:h-[100dvh] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+          <div className="flex min-h-full flex-col">
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black">
+                <Command className="h-5 w-5" aria-hidden="true" />
               </div>
-
-              <nav className="mt-7 grid gap-1" aria-label="Navegacao principal">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <button
-                      key={item.label}
-                      className={cn(
-                        "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm text-[color:var(--muted-strong)] transition",
-                        item.active
-                          ? "bg-[rgba(199,255,93,0.13)] text-[color:var(--foreground)]"
-                          : "hover:bg-[rgba(255,255,255,0.055)] hover:text-[color:var(--foreground)]",
-                      )}
-                      type="button"
-                    >
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </nav>
-
-              <div className="mt-auto rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
-                  <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                  {tenant.workspaceName}
-                </div>
-                <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-                  {tenant.userEmail} - {tenant.role.toLowerCase()}. Dados isolados por workspace e sessao obrigatoria.
-                </p>
-                <button
-                  className="mt-4 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)]"
-                  type="button"
-                  onClick={logout}
-                  disabled={isLoggingOut}
-                >
-                  sair
-                </button>
-                <Link
-                  className="ml-2 inline-flex rounded-full border border-[rgba(64,224,208,0.28)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.08)]"
-                  href="/workspace"
-                >
-                  settings
-                </Link>
+              <div>
+                <p className="text-sm font-semibold">Market Intel</p>
+                <p className="text-xs text-[color:var(--muted)]">TikTok Command Center</p>
               </div>
+            </div>
+
+            <nav className="mt-7 grid gap-1" aria-label="Navegacao principal">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.label}
+                    className={cn(
+                      "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm text-[color:var(--muted-strong)] transition",
+                      item.active
+                        ? "bg-[rgba(199,255,93,0.13)] text-[color:var(--foreground)]"
+                        : "hover:bg-[rgba(255,255,255,0.055)] hover:text-[color:var(--foreground)]",
+                    )}
+                    type="button"
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="app-card mt-auto rounded-[var(--radius-md)] p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                {tenant.workspaceName}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+                {tenant.userEmail} - {tenant.role.toLowerCase()}. Dados isolados por workspace e sessao obrigatoria.
+              </p>
+              <button
+                className="mt-4 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)]"
+                type="button"
+                onClick={logout}
+                disabled={isLoggingOut}
+              >
+                sair
+              </button>
+              <Link
+                className="ml-2 inline-flex rounded-full border border-[rgba(64,224,208,0.28)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.08)]"
+                href="/workspace"
+              >
+                settings
+              </Link>
             </div>
           </div>
         </aside>
 
-        <section className="min-w-0 bg-[rgba(7,7,6,0.52)] backdrop-blur-xl lg:my-3">
-          <header className="sticky top-0 z-20 border-b border-[color:var(--line)] bg-[rgba(7,7,6,0.78)] px-4 py-3 backdrop-blur-2xl md:px-6">
+        <section className="min-w-0 bg-[rgba(7,7,6,0.58)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[color:var(--line)]">
+          <header className="border-b border-[color:var(--line)] bg-[var(--topbar-bg)] px-4 py-4 shadow-[0_18px_46px_rgba(0,0,0,0.24)] backdrop-blur-2xl md:px-6 lg:rounded-t-[var(--radius-lg)]">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black lg:hidden">
@@ -591,15 +586,15 @@ export function CommandCenter({
                     <h1 className="text-xl font-semibold tracking-normal md:text-2xl">
                       Command Center v2
                     </h1>
-                    <span className="rounded-full border border-[rgba(199,255,93,0.36)] bg-[rgba(199,255,93,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
+                    <span className="rounded-full border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.12)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                       {persistence.mode === "database" ? "live data" : "safe fallback"}
                     </span>
                     <span
                       className={cn(
                         "rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
                         persistence.mode === "database"
-                          ? "border-[rgba(64,224,208,0.34)] bg-[rgba(64,224,208,0.1)] text-[color:var(--aqua)]"
-                          : "border-[rgba(243,201,105,0.34)] bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]",
+                          ? "border-[rgba(64,224,208,0.42)] bg-[rgba(64,224,208,0.12)] text-[color:var(--aqua)]"
+                          : "border-[rgba(243,201,105,0.42)] bg-[rgba(243,201,105,0.12)] text-[color:var(--gold)]",
                       )}
                     >
                       {isSaving ? "gravando..." : persistence.label}
@@ -615,7 +610,7 @@ export function CommandCenter({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-3 py-2 text-sm text-[color:var(--muted)] sm:min-w-[280px] xl:w-[360px] xl:flex-none">
+                <label className="flex min-h-[var(--control-height)] min-w-0 flex-1 items-center gap-2 rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] xl:w-[360px] xl:flex-none">
                   <Search className="h-4 w-4" aria-hidden="true" />
                   <input
                     value={query}
@@ -624,16 +619,16 @@ export function CommandCenter({
                     className="min-w-0 flex-1 bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted)]"
                   />
                 </label>
-                <button className="grid h-10 w-10 place-items-center rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
+                <button className="grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
                   <Filter className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Filtros</span>
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
+                <button className="grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)]">
                   <Bell className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Alertas</span>
                 </button>
                 <button
-                  className="h-10 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)]"
+                  className="h-[var(--control-height)] rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.42)] hover:text-[color:var(--coral)]"
                   type="button"
                   onClick={logout}
                   disabled={isLoggingOut}
@@ -641,13 +636,13 @@ export function CommandCenter({
                   sair
                 </button>
                 <Link
-                  className="inline-flex h-10 items-center rounded-full border border-[rgba(64,224,208,0.28)] bg-[rgba(64,224,208,0.06)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.1)]"
+                  className="inline-flex h-[var(--control-height)] items-center rounded-full border border-[rgba(64,224,208,0.34)] bg-[rgba(64,224,208,0.08)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.12)]"
                   href="/workspace"
                 >
                   workspace
                 </Link>
                 <Link
-                  className="inline-flex h-10 items-center rounded-full border border-[rgba(199,255,93,0.28)] bg-[rgba(199,255,93,0.08)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.13)]"
+                  className="inline-flex h-[var(--control-height)] items-center rounded-full border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.1)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.14)]"
                   href="/trends"
                 >
                   trend search
@@ -656,8 +651,8 @@ export function CommandCenter({
             </div>
           </header>
 
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 px-4 py-5 md:px-6">
-            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 md:px-6">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
               <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="Metricas operacionais">
                 {metricTiles.map((metric) => (
                   <MetricTile key={metric.label} {...metric} />
@@ -668,7 +663,7 @@ export function CommandCenter({
 
               <IngestionLab lab={ingestionLab} signals={signals} sources={sources} />
 
-              <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 md:p-5">
+              <section className="app-panel rounded-[var(--radius-lg)] p-4 md:p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -728,7 +723,7 @@ export function CommandCenter({
                   </div>
                 </div>
 
-                <div className="mb-4 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.04)] p-3">
+                <div className="app-panel mb-4 rounded-[var(--radius-lg)] p-3">
                   <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                     <div className="flex flex-wrap gap-2">
                       {marketOptions.map((option) => (
@@ -838,9 +833,9 @@ export function CommandCenter({
           </div>
         </section>
 
-        <aside className="mt-5 min-w-0 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
+        <aside className="mt-6 min-w-0 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
           <div className="xl:sticky xl:top-3 xl:h-[calc(100dvh-24px)] xl:self-start">
-            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 pb-5 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-8 xl:pr-1">
+            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-10 xl:pr-1">
               <EvidenceInspector
                 signal={selectedSignal}
                 savedCount={savedIds.size}
@@ -849,7 +844,7 @@ export function CommandCenter({
 
               <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
 
-              <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+              <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
@@ -863,7 +858,7 @@ export function CommandCenter({
                   {sources.map((source) => (
                     <div
                       key={source.id}
-                      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-3"
+                      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <p className="min-w-0 break-words text-sm font-medium leading-5">{source.title}</p>
@@ -881,7 +876,7 @@ export function CommandCenter({
                 </div>
               </section>
 
-              <section className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+              <section className="app-card min-w-0 rounded-[var(--radius-lg)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                   Pipeline
                 </p>

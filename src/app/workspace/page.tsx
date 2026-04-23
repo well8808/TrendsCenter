@@ -24,6 +24,9 @@ const roleOptions = [
   { value: "MEMBER", label: "member" },
 ] as const;
 
+const controlClass =
+  "min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 text-sm text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]";
+
 export default async function WorkspacePage({
   searchParams,
 }: {
@@ -34,10 +37,10 @@ export default async function WorkspacePage({
   const { status, error } = await searchParams;
 
   return (
-    <main className="relative min-h-svh overflow-x-hidden text-[color:var(--foreground)]">
+    <main className="relative min-h-dvh text-[color:var(--foreground)]">
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-50" />
-      <section className="relative mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 md:px-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.72)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl lg:sticky lg:top-5 lg:h-[calc(100dvh-2.5rem)]">
+      <section className="relative mx-auto grid w-full max-w-7xl items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="app-panel scrollbar-soft rounded-[var(--radius-lg)] p-5 lg:sticky lg:top-5 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto lg:overscroll-contain">
           <Link className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href="/">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             command center
@@ -52,12 +55,12 @@ export default async function WorkspacePage({
             </p>
           </div>
           <div className="mt-8 grid gap-3 text-sm">
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
+            <div className="app-card rounded-[var(--radius-md)] p-4">
               <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">sua sessao</p>
               <p className="mt-2 font-semibold">{data.actor.email}</p>
               <p className="mt-1 text-[color:var(--muted)]">{data.actor.role.toLowerCase()}</p>
             </div>
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
+            <div className="app-card rounded-[var(--radius-md)] p-4">
               <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">permissoes</p>
               <p className="mt-2 text-[color:var(--muted-strong)]">
                 {data.actor.canManageRoles ? "owner controls" : data.actor.canInvite ? "admin ops" : "member ops"}
@@ -66,7 +69,7 @@ export default async function WorkspacePage({
           </div>
         </aside>
 
-        <section className="min-w-0 space-y-5">
+        <section className="min-w-0 space-y-6">
           {(status || error) && (
             <div
               className={cn(
@@ -80,7 +83,7 @@ export default async function WorkspacePage({
             </div>
           )}
 
-          <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.7)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+          <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
@@ -100,7 +103,7 @@ export default async function WorkspacePage({
             <div className="mt-5 grid gap-3">
               {data.members.map((member) => (
                 <div
-                  className="grid gap-3 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 md:grid-cols-[minmax(0,1fr)_220px]"
+                  className="app-card grid gap-3 rounded-[var(--radius-md)] p-4 md:grid-cols-[minmax(0,1fr)_220px]"
                   key={member.id}
                 >
                   <div className="min-w-0">
@@ -119,7 +122,7 @@ export default async function WorkspacePage({
                     <form action={changeMemberRoleAction} className="flex items-center gap-2">
                       <input name="memberId" type="hidden" value={member.id} />
                       <select
-                        className="min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] px-3 py-2 text-sm outline-none"
+                        className={`${controlClass} min-w-0 flex-1 py-2`}
                         name="role"
                         defaultValue={member.role}
                       >
@@ -129,7 +132,7 @@ export default async function WorkspacePage({
                           </option>
                         ))}
                       </select>
-                      <button className="rounded-full border border-[rgba(199,255,93,0.34)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)]" type="submit">
+                      <button className="min-h-[var(--control-height)] rounded-full border border-[rgba(199,255,93,0.4)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.1)]" type="submit">
                         salvar
                       </button>
                     </form>
@@ -146,7 +149,7 @@ export default async function WorkspacePage({
           </section>
 
           <section className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.7)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+            <div className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
                 <MailPlus className="h-4 w-4" aria-hidden="true" />
                 invite member
@@ -156,27 +159,27 @@ export default async function WorkspacePage({
                 <form action={inviteMemberAction} className="mt-5 grid gap-4">
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
                     e-mail
-                    <input className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] px-3 py-3 text-sm outline-none" name="email" type="email" required />
+                    <input className={controlClass} name="email" type="email" required />
                   </label>
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
                     papel
-                    <select className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] px-3 py-3 text-sm outline-none" name="role" defaultValue="MEMBER">
+                    <select className={controlClass} name="role" defaultValue="MEMBER">
                       {data.actor.role === "OWNER" && <option value="ADMIN">admin</option>}
                       <option value="MEMBER">member</option>
                     </select>
                   </label>
-                  <button className="rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]" type="submit">
+                  <button className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.4)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]" type="submit">
                     criar convite
                   </button>
                 </form>
               ) : (
-                <p className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+                <p className="app-card mt-5 rounded-[var(--radius-md)] p-4 text-sm leading-6 text-[color:var(--muted-strong)]">
                   Seu papel atual permite operar sinais, mas nao convidar membros.
                 </p>
               )}
             </div>
 
-            <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.7)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+            <div className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                 invites pendentes
@@ -185,7 +188,7 @@ export default async function WorkspacePage({
               <div className="mt-5 grid gap-3">
                 {data.invites.length ? (
                   data.invites.map((invite) => (
-                    <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4" key={invite.id}>
+                    <div className="app-card rounded-[var(--radius-md)] p-4" key={invite.id}>
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="font-semibold">{invite.email}</p>
                         <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.14em] text-[color:var(--muted)]">
@@ -198,7 +201,7 @@ export default async function WorkspacePage({
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+                  <p className="app-card rounded-[var(--radius-md)] p-4 text-sm leading-6 text-[color:var(--muted-strong)]">
                     Nenhum convite pendente. O workspace esta fechado por padrao.
                   </p>
                 )}

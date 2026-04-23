@@ -55,13 +55,13 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <main className="relative min-h-svh overflow-x-hidden text-[color:var(--foreground)]">
+    <main className="relative min-h-dvh text-[color:var(--foreground)]">
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
-      <section className="relative mx-auto grid w-full max-w-[1560px] gap-5 px-3 py-3 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 space-y-5">
-          <header className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.72)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+      <section className="relative mx-auto grid w-full max-w-[1560px] items-start gap-6 px-4 py-4 md:px-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-6">
+          <header className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <Link className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href="/trends">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               voltar para busca
@@ -70,15 +70,15 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               <span className="rounded-full border border-[rgba(199,255,93,0.32)] bg-[rgba(199,255,93,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                 {trend.market}
               </span>
-              <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">
+              <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
                 {trend.origin}
               </span>
-              <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">
+              <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
                 {trend.source.kind}
               </span>
             </div>
             <h1 className="mt-4 max-w-5xl text-3xl font-semibold leading-tight md:text-5xl">{trend.title}</h1>
-            {trend.caption && <p className="mt-4 max-w-4xl text-sm leading-6 text-[color:var(--muted)]">{trend.caption}</p>}
+            {trend.caption && <p className="mt-4 max-w-4xl text-sm leading-6 text-[color:var(--muted-strong)]">{trend.caption}</p>}
             {trend.url && (
               <a className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href={trend.url} target="_blank" rel="noreferrer">
                 abrir fonte do video
@@ -94,21 +94,21 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               ["growth", formatNumber(trend.growthViews), "growth"],
               ["snapshots", trend.snapshotCount, "snap"],
             ].map(([label, value, key]) => (
-              <div key={key} className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4">
+              <div key={key} className="app-card rounded-[var(--radius-lg)] p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
                 <p className={cn("mt-3 font-mono text-3xl font-semibold", key === "score" && scoreTone(trend.trendScore))}>{value}</p>
               </div>
             ))}
           </section>
 
-          <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.68)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+          <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
               <LineChart className="h-4 w-4" aria-hidden="true" />
               timeline
             </div>
             <div className="mt-5 grid gap-3">
               {trend.timeline.map((point) => (
-                <div key={point.id} className="grid gap-3 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.04)] p-4 md:grid-cols-[180px_minmax(0,1fr)_120px]">
+                <div key={point.id} className="app-card grid gap-3 rounded-[var(--radius-md)] p-4 md:grid-cols-[180px_minmax(0,1fr)_120px]">
                   <div className="text-sm text-[color:var(--muted)]">{formatDate(point.observedAt)}</div>
                   <div className="grid grid-cols-3 gap-2">
                     <div>
@@ -130,22 +130,22 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
           </section>
 
-          <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.68)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+          <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--gold)]">
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
               evidencias
             </div>
             <div className="mt-5 grid gap-3">
               {trend.evidence.map((item) => (
-                <div key={item.id} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.04)] p-4">
+                <div key={item.id} className="app-card rounded-[var(--radius-md)] p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="font-semibold">{item.title}</h2>
-                    <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                    <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.14em] text-[color:var(--muted-strong)]">
                       {item.confidence}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{item.note}</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[color:var(--muted)]">
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--muted-strong)]">{item.note}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[color:var(--muted-strong)]">
                     <span>{item.sourceTitle}</span>
                     <span>{item.origin}</span>
                     <span>{formatDate(item.capturedAt)}</span>
@@ -161,8 +161,8 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
           </section>
         </div>
 
-        <aside className="min-w-0 lg:sticky lg:top-3 lg:h-[calc(100dvh-24px)]">
-          <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-6 pr-1">
+        <aside className="min-w-0 lg:sticky lg:top-4 lg:h-[calc(100dvh-32px)]">
+          <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-10 pr-1">
             <section className="rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.24)] bg-[rgba(199,255,93,0.07)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
                 <Gauge className="h-4 w-4" aria-hidden="true" />
@@ -184,7 +184,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </div>
             </section>
 
-            <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+            <section className="app-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                 <UserRoundCheck className="h-4 w-4" aria-hidden="true" />
                 creator
@@ -194,7 +194,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               {trend.creator?.followerCount && <p className="mt-3 font-mono text-2xl">{formatNumber(trend.creator.followerCount)}</p>}
             </section>
 
-            <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+            <section className="app-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--gold)]">
                 <AudioLines className="h-4 w-4" aria-hidden="true" />
                 sound
@@ -206,7 +206,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </p>
             </section>
 
-            <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+            <section className="app-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                 <Hash className="h-4 w-4" aria-hidden="true" />
                 hashtags
@@ -218,7 +218,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </div>
             </section>
 
-            <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5">
+            <section className="app-card rounded-[var(--radius-lg)] p-5">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
                 relacionados

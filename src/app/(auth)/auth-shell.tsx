@@ -40,11 +40,11 @@ export function AuthShell({
   footerText?: string;
 }) {
   return (
-    <main className="relative min-h-svh overflow-hidden px-4 py-6 text-[color:var(--foreground)] sm:px-6">
+    <main className="relative min-h-svh overflow-x-hidden px-4 py-6 text-[color:var(--foreground)] sm:px-6">
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-60" />
       <div className="relative mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-6xl items-center justify-center">
-        <section className="grid w-full max-w-[1040px] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.72)] shadow-[var(--shadow-soft)] backdrop-blur-2xl lg:grid-cols-[1fr_420px]">
-          <div className="hidden min-h-[620px] border-r border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-8 lg:flex lg:flex-col lg:justify-between">
+        <section className="app-panel grid w-full max-w-[1040px] overflow-hidden rounded-[var(--radius-lg)] lg:grid-cols-[1fr_420px]">
+          <div className="hidden min-h-[620px] border-r border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-8 lg:flex lg:flex-col lg:justify-between">
             <div>
               <div className="inline-flex rounded-full border border-[rgba(199,255,93,0.28)] bg-[rgba(199,255,93,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
                 tenant safe
@@ -109,7 +109,7 @@ export function AuthShell({
 }
 
 export const authInputClass =
-  "w-full rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] px-3 py-3 text-sm outline-none transition focus:border-[rgba(64,224,208,0.58)]";
+  "min-h-[var(--control-height)] w-full rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 text-sm outline-none transition focus:border-[rgba(64,224,208,0.58)]";
 
 export const authButtonClass =
-  "w-full rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]";
+  "min-h-[var(--control-height)] w-full rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]";

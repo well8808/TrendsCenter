@@ -10,10 +10,10 @@
   --surface: #10100d;
   --surface-elevated: #171714;
   --surface-soft: #1f1e19;
-  --line: rgba(239, 233, 220, 0.12);
-  --line-strong: rgba(239, 233, 220, 0.2);
-  --muted: #9b9689;
-  --muted-strong: #cfc6b3;
+  --line: rgba(239, 233, 220, 0.18);
+  --line-strong: rgba(239, 233, 220, 0.3);
+  --muted: #b2aa9a;
+  --muted-strong: #ded4c1;
   --acid: #c7ff5d;
   --aqua: #40e0d0;
   --coral: #ff6f61;
@@ -24,7 +24,13 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  --shadow-soft: 0 20px 70px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 22px 70px rgba(0, 0, 0, 0.4);
+  --panel-bg: rgba(16, 16, 13, 0.82);
+  --card-bg: rgba(255, 255, 255, 0.055);
+  --control-bg: rgba(0, 0, 0, 0.3);
+  --topbar-bg: rgba(7, 7, 6, 0.94);
+  --control-height: 44px;
+  --shell-gutter: 12px;
 }
 
 @theme inline {
@@ -52,11 +58,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, sans-serif;
   min-height: 100svh;
-  overflow-x: hidden;
+  overflow-x: clip;
+  text-rendering: optimizeLegibility;
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -65,9 +74,29 @@ button {
 }
 
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--aqua);
   outline-offset: 3px;
+}
+
+input,
+select,
+textarea {
+  color: var(--foreground);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #ada694;
+  opacity: 1;
+}
+
+select option {
+  background: #10100d;
+  color: var(--foreground);
 }
 
 ::selection {
@@ -102,4 +131,18 @@ a:focus-visible {
 
 .scrollbar-soft {
   scrollbar-color: rgba(239, 233, 220, 0.24) transparent;
+}
+
+@layer components {
+  .app-panel {
+    border: 1px solid var(--line);
+    background: var(--panel-bg);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(24px);
+  }
+
+  .app-card {
+    border: 1px solid var(--line);
+    background: var(--card-bg);
+  }
 }

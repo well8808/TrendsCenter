@@ -48,6 +48,9 @@ function pillTone(score: number) {
   return "border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] text-[color:var(--muted-strong)]";
 }
 
+const controlClass =
+  "min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 text-sm text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]";
+
 export default async function TrendsPage({
   searchParams,
 }: {
@@ -62,13 +65,13 @@ export default async function TrendsPage({
   });
 
   return (
-    <main className="relative min-h-svh overflow-x-hidden text-[color:var(--foreground)]">
+    <main className="relative min-h-dvh text-[color:var(--foreground)]">
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
-      <section className="relative mx-auto grid w-full max-w-[1760px] gap-5 px-3 py-3 lg:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="min-w-0 space-y-5">
-          <header className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.72)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+      <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-4 md:px-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="min-w-0 space-y-6">
+          <header className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <Link className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)]" href="/">
@@ -86,7 +89,7 @@ export default async function TrendsPage({
                 <h1 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                   Buscar trends indexadas
                 </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)]">
                   Videos, creators, sons e hashtags persistidos com snapshot temporal e fonte rastreavel.
                 </p>
               </div>
@@ -98,7 +101,7 @@ export default async function TrendsPage({
                   ["US", data.stats.us],
                   ["score med.", data.stats.avgScore],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-3">
+                  <div key={label} className="app-card rounded-[var(--radius-md)] p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</p>
                     <p className="mt-2 font-mono text-2xl font-semibold">{value}</p>
                   </div>
@@ -120,19 +123,19 @@ export default async function TrendsPage({
             )}
           </header>
 
-          <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(16,16,13,0.68)] p-4 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+          <section className="app-panel rounded-[var(--radius-lg)] p-4 md:p-5">
             <form className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_150px_180px_120px]" action="/trends">
-              <label className="flex min-w-0 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3">
+              <label className={`${controlClass} flex min-w-0 items-center gap-2`}>
                 <Search className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                 <input
-                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted)]"
+                  className="min-w-0 flex-1 bg-transparent text-sm outline-none"
                   name="q"
                   defaultValue={data.params.query}
                   placeholder="keyword, @creator, #hashtag, som..."
                 />
               </label>
               <select
-                className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none"
+                className={controlClass}
                 name="market"
                 defaultValue={data.params.market}
               >
@@ -141,7 +144,7 @@ export default async function TrendsPage({
                 <option value="US">EUA</option>
               </select>
               <select
-                className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none"
+                className={controlClass}
                 name="sort"
                 defaultValue={data.params.sort}
               >
@@ -149,7 +152,7 @@ export default async function TrendsPage({
                 <option value="growth">Crescimento</option>
                 <option value="recency">Recencia</option>
               </select>
-              <button className="rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)]">
+              <button className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.4)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]">
                 buscar
               </button>
             </form>
@@ -169,7 +172,7 @@ export default async function TrendsPage({
                 <Link
                   key={video.id}
                   href={`/trends/${video.id}`}
-                  className="group rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 transition hover:border-[rgba(64,224,208,0.34)] hover:bg-[rgba(64,224,208,0.055)]"
+                  className="app-card group rounded-[var(--radius-lg)] p-4 transition hover:border-[rgba(64,224,208,0.38)] hover:bg-[rgba(64,224,208,0.06)] md:p-5"
                 >
                   <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
                     <div className="min-w-0">
@@ -216,29 +219,29 @@ export default async function TrendsPage({
           </section>
         </div>
 
-        <aside className="min-w-0 lg:sticky lg:top-3 lg:h-[calc(100dvh-24px)]">
-          <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-6 pr-1">
-            <section className="rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.24)] bg-[rgba(64,224,208,0.07)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
+        <aside className="min-w-0 lg:sticky lg:top-4 lg:h-[calc(100dvh-32px)]">
+          <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-10 pr-1">
+            <section className="rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)] p-5 shadow-[var(--shadow-soft)] backdrop-blur-2xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
                 <DatabaseZap className="h-4 w-4" aria-hidden="true" />
                 ingestao
               </div>
               <h2 className="mt-3 text-lg font-semibold">Indexar lote rastreavel</h2>
               <form action={ingestTrendVideosAction} className="mt-4 grid gap-3">
-                <input className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none" name="sourceTitle" placeholder="Fonte / lote" required />
-                <input className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none" name="sourceUrl" placeholder="URL da fonte" type="url" />
+                <input className={controlClass} name="sourceTitle" placeholder="Fonte / lote" required />
+                <input className={controlClass} name="sourceUrl" placeholder="URL da fonte" type="url" />
                 <div className="grid grid-cols-2 gap-2">
-                  <select className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none" name="market" defaultValue="BR">
+                  <select className={controlClass} name="market" defaultValue="BR">
                     <option value="BR">BR</option>
                     <option value="US">US</option>
                   </select>
-                  <select className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none" name="sourceOrigin" defaultValue="MANUAL">
+                  <select className={controlClass} name="sourceOrigin" defaultValue="MANUAL">
                     <option value="MANUAL">manual</option>
                     <option value="OFFICIAL">oficial</option>
                     <option value="OWNED">proprio</option>
                   </select>
                 </div>
-                <select className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 text-sm outline-none" name="sourceKind" defaultValue="MANUAL_RESEARCH">
+                <select className={controlClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
                   <option value="MANUAL_RESEARCH">Manual research</option>
                   <option value="CREATIVE_CENTER_TRENDS">Creative Center</option>
                   <option value="TOP_ADS">Top Ads</option>
@@ -247,19 +250,19 @@ export default async function TrendsPage({
                   <option value="OWNED_UPLOAD">Owned upload</option>
                 </select>
                 <textarea
-                  className="min-h-56 resize-y rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)] px-3 py-3 font-mono text-xs leading-5 outline-none placeholder:text-[color:var(--muted)]"
+                  className="min-h-56 resize-y rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 font-mono text-xs leading-5 text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]"
                   name="payloadJson"
                   placeholder='{"videos":[{"title":"","metrics":{"views":0},"creator":{"handle":""},"sound":{"title":""},"hashtags":[],"evidence":{"title":"","note":""}}]}'
                   required
                 />
-                <button className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)]">
+                <button className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.4)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]">
                   <FileInput className="h-4 w-4" aria-hidden="true" />
                   indexar
                 </button>
               </form>
             </section>
 
-            <section className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5 backdrop-blur-2xl">
+            <section className="app-card rounded-[var(--radius-lg)] p-5 backdrop-blur-2xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--gold)]">
                 <Gauge className="h-4 w-4" aria-hidden="true" />
                 score v0.1

@@ -44,7 +44,7 @@ export function StatePanel({ state }: { state: WorkspaceState }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "relative overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-5 shadow-[var(--shadow-soft)]",
+        "app-card relative overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-soft)]",
         state === "error" && "border-[rgba(255,111,97,0.42)]",
       )}
     >
@@ -64,7 +64,7 @@ export function StatePanel({ state }: { state: WorkspaceState }) {
         </div>
         <div>
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{copy.title}</p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">{copy.body}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]">{copy.body}</p>
           <div className="mt-4 inline-flex rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.18em] text-[color:var(--muted-strong)]">
             {copy.action}
           </div>
@@ -80,7 +80,7 @@ export function LoadingSkeleton() {
       {[0, 1, 2].map((item) => (
         <div
           key={item}
-          className="h-24 animate-pulse rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)]"
+          className="app-card h-24 animate-pulse rounded-[var(--radius-md)]"
         />
       ))}
     </div>
