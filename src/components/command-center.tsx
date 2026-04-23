@@ -844,9 +844,9 @@ export function CommandCenter({
           </div>
         </section>
 
-        <aside className="mt-6 min-w-0 opacity-95 lg:col-start-2 lg:mb-3 xl:col-start-auto xl:my-3">
-          <div className="xl:sticky xl:top-3 xl:h-[calc(100dvh-24px)] xl:self-start">
-            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3.5 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-10 xl:pr-1">
+        <aside className="mt-6 min-w-0 opacity-95 lg:col-start-2 lg:mb-4 xl:col-start-auto xl:my-4">
+          <div className="xl:sticky xl:top-4 xl:h-[calc(100dvh-32px)] xl:self-start">
+            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-12 xl:pr-3">
               <EvidenceInspector
                 signal={selectedSignal}
                 savedCount={savedIds.size}
