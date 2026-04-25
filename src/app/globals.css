@@ -42,8 +42,22 @@
   --control-height: 44px;
   --shell-gutter: 12px;
   --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-swift: cubic-bezier(0.32, 0.72, 0, 1);
   --motion-fast: 160ms;
   --motion-medium: 260ms;
+  --motion-slow: 440ms;
+
+  /* Score semântica — usar estas cores sempre que representar score */
+  --score-high: var(--acid);
+  --score-mid: var(--gold);
+  --score-low: var(--aqua);
+  --score-glow-high: rgba(199, 255, 93, 0.42);
+  --score-glow-mid: rgba(243, 201, 105, 0.38);
+  --score-glow-low: rgba(64, 224, 208, 0.34);
+
+  /* Feedback */
+  --focus-ring: 0 0 0 1px rgba(64, 224, 208, 0.35), 0 0 22px rgba(64, 224, 208, 0.18);
+  --hover-glow: 0 18px 56px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(239, 233, 220, 0.03);
 }
 
 @theme inline {
@@ -93,7 +107,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--aqua);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 input,
@@ -270,8 +284,321 @@ select option {
   }
 
   .metric-number {
-    font-family: var(--font-geist-mono), monospace;
+    font-family: var(--font-geist-sans), sans-serif;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
     letter-spacing: -0.01em;
   }
+}
+
+@keyframes signal-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes signal-core {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(199, 255, 93, 0.55), 0 0 14px 2px rgba(199, 255, 93, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(199, 255, 93, 0), 0 0 22px 4px rgba(199, 255, 93, 0.28);
+  }
+}
+
+@keyframes priority-shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  60%,
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes border-drift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.signal-now-pulse {
+  animation: signal-pulse 1.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.signal-now-core {
+  animation: signal-core 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.priority-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.24) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  animation: priority-shine 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.trend-card-now-border {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(199, 255, 93, 0.45) 0%,
+      rgba(64, 224, 208, 0.12) 40%,
+      rgba(199, 255, 93, 0.3) 80%,
+      rgba(199, 255, 93, 0.45) 100%
+    );
+  background-size: 220% 220%;
+  animation: border-drift 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-now-pulse,
+  .signal-now-core,
+  .priority-shine::after,
+  .trend-card-now-border,
+  .data-stream::after,
+  .live-dot::after,
+  .scan-line::after {
+    animation: none;
+  }
+}
+
+/* War-room refinements — intelligence terminal cues
+ * Usar com moderação: só onde o dado é "ao vivo" ou precisa de peso. */
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(121, 232, 132, 0.55);
+  }
+  50% {
+    opacity: 0.65;
+    box-shadow: 0 0 0 6px rgba(121, 232, 132, 0);
+  }
+}
+
+@keyframes data-stream {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%);
+    opacity: 0;
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(200%);
+    opacity: 0;
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.live-dot {
+  position: relative;
+  display: inline-flex;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  background: var(--success);
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--success);
+  animation: live-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.data-stream {
+  position: relative;
+  overflow: hidden;
+}
+.data-stream::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(64, 224, 208, 0.22) 45%,
+    rgba(199, 255, 93, 0.22) 55%,
+    transparent 100%
+  );
+  animation: data-stream 2.4s linear infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.scan-line::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(199, 255, 93, 0.28) 50%,
+    transparent
+  );
+  animation: scan-line 6s linear infinite;
+  pointer-events: none;
+}
+
+.terminal-caret::after {
+  content: "_";
+  margin-left: 2px;
+  color: var(--acid);
+  animation: caret-blink 1.2s steps(1) infinite;
+}
+
+/* Score tier glows — usar em containers que precisam sinalizar nível */
+.score-glow-high {
+  box-shadow: 0 0 42px var(--score-glow-high), inset 0 0 0 1px rgba(199, 255, 93, 0.22);
+}
+.score-glow-mid {
+  box-shadow: 0 0 38px var(--score-glow-mid), inset 0 0 0 1px rgba(243, 201, 105, 0.2);
+}
+.score-glow-low {
+  box-shadow: 0 0 34px var(--score-glow-low), inset 0 0 0 1px rgba(64, 224, 208, 0.18);
+}
+
+/* Surface elevations para sidebar / control panel */
+.app-surface-console {
+  border: 1px solid rgba(239, 233, 220, 0.09);
+  background:
+    linear-gradient(180deg, rgba(12, 12, 10, 0.94), rgba(6, 6, 5, 0.88)),
+    radial-gradient(circle at 0% 0%, rgba(199, 255, 93, 0.06), transparent 30%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset -1px 0 0 rgba(239, 233, 220, 0.05);
+}
+
+.nav-item {
+  position: relative;
+  isolation: isolate;
+}
+.nav-item-indicator {
+  position: absolute;
+  inset-block: 6px;
+  left: 0;
+  width: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, var(--acid), var(--aqua));
+  box-shadow: 0 0 14px rgba(199, 255, 93, 0.55);
+}
+
+.metric-value-xl {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-size: clamp(1.5rem, 1.6vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.metric-value-hero {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-size: clamp(2rem, 2.4vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+/* Score — dominant, mas ainda dentro da escala do dashboard.
+ * ~32-40px, não marketing-page scale. */
+.score-value {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-size: clamp(2rem, 2.2vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1;
+}
+
+/* Card eyebrow — sits ABOVE titles, reinforces region/type. */
+.card-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-feature-settings: "ss01";
+}
+
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--line-strong) 18%,
+    var(--line-strong) 82%,
+    transparent 100%
+  );
+}
+
+.hairline-top {
+  position: relative;
+}
+.hairline-top::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(239, 233, 220, 0.28),
+    transparent
+  );
+  pointer-events: none;
 }

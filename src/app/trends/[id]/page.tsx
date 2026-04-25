@@ -193,7 +193,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-3">
                     <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">{label}</p>
-                    <p className="mt-1 font-mono text-xl">{value}</p>
+                    <p className="metric-number mt-1 text-xl font-semibold">{value}</p>
                   </div>
                 ))}
               </div>
@@ -206,7 +206,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               </div>
               <p className="mt-3 text-lg font-semibold">{trend.creator ? `@${trend.creator.handle}` : "sem creator vinculado"}</p>
               {trend.creator?.displayName && <p className="mt-1 text-sm text-[color:var(--muted)]">{trend.creator.displayName}</p>}
-              {trend.creator?.followerCount && <p className="mt-3 font-mono text-2xl">{formatNumber(trend.creator.followerCount)}</p>}
+              {trend.creator?.followerCount && <p className="metric-number mt-3 text-2xl font-semibold">{formatNumber(trend.creator.followerCount)}</p>}
             </section>
 
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5">

@@ -88,6 +88,7 @@ enum JobStatus {
   RUNNING
   SUCCEEDED
   FAILED
+  DEAD_LETTERED
   CANCELED
 }
 
@@ -143,6 +144,7 @@ enum AuthEmailKind {
 
 enum AuthEmailStatus {
   QUEUED
+  PROCESSING
   SENT
   FAILED
   SUPPRESSED
@@ -338,23 +340,35 @@ model WorkspaceInvite {
 }
 
 model AuthEmailOutbox {
-  id          String          @id @default(cuid())
-  kind        AuthEmailKind
-  status      AuthEmailStatus @default(QUEUED)
-  toEmail     String
-  subject     String
-  body        String
-  actionUrl   String?
-  workspaceId String?
-  workspace   Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  userId      String?
-  error       String?
-  sentAt      DateTime?
-  createdAt   DateTime        @default(now())
+  id                String          @id @default(cuid())
+  kind              AuthEmailKind
+  status            AuthEmailStatus @default(QUEUED)
+  toEmail           String
+  subject           String
+  body              String
+  actionUrl         String?
+  workspaceId       String?
+  workspace         Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId            String?
+  provider          String?
+  providerMessageId String?
+  dedupeKey         String?
+  attemptCount      Int             @default(0)
+  maxAttempts       Int             @default(5)
+  nextAttemptAt     DateTime        @default(now())
+  leaseExpiresAt    DateTime?
+  claimToken        String?
+  error             String?
+  lastError         String?
+  sentAt            DateTime?
+  processedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  @@index([kind, status, createdAt])
+  @@unique([workspaceId, dedupeKey])
+  @@index([kind, status, nextAttemptAt])
   @@index([toEmail, createdAt])
-  @@index([workspaceId, createdAt])
+  @@index([workspaceId, status, nextAttemptAt])
 }
 
 model AuthRateLimit {
@@ -710,31 +724,45 @@ model MediaDerivative {
 }
 
 model JobRun {
-  id             String           @id @default(cuid())
-  workspaceId    String
-  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name           String
-  status         JobStatus        @default(QUEUED)
-  stage          IngestStepName?
-  requestId      String?
-  request        IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
-  importBatchId  String?
-  importBatch    ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  payload        Json?
-  startedAt      DateTime?
-  finishedAt     DateTime?
-  error          String?
-  createdAt      DateTime         @default(now())
-  snapshots      SourceSnapshot[]
-  evidence       Evidence[]
-  videos         Video[]
-  trendSnapshots TrendSnapshot[]
-  trendEvidence  TrendEvidence[]
-  auditEvents    AuditEvent[]
+  id              String           @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  queue           String           @default("default")
+  handler         String           @default("generic")
+  name            String
+  status          JobStatus        @default(QUEUED)
+  stage           IngestStepName?
+  requestId       String?
+  request         IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  importBatchId   String?
+  importBatch     ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  dedupeKey       String?
+  createdBy       String           @default("system")
+  attemptCount    Int              @default(0)
+  maxAttempts     Int              @default(5)
+  availableAt     DateTime         @default(now())
+  leaseExpiresAt  DateTime?
+  claimToken      String?
+  payload         Json?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  error           String?
+  lastError       String?
+  deadLetteredAt  DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  snapshots       SourceSnapshot[]
+  evidence        Evidence[]
+  videos          Video[]
+  trendSnapshots  TrendSnapshot[]
+  trendEvidence   TrendEvidence[]
+  auditEvents     AuditEvent[]
 
+  @@unique([workspaceId, dedupeKey])
   @@index([name, status, createdAt])
+  @@index([queue, status, availableAt])
   @@index([importBatchId, status])
-  @@index([workspaceId, status, createdAt])
+  @@index([workspaceId, status, availableAt])
 }
 
 model IngestRequest {

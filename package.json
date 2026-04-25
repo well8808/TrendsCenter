@@ -9,12 +9,14 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:integration": "vitest run src/test/http/backend-api.integration.test.ts src/test/operations/backend-ops.integration.test.ts",
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "node prisma/seed.mjs",
-    "db:status": "prisma migrate status"
+    "db:status": "prisma migrate status",
+    "smoke:http": "node scripts/smoke-http-backend.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
