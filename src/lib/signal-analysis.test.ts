@@ -18,7 +18,7 @@ const persistedSignals: TrendSignal[] = [
     strength: 78,
     trendWindow: "48h",
     decision: "Priorizar teste com criativo proprio.",
-    nextAction: "Registrar evidencia adicional.",
+    nextAction: "Registrar evidência adicional.",
     saved: true,
     origin: "MANUAL",
     scoreInput: {
@@ -57,11 +57,11 @@ const persistedSignals: TrendSignal[] = [
         sourceLabel: "Manual research intake BR",
         quality: "medium",
         timestamp: new Date().toISOString(),
-        note: "Evidencia persistida em teste.",
+        note: "Evidência persistida em teste.",
       },
     ],
     history: [{ label: "ingest", value: "manual", tone: "acid" }],
-    scoreDrivers: ["manual intake", "evidencia inicial"],
+    scoreDrivers: ["manual intake", "evidência inicial"],
   },
   {
     id: "sig-real-us",

@@ -82,7 +82,7 @@ export async function inviteMemberAction(formData: FormData) {
       subject: `Convite para ${context.workspaceName}`,
       actionUrl,
       workspaceId: context.workspaceId,
-      body: `Voce foi convidado para ${context.workspaceName} como ${role.toLowerCase()}. Link valido por 7 dias: ${actionUrl}`,
+      body: `Você foi convidado para ${context.workspaceName} como ${role.toLowerCase()}. Link válido por 7 dias: ${actionUrl}`,
     });
     await writeAuthEvent({
       client: tx,

@@ -8,10 +8,10 @@ export default function ForgotPasswordSentPage() {
       status="success"
       footerHref="/login"
       footerLabel="Entrar"
-      footerText="Ja redefiniu?"
+      footerText="Já redefiniu?"
     >
       <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
-        Por seguranca, esta tela nao confirma se o e-mail existe no sistema.
+        Por segurança, esta tela não confirma se o e-mail existe no sistema.
       </div>
     </AuthShell>
   );

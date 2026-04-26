@@ -365,7 +365,7 @@ describe.sequential("backend HTTP integration", () => {
     });
 
     expect(outbox.status).toBe("SUPPRESSED");
-    expect(outbox.lastError).toMatch(/nao configurado/i);
+    expect(outbox.lastError).toMatch(/n[aã]o configurado/i);
     expect(server.logs()).toContain("outbox_item_suppressed");
     expect(server.logs()).toContain('"reasonCode":"missing_env"');
     expect(server.logs()).toContain('"emailDeliveryEnabled":false');

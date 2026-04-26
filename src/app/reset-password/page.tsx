@@ -12,7 +12,7 @@ export default async function ResetPasswordPage({
   if (!tokenState.ok) {
     return (
       <AuthShell
-        title="Link invalido ou expirado"
+        title="Link inválido ou expirado"
         subtitle="Solicite uma nova redefinicao para proteger sua conta."
         error={error ?? "invalid_token"}
         footerHref="/forgot-password"
@@ -20,7 +20,7 @@ export default async function ResetPasswordPage({
         footerText="Precisa recuperar?"
       >
         <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
-          Tokens de reset sao temporarios, de uso unico e invalidam sessoes antigas.
+          Tokens de reset são temporários, de uso único e invalidam sessões antigas.
         </div>
       </AuthShell>
     );
@@ -29,11 +29,11 @@ export default async function ResetPasswordPage({
   return (
     <AuthShell
       title="Redefinir senha"
-      subtitle="Crie uma senha nova. O link sera invalidado imediatamente depois do uso."
+      subtitle="Crie uma senha nova. O link será invalidado imediatamente depois do uso."
       error={error}
       footerHref="/login"
       footerLabel="Entrar"
-      footerText="Ja concluiu?"
+      footerText="Já concluiu?"
     >
       <form action={resetPasswordAction} className="grid gap-4">
         <input name="token" type="hidden" value={token} />

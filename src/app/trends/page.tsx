@@ -54,7 +54,7 @@ export default async function TrendsPage({
   });
 
   // Hidrata o JobRunsFeed com SSR para evitar flicker e dar leitura imediata.
-  // TenantContext e ApiTenantContext sao structurally compativeis.
+  // TenantContext e ApiTenantContext são compatíveis estruturalmente.
   const initialJobRuns: JobRunsListDto = await listWorkspaceJobRuns(
     context,
     new URLSearchParams({ limit: "12" }),
@@ -80,7 +80,7 @@ export default async function TrendsPage({
   }));
 
   const stats = [
-    { label: "videos", value: data.stats.total, tone: "acid" as const },
+    { label: "vídeos", value: data.stats.total, tone: "acid" as const },
     { label: "BR", value: data.stats.br, tone: "aqua" as const },
     { label: "US", value: data.stats.us, tone: "gold" as const },
     { label: "score med.", value: data.stats.avgScore, tone: "violet" as const },
@@ -121,8 +121,8 @@ export default async function TrendsPage({
                   <span className="terminal-caret">Buscar trends indexadas</span>
                 </h1>
                 <p className="mt-4 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)] md:text-base">
-                  Videos, creators, sons e hashtags persistidos com snapshot temporal e fonte rastreavel.
-                  Ingestao manual ou oficial — sem scraping, sem dado sem origem.
+                  Vídeos, creators, sons e hashtags persistidos com snapshot temporal e fonte rastreável.
+                  Ingestão manual ou oficial — sem scraping, sem dado sem origem.
                 </p>
               </div>
 
@@ -166,9 +166,9 @@ export default async function TrendsPage({
               <select className={controlClass} name="sort" defaultValue={data.params.sort}>
                 <option value="score">Trend score</option>
                 <option value="growth">Crescimento</option>
-                <option value="recency">Recencia</option>
+                <option value="recency">Recência</option>
               </select>
-              <button className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.14)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.2)]">
+              <button type="submit" className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.14)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.2)]">
                 buscar
               </button>
             </form>
@@ -197,9 +197,9 @@ export default async function TrendsPage({
                 {[
                   ["crescimento", "views atuais contra snapshot anterior", "acid"],
                   ["velocidade", "crescimento por janela temporal", "aqua"],
-                  ["aceleracao", "mudanca de velocidade", "gold"],
-                  ["recencia", "idade do video no momento observado", "violet"],
-                  ["consistencia", "snapshots + evidencias", "aqua"],
+                  ["aceleração", "mudança de velocidade", "gold"],
+                  ["recência", "idade do vídeo no momento observado", "violet"],
+                  ["consistência", "snapshots + evidências", "aqua"],
                 ].map(([label, body, tone]) => (
                   <div
                     key={label}
@@ -233,12 +233,12 @@ export default async function TrendsPage({
                 <div className="flex items-center gap-2">
                   <History className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
                   <span className="font-mono">
-                    ultimo indice: {formatDate(data.stats.latestIndexedAt)}
+                    último índice: {formatDate(data.stats.latestIndexedAt)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ArrowDownUp className="h-4 w-4 text-[color:var(--aqua)]" aria-hidden="true" />
-                  <span className="font-mono uppercase tracking-[0.14em]">ordenacao: {data.params.sort}</span>
+                  <span className="font-mono uppercase tracking-[0.14em]">ordenação: {data.params.sort}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-[color:var(--acid)]" aria-hidden="true" />

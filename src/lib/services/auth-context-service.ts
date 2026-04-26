@@ -50,7 +50,7 @@ export async function requireApiTenantContext(request: NextRequest, permission?:
       await deleteSessionById(session.id);
     }
 
-    throw unauthorized("Sessao invalida ou expirada.");
+    throw unauthorized("Sessão inválida ou expirada.");
   }
 
   const membership = session.user.memberships.find(
@@ -58,7 +58,7 @@ export async function requireApiTenantContext(request: NextRequest, permission?:
   );
 
   if (!membership) {
-    throw unauthorized("Workspace indisponivel para esta sessao.");
+    throw unauthorized("Workspace indisponível para esta sessão.");
   }
 
   if (permission && !hasPermission(membership.role, permission)) {
@@ -89,13 +89,13 @@ export function assertInternalRequest(request: NextRequest) {
   const secrets = internalSecrets();
 
   if (secrets.length === 0) {
-    throw serviceUnavailable("INTERNAL_API_TOKEN ou CRON_SECRET nao configurado.");
+    throw serviceUnavailable("INTERNAL_API_TOKEN ou CRON_SECRET não configurado.");
   }
 
   const authorization = request.headers.get("authorization");
 
   if (!secrets.some((secret) => authorization === `Bearer ${secret}`)) {
-    throw unauthorized("Internal token invalido.");
+    throw unauthorized("Internal token inválido.");
   }
 }
 
@@ -103,7 +103,7 @@ export async function buildSystemTenantContext(workspaceId: string, actor = "sys
   const workspace = await findWorkspaceRunContext(workspaceId);
 
   if (!workspace) {
-    throw unauthorized("Workspace nao encontrado para execucao interna.");
+    throw unauthorized("Workspace não encontrado para execução interna.");
   }
 
   return {

@@ -70,12 +70,21 @@ export async function getJobRunById(id: string) {
 
 export async function claimDueJobs(limit: number, claimToken: string, leaseExpiresAt: Date) {
   const now = new Date();
+  const claimableWhere = {
+    OR: [
+      {
+        status: { in: ["QUEUED", "FAILED"] as JobStatus[] },
+        availableAt: { lte: now },
+        OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
+      },
+      {
+        status: "RUNNING" as JobStatus,
+        leaseExpiresAt: { lt: now },
+      },
+    ],
+  };
   const candidates = await getPrisma().jobRun.findMany({
-    where: {
-      status: { in: ["QUEUED", "FAILED"] },
-      availableAt: { lte: now },
-      OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
-    },
+    where: claimableWhere,
     orderBy: [{ availableAt: "asc" }, { createdAt: "asc" }],
     take: limit,
   });
@@ -85,9 +94,7 @@ export async function claimDueJobs(limit: number, claimToken: string, leaseExpir
     const result = await getPrisma().jobRun.updateMany({
       where: {
         id: candidate.id,
-        status: { in: ["QUEUED", "FAILED"] },
-        availableAt: { lte: now },
-        OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
+        ...claimableWhere,
       },
       data: {
         status: "RUNNING",

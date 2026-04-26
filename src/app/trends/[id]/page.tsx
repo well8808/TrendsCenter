@@ -148,7 +148,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
           <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--gold)]">
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              evidencias
+              evidências
             </div>
             <div className="mt-5 grid gap-3">
               {trend.evidence.map((item) => (
@@ -187,8 +187,8 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {[
                   ["velocidade", trend.velocityScore],
-                  ["aceleracao", trend.accelerationScore],
-                  ["recencia", trend.recencyScore],
+                  ["aceleração", trend.accelerationScore],
+                  ["recência", trend.recencyScore],
                   ["consist.", trend.consistencyScore],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] p-3">
@@ -217,7 +217,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               <p className="mt-3 text-lg font-semibold">{trend.sound?.title ?? "sem som vinculado"}</p>
               {trend.sound?.authorName && <p className="mt-1 text-sm text-[color:var(--muted)]">{trend.sound.authorName}</p>}
               <p className="mt-3 text-sm text-[color:var(--muted)]">
-                Comercial: {trend.sound?.isCommerciallyUsable ? "sim" : "nao informado"}
+                Comercial: {trend.sound?.isCommerciallyUsable ? "sim" : "não informado"}
               </p>
             </section>
 

@@ -21,7 +21,7 @@ export function hasPermission(role: WorkspaceRole, permission: WorkspacePermissi
 
 export function requirePermission(context: TenantContext, permission: WorkspacePermission) {
   if (!hasPermission(context.role, permission)) {
-    throw new Error("Acao nao autorizada para o seu papel neste workspace.");
+    throw new Error("Ação não autorizada para o seu papel neste workspace.");
   }
 }
 

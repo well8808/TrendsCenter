@@ -12,7 +12,7 @@ describe("ingestion dedupe", () => {
     expect(normalizeForDedupe("  Áudio Funk-Pop / Corte 01!  ")).toBe("audio-funk-pop-corte-01");
   });
 
-  it("mantem chaves idempotentes por mercado, tipo, fonte e evidencia", () => {
+  it("mantém chaves idempotentes por mercado, tipo, fonte e evidência", () => {
     const signalKey = buildSignalDedupeKey({
       market: "BR",
       type: "FORMAT",

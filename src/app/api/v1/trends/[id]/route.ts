@@ -16,7 +16,7 @@ export async function GET(
     const data = await getTrendById(context, id);
 
     if (!data) {
-      throw notFound("Trend nao encontrada neste workspace.");
+      throw notFound("Trend não encontrada neste workspace.");
     }
 
     return ok(routeContext.requestId, data);

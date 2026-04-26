@@ -43,7 +43,7 @@ function requireText(value: string, field: string) {
   const trimmed = value.trim();
 
   if (!trimmed) {
-    throw new Error(`${field} obrigatorio`);
+    throw new Error(`${field} obrigatório`);
   }
 
   return trimmed;
@@ -51,7 +51,7 @@ function requireText(value: string, field: string) {
 
 function assertOperationalOrigin(origin: DataOrigin) {
   if (origin === "DEMO") {
-    throw new Error("Origem demo/mock nao pode ser usada em fluxos reais. Use MANUAL, OWNED ou OFFICIAL.");
+    throw new Error("Origem demo/mock não pode ser usada em fluxos reais. Use MANUAL, OWNED ou OFFICIAL.");
   }
 }
 
@@ -59,7 +59,7 @@ function assertSafeText(...values: string[]) {
   const unsafeMinorPattern = /\b(menor|menores|crianca|criança|infantil|adolescente|teen|underage|minor)\b/i;
 
   if (values.some((value) => unsafeMinorPattern.test(value))) {
-    throw new Error("Conteudo com menor ou idade ambigua bloqueado pelo safe mode.");
+    throw new Error("Conteúdo com menor ou idade ambígua bloqueado pelo safe mode.");
   }
 }
 
@@ -69,7 +69,7 @@ function connectorSlug(kind: SourceKind, origin: DataOrigin) {
   }
 
   if (origin === "DEMO") {
-    throw new Error("Origem nao operacional nao possui connector de ingestao.");
+    throw new Error("Origem não operacional não possui connector de ingestão.");
   }
 
   return "manual-safe-intake";
@@ -118,7 +118,7 @@ async function ensureConnector(
       market: input.market,
       manualEntryEnabled: true,
       officialSurface: input.origin === "OFFICIAL" ? input.kind : undefined,
-      policyNotes: "Criado pela Fase 3B sem integracao externa automatica.",
+      policyNotes: "Criado pela Fase 3B sem integração externa automática.",
     },
   });
 }
@@ -150,10 +150,10 @@ async function createSteps(
         completedAt: now,
         notes:
           stepStatus === "SUCCEEDED"
-            ? "Etapa local concluida sem rede externa."
+            ? "Etapa local concluída sem rede externa."
             : stepStatus === "SKIPPED"
-              ? "Etapa ignorada apos falha anterior."
-              : "Etapa falhou e nao gerou insight.",
+              ? "Etapa ignorada após falha anterior."
+              : "Etapa falhou e não gerou insight.",
       };
     }),
   });
@@ -185,10 +185,10 @@ async function createJob(
 }
 
 export async function createManualSignalWithEvidence(input: ManualSignalInput, context: TenantContext) {
-  const title = requireText(input.title, "Titulo do sinal");
+  const title = requireText(input.title, "Título do sinal");
   const sourceTitle = requireText(input.sourceTitle, "Fonte");
-  const evidenceTitle = requireText(input.evidenceTitle, "Titulo da evidencia");
-  const evidenceNote = requireText(input.evidenceNote, "Nota da evidencia");
+  const evidenceTitle = requireText(input.evidenceTitle, "Título da evidência");
+  const evidenceNote = requireText(input.evidenceNote, "Nota da evidência");
 
   assertOperationalOrigin(input.sourceOrigin);
   assertSafeText(title, input.summary, input.audience, sourceTitle, evidenceTitle, evidenceNote);
@@ -239,7 +239,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput, c
         dedupeKey: sourceKey,
         coverage: "registro manual/oficial aprovado pelo operador",
         freshness: "coletado manualmente",
-        gap: "sem conector externo automatico nesta fase",
+        gap: "sem conector externo automático nesta fase",
         notes: "Criado via Ingestion Lab Fase 3B.",
       },
     });
@@ -330,20 +330,20 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput, c
           data: {
             workspaceId: context.workspaceId,
             title,
-            summary: input.summary.trim() || "Sinal criado manualmente; aguarda evidencias adicionais.",
+            summary: input.summary.trim() || "Sinal criado manualmente; aguarda evidências adicionais.",
             type: input.type,
             market: input.market,
-            audience: input.audience.trim() || "Operacao interna",
+            audience: input.audience.trim() || "Operação interna",
             status: "WATCH",
             priority: "WATCH",
             riskLevel: "LOW",
             stage: "MONITOR",
             strength: score.value,
-            trendWindow: "aguardar validacao manual",
-            decision: "Manter em observacao ate acumular evidencia verificavel.",
-            nextAction: "Revisar fonte, confirmar permissao de uso e comparar com sinais BR/EUA.",
+            trendWindow: "aguardar validação manual",
+            decision: "Manter em observação até acumular evidência verificável.",
+            nextAction: "Revisar fonte, confirmar permissão de uso e comparar com sinais BR/EUA.",
             tags: ["manual", input.market.toLowerCase(), input.type.toLowerCase()],
-            scoreDrivers: ["manual intake", "evidencia inicial", "sem scraping"],
+            scoreDrivers: ["manual intake", "evidência inicial", "sem scraping"],
             dedupeKey: signalKey,
             importBatchId: batch.id,
             lastIngestedAt: new Date(),
@@ -439,7 +439,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput, c
           label: existingSignal ? "dedupe" : "ingest",
           value: existingSignal ? "atualizado" : "manual",
           tone: existingSignal ? "gold" : "acid",
-          message: existingSignal ? "Sinal atualizado por ingestao idempotente." : "Sinal criado por ingestao manual real.",
+          message: existingSignal ? "Sinal atualizado por ingestão idempotente." : "Sinal criado por ingestão manual real.",
           actor: input.submittedBy ?? "operator",
         },
         {
@@ -452,7 +452,7 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput, c
           label: "evid.",
           value: evidenceExists ? "dedupe" : "+1",
           tone: evidenceExists ? "violet" : "aqua",
-          message: evidenceExists ? "Evidencia idempotente reutilizada." : "Evidencia anexada ao sinal.",
+          message: evidenceExists ? "Evidência idempotente reutilizada." : "Evidência anexada ao sinal.",
           actor: input.submittedBy ?? "operator",
         },
         {
@@ -498,14 +498,14 @@ export async function createManualSignalWithEvidence(input: ManualSignalInput, c
       batchId: batch.id,
       dedupedSignal: Boolean(existingSignal),
       dedupedEvidence: Boolean(evidenceExists),
-      message: existingSignal ? "Sinal existente atualizado com proveniencia." : "Sinal manual criado com proveniencia.",
+      message: existingSignal ? "Sinal existente atualizado com proveniência." : "Sinal manual criado com proveniência.",
     };
   });
 }
 
 export async function attachManualEvidence(input: ManualEvidenceInput, context: TenantContext) {
-  const evidenceTitle = requireText(input.evidenceTitle, "Titulo da evidencia");
-  const evidenceNote = requireText(input.evidenceNote, "Nota da evidencia");
+  const evidenceTitle = requireText(input.evidenceTitle, "Título da evidência");
+  const evidenceNote = requireText(input.evidenceNote, "Nota da evidência");
 
   assertSafeText(evidenceTitle, evidenceNote);
 
@@ -520,7 +520,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput, context: 
     });
 
     if (!signal || !source) {
-      throw new Error("Sinal ou fonte nao encontrados");
+      throw new Error("Sinal ou fonte não encontrados");
     }
 
     assertOperationalOrigin(source.origin);
@@ -662,7 +662,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput, context: 
         label: "evid.",
         value: existingEvidence ? "dedupe" : "+1",
         tone: existingEvidence ? "violet" : "aqua",
-        message: existingEvidence ? "Evidencia idempotente reutilizada." : "Evidencia anexada ao sinal.",
+        message: existingEvidence ? "Evidência idempotente reutilizada." : "Evidência anexada ao sinal.",
         actor: input.submittedBy ?? "operator",
       },
     });
@@ -691,7 +691,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput, context: 
       evidenceId: evidence.id,
       batchId: batch.id,
       dedupedEvidence: Boolean(existingEvidence),
-      message: existingEvidence ? "Evidencia existente vinculada novamente." : "Evidencia anexada ao sinal.",
+      message: existingEvidence ? "Evidência existente vinculada novamente." : "Evidência anexada ao sinal.",
     };
   });
 }

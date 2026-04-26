@@ -3,21 +3,21 @@ import type { ReactNode } from "react";
 
 const errorCopy: Record<string, string> = {
   missing: "Preencha e-mail e senha para continuar.",
-  invalid: "Credenciais invalidas ou senha curta. Use pelo menos 10 caracteres no cadastro.",
-  exists: "Ja existe uma conta com este e-mail.",
-  failed: "Nao foi possivel concluir a autenticacao agora.",
-  workspace: "Esta conta nao possui workspace ativo.",
+  invalid: "Credenciais inválidas ou senha curta. Use pelo menos 10 caracteres no cadastro.",
+  exists: "Já existe uma conta com este e-mail.",
+  failed: "Não foi possível concluir a autenticação agora.",
+  workspace: "Esta conta não possui workspace ativo.",
   unverified: "Verifique seu e-mail antes de entrar no app operacional.",
   rate_limited: "Muitas tentativas. Aguarde um pouco e tente novamente.",
-  invalid_token: "Este link nao e valido ou ja foi usado.",
+  invalid_token: "Este link não é válido ou já foi usado.",
 };
 
 const statusCopy: Record<string, string> = {
-  sent: "Verificacao pronta neste navegador.",
-  resent: "Novo link de verificacao criado para este navegador.",
+  sent: "Verificação pronta neste navegador.",
+  resent: "Novo link de verificação criado para este navegador.",
   cooldown: "Reenvio controlado. Aguarde antes de solicitar outro link.",
-  unverified: "Conta pendente de verificacao. Confirme abaixo para liberar o acesso.",
-  success: "Operacao concluida com seguranca.",
+  unverified: "Conta pendente de verificação. Confirme abaixo para liberar o acesso.",
+  success: "Operação concluída com segurança.",
 };
 
 export function AuthShell({
@@ -53,13 +53,13 @@ export function AuthShell({
                 TikTok Market Command Center
               </h1>
               <p className="mt-5 max-w-md text-sm leading-6 text-[color:var(--muted-strong)]">
-                Autenticacao, sessao e workspace isolado antes de qualquer dado operacional.
+                Autenticação, sessão e workspace isolado antes de qualquer dado operacional.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-xs text-[color:var(--muted)]">
               <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] p-3">
                 <p className="text-[color:var(--aqua)]">01</p>
-                <p className="mt-2">sessao HTTP-only</p>
+                <p className="mt-2">sessão HTTP-only</p>
               </div>
               <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] p-3">
                 <p className="text-[color:var(--gold)]">02</p>

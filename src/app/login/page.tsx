@@ -22,11 +22,11 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Entrar no command center"
-      subtitle="Acesso obrigatorio para ler ou escrever qualquer sinal, evidencia, job ou fonte."
+      subtitle="Acesso obrigatório para ler ou escrever qualquer sinal, evidência, job ou fonte."
       error={error}
       footerHref="/signup"
       footerLabel="Criar workspace"
-      footerText="Ainda nao tem acesso?"
+      footerText="Ainda não tem acesso?"
     >
       <form action={loginAction} className="grid gap-4">
         <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
@@ -39,7 +39,7 @@ export default async function LoginPage({
             <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--foreground)]">
               Manter Conectado
             </span>
-            <span className="mt-1 block text-xs text-[color:var(--muted)]">Mantem a sessao por ate 30 dias.</span>
+            <span className="mt-1 block text-xs text-[color:var(--muted)]">Mantém a sessão por até 30 dias.</span>
           </span>
           <input className="peer sr-only" name="remember" type="checkbox" defaultChecked />
           <span className="relative h-6 w-11 rounded-full border border-[color:var(--line)] bg-[rgba(0,0,0,0.28)] transition after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-[color:var(--muted)] after:transition peer-checked:border-[rgba(199,255,93,0.55)] peer-checked:bg-[rgba(199,255,93,0.22)] peer-checked:after:translate-x-5 peer-checked:after:bg-[color:var(--acid)]" />

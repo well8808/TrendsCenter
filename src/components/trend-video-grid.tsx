@@ -179,7 +179,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
         <Sparkles className="mx-auto mb-3 h-6 w-6 text-[color:var(--muted)]" aria-hidden="true" />
         <h2 className="text-xl font-semibold text-[color:var(--foreground)]">Nenhuma trend indexada nesse recorte</h2>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[color:var(--muted-strong)]">
-          A busca permanece vazia ate existir ingestao manual/oficial com fonte e evidencia rastreavel.
+          A busca permanece vazia até existir ingestão manual/oficial com fonte e evidência rastreável.
         </p>
         <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--muted)]">
           <Radar className="h-3 w-3" aria-hidden="true" />

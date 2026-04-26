@@ -156,7 +156,7 @@ export async function requireTenantContextForAction() {
   const context = await getTenantContext();
 
   if (!context) {
-    throw new Error("Sessao obrigatoria. Entre novamente para continuar.");
+    throw new Error("Sessão obrigatória. Entre novamente para continuar.");
   }
 
   return context;

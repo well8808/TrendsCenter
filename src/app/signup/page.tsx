@@ -21,11 +21,11 @@ export default async function SignupPage({
   return (
     <AuthShell
       title="Criar acesso inicial"
-      subtitle="Cada cadastro cria um workspace isolado, com connectors seguros e sem dados ficticios de mercado."
+      subtitle="Cada cadastro cria um workspace isolado, com connectors seguros e sem dados fictícios de mercado."
       error={error}
       footerHref="/login"
       footerLabel="Entrar"
-      footerText="Ja tem uma conta?"
+      footerText="Já tem uma conta?"
     >
       <form action={signupAction} className="grid gap-4">
         <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">

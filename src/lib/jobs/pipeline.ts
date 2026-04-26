@@ -13,7 +13,7 @@ export interface SafeJobEnvelope {
 
 export const phase3BQueues: Array<{ queue: JobQueueName; purpose: string }> = [
   { queue: "manual-ingest", purpose: "Registrar snapshots manuais ou oficiais aprovados." },
-  { queue: "normalize", purpose: "Preparar dedupe, taxonomia e ligacao de evidencia." },
+  { queue: "normalize", purpose: "Preparar dedupe, taxonomia e ligação de evidência." },
   { queue: "score", purpose: "Recalcular score de sinais com modelo versionado." },
   { queue: "audit", purpose: "Registrar mudancas relevantes e fronteiras de compliance." },
 ];

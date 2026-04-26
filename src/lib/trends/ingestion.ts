@@ -137,17 +137,17 @@ function requireText(value: string, label: string) {
   const item = value.trim();
 
   if (!item) {
-    throw new Error(`${label} obrigatorio.`);
+    throw new Error(`${label} obrigatório.`);
   }
 
   return item;
 }
 
 function assertSafeText(...values: string[]) {
-  const unsafeMinorPattern = /\b(menor|menores|crianca|crianÃ§a|infantil|adolescente|teen|underage|minor)\b/i;
+  const unsafeMinorPattern = /\b(menor|menores|crianca|criança|infantil|adolescente|teen|underage|minor)\b/i;
 
   if (values.some((value) => unsafeMinorPattern.test(value))) {
-    throw new Error("Conteudo com menor ou idade ambigua bloqueado pelo safe mode.");
+    throw new Error("Conteúdo com menor ou idade ambígua bloqueado pelo safe mode.");
   }
 }
 
@@ -157,7 +157,7 @@ function parseVideos(payloadJson: string): NormalizedVideo[] {
   try {
     parsed = JSON.parse(payloadJson);
   } catch {
-    throw new Error("JSON invalido. A ingestao foi bloqueada sem persistir insight.");
+    throw new Error("JSON inválido. A ingestão foi bloqueada sem persistir insight.");
   }
 
   const candidate = Array.isArray(parsed) ? parsed : record(parsed).videos;
@@ -172,14 +172,14 @@ function parseVideos(payloadJson: string): NormalizedVideo[] {
     const metrics = record(item.metrics);
     const creator = record(item.creator);
     const sound = record(item.sound);
-    const title = requireText(text(item.title) || text(item.caption), `Titulo do video ${index + 1}`);
+    const title = requireText(text(item.title) || text(item.caption), `Título do vídeo ${index + 1}`);
     const evidence = record(item.evidence);
     const hashtagsRaw = Array.isArray(item.hashtags) ? item.hashtags : [];
     const hashtags = hashtagsRaw
       .map((tag) => normalizeForDedupe(text(tag).replace(/^#/, "")))
       .filter(Boolean)
       .slice(0, 12);
-    const evidenceTitle = requireText(text(evidence.title) || `Evidencia ${index + 1}`, "Titulo da evidencia");
+    const evidenceTitle = requireText(text(evidence.title) || `Evidência ${index + 1}`, "Título da evidência");
 
     assertSafeText(
       title,
@@ -228,7 +228,7 @@ function parseVideos(payloadJson: string): NormalizedVideo[] {
         title: evidenceTitle,
         url: optionalText(evidence.url) ?? optionalText(item.url),
         excerpt: optionalText(evidence.excerpt),
-        note: optionalText(evidence.note) ?? "Evidencia importada com proveniencia do lote.",
+        note: optionalText(evidence.note) ?? "Evidência importada com proveniência do lote.",
       },
     };
   });
@@ -278,7 +278,7 @@ async function createSteps(tx: Tx, context: TenantContext, batchId: string, fail
         sequence: index + 1,
         startedAt: now,
         completedAt: now,
-        notes: status === "SUCCEEDED" ? "Etapa local concluida." : "Insight nao foi promovido.",
+        notes: status === "SUCCEEDED" ? "Etapa local concluída." : "Insight não foi promovido.",
       };
     }),
   });
@@ -368,7 +368,7 @@ async function ensureSource(tx: Tx, context: TenantContext, input: TrendImportSo
       market: input.market,
       manualEntryEnabled: true,
       officialSurface: input.sourceOrigin === "OFFICIAL" ? input.sourceKind : undefined,
-      policyNotes: "Core trend search intake sem rede externa automatica.",
+      policyNotes: "Core trend search intake sem rede externa automática.",
     },
   });
 
@@ -389,7 +389,7 @@ async function ensureSource(tx: Tx, context: TenantContext, input: TrendImportSo
       confidence: input.sourceOrigin === "OFFICIAL" ? "HIGH" : "MEDIUM",
       connectorId: connector.id,
       dedupeKey: sourceDedupeKey(input),
-      coverage: "lote de videos importado com proveniencia rastreavel",
+      coverage: "lote de vídeos importado com proveniência rastreável",
       freshness: "snapshot temporal do momento de coleta",
       gap: "sem scraping; origem depende do operador ou superficie oficial registrada",
       notes: "Criado pelo core de busca de trends.",
@@ -401,11 +401,11 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
   requirePermission(context, "operateSignals");
 
   if (!allowedOrigins.includes(input.sourceOrigin)) {
-    throw new Error("Origem demo/mock nao pode entrar no fluxo real.");
+    throw new Error("Origem demo/mock não pode entrar no fluxo real.");
   }
 
   if (!allowedSourceKinds.includes(input.sourceKind)) {
-    throw new Error("Superficie de fonte invalida para ingestao de trends.");
+    throw new Error("Superfície de fonte inválida para ingestão de trends.");
   }
 
   const sourceTitle = requireText(input.sourceTitle, "Fonte");
@@ -738,7 +738,7 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
 
     return {
       ok: true,
-      message: `${importedVideoIds.length} videos indexados com snapshots e proveniencia.`,
+      message: `${importedVideoIds.length} vídeos indexados com snapshots e proveniência.`,
       importedVideoIds,
       batchId: batch.id,
     };
@@ -749,7 +749,7 @@ export async function ingestTrendVideos(input: TrendImportSourceInput, context: 
   try {
     return await runImport(input, context);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Falha segura na ingestao de trends.";
+    const message = error instanceof Error ? error.message : "Falha segura na ingestão de trends.";
     await recordFailure(input, context, message).catch((recordError) => {
       console.error("[trend-ingestion] failed to record failure", recordError);
     });

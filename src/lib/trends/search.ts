@@ -331,6 +331,6 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
     })),
     related: related.map(mapVideo),
     scoreExplanation:
-      "Score v0.1 combina crescimento de views, velocidade, aceleracao, recencia do post e consistencia entre snapshots/evidencias.",
+      "Score v0.1 combina crescimento de views, velocidade, aceleração, recência do post e consistência entre snapshots/evidências.",
   };
 }

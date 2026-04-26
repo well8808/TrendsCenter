@@ -12,12 +12,12 @@ export default async function InvitePage({
   if (!invite.ok) {
     return (
       <AuthShell
-        title="Convite invalido"
+        title="Convite inválido"
         subtitle="Este link pode ter expirado, sido aceito ou revogado."
         error={error ?? "invalid_token"}
         footerHref="/login"
         footerLabel="Entrar"
-        footerText="Ja tem acesso?"
+        footerText="Já tem acesso?"
       >
         <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
           Solicite um novo convite ao owner ou admin do workspace.
@@ -36,7 +36,7 @@ export default async function InvitePage({
       error={error}
       footerHref="/login"
       footerLabel="Entrar"
-      footerText="Ja tem sessao?"
+      footerText="Já tem sessão?"
     >
       <form action={acceptInviteAction} className="grid gap-4">
         <input name="token" type="hidden" value={token} />

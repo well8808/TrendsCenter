@@ -1,3 +1,5 @@
+import type { AuthEmailStatus } from "@prisma/client";
+
 import { getPrisma } from "@/lib/db";
 
 export interface ClaimedOutboxItem {
@@ -16,12 +18,21 @@ export interface ClaimedOutboxItem {
 
 export async function claimDueOutboxItems(limit: number, claimToken: string, leaseExpiresAt: Date) {
   const now = new Date();
+  const claimableWhere = {
+    OR: [
+      {
+        status: { in: ["QUEUED", "FAILED"] as AuthEmailStatus[] },
+        nextAttemptAt: { lte: now },
+        OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
+      },
+      {
+        status: "PROCESSING" as AuthEmailStatus,
+        leaseExpiresAt: { lt: now },
+      },
+    ],
+  };
   const candidates = await getPrisma().authEmailOutbox.findMany({
-    where: {
-      status: { in: ["QUEUED", "FAILED"] },
-      nextAttemptAt: { lte: now },
-      OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
-    },
+    where: claimableWhere,
     orderBy: [{ createdAt: "asc" }],
     take: limit,
   });
@@ -31,9 +42,7 @@ export async function claimDueOutboxItems(limit: number, claimToken: string, lea
     const result = await getPrisma().authEmailOutbox.updateMany({
       where: {
         id: candidate.id,
-        status: { in: ["QUEUED", "FAILED"] },
-        nextAttemptAt: { lte: now },
-        OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
+        ...claimableWhere,
       },
       data: {
         status: "PROCESSING",

@@ -13,7 +13,7 @@ async function dispatch(request: NextRequest) {
     const input =
       request.method === "POST"
         ? await request.json().catch(() => {
-            throw badRequest("JSON invalido no corpo da requisicao.");
+            throw badRequest("JSON inválido no corpo da requisição.");
           })
         : {};
     const payload = typeof input === "object" && input !== null ? (input as Record<string, unknown>) : {};

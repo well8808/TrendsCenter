@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils";
 
 const statusCopy: Record<string, string> = {
   invite_sent: "Convite criado e enfileirado para entrega.",
-  role_updated: "Papel atualizado com autorizacao owner.",
+  role_updated: "Papel atualizado com autorização owner.",
 };
 
 const errorCopy: Record<string, string> = {
   rate_limited: "Muitas tentativas. Aguarde antes de tentar novamente.",
-  invite_invalid: "Convite invalido para seu papel atual.",
-  already_member: "Este e-mail ja faz parte do workspace.",
-  role_invalid: "Papel invalido.",
+  invite_invalid: "Convite inválido para seu papel atual.",
+  already_member: "Este e-mail já faz parte do workspace.",
+  role_invalid: "Papel inválido.",
   role_blocked: "Esta mudanca de papel esta bloqueada.",
 };
 
@@ -51,17 +51,17 @@ export default async function WorkspacePage({
             </div>
             <h1 className="mt-5 text-3xl font-semibold leading-tight">{data.workspace.name}</h1>
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-              Membros, convites e autorizacao real por tenant. Nada aqui depende apenas da UI.
+              Membros, convites e autorização real por tenant. Nada aqui depende apenas da UI.
             </p>
           </div>
           <div className="mt-8 grid gap-3 text-sm">
             <div className="app-rail-card rounded-[var(--radius-md)] p-4">
-              <p className="eyebrow">sua sessao</p>
+              <p className="eyebrow">sua sessão</p>
               <p className="mt-2 font-semibold">{data.actor.email}</p>
               <p className="mt-1 text-[color:var(--muted)]">{data.actor.role.toLowerCase()}</p>
             </div>
             <div className="app-rail-card rounded-[var(--radius-md)] p-4">
-              <p className="eyebrow">permissoes</p>
+              <p className="eyebrow">permissões</p>
               <p className="mt-2 text-[color:var(--muted-strong)]">
                 {data.actor.canManageRoles ? "owner controls" : data.actor.canInvite ? "admin ops" : "member ops"}
               </p>
@@ -79,7 +79,7 @@ export default async function WorkspacePage({
                   : "border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)] text-[color:var(--aqua)]",
               )}
             >
-              {error ? errorCopy[error] ?? "Acao bloqueada." : statusCopy[status ?? ""] ?? "Acao concluida."}
+              {error ? errorCopy[error] ?? "Ação bloqueada." : statusCopy[status ?? ""] ?? "Ação concluída."}
             </div>
           )}
 
@@ -112,7 +112,7 @@ export default async function WorkspacePage({
                       {member.role === "OWNER" && <Crown className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />}
                       {member.isSelf && (
                         <span className="rounded-full bg-[rgba(64,224,208,0.1)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--aqua)]">
-                          voce
+                          você
                         </span>
                       )}
                     </div>
@@ -154,7 +154,7 @@ export default async function WorkspacePage({
                 <MailPlus className="h-4 w-4" aria-hidden="true" />
                 invite member
               </div>
-              <h2 className="mt-3 text-xl font-semibold">Convite rastreavel</h2>
+              <h2 className="mt-3 text-xl font-semibold">Convite rastreável</h2>
               {data.actor.canInvite ? (
                 <form action={inviteMemberAction} className="mt-5 grid gap-4">
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
@@ -174,7 +174,7 @@ export default async function WorkspacePage({
                 </form>
               ) : (
                 <p className="app-card mt-5 rounded-[var(--radius-md)] p-4 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  Seu papel atual permite operar sinais, mas nao convidar membros.
+                  Seu papel atual permite operar sinais, mas não convidar membros.
                 </p>
               )}
             </div>
@@ -202,7 +202,7 @@ export default async function WorkspacePage({
                   ))
                 ) : (
                   <p className="app-card rounded-[var(--radius-md)] p-4 text-sm leading-6 text-[color:var(--muted-strong)]">
-                    Nenhum convite pendente. O workspace esta fechado por padrao.
+                    Nenhum convite pendente. O workspace está fechado por padrão.
                   </p>
                 )}
               </div>

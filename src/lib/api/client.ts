@@ -142,7 +142,7 @@ export async function apiFetch<T>(path: string, options: ApiRequestOptions = {})
     throw new ApiError(
       {
         code: "INVALID_RESPONSE",
-        message: `Resposta nao-JSON recebida (status ${response.status}).`,
+        message: `Resposta não-JSON recebida (status ${response.status}).`,
         status: response.status || 500,
         requestId: requestIdHeader,
       },
@@ -154,7 +154,7 @@ export async function apiFetch<T>(path: string, options: ApiRequestOptions = {})
   try {
     envelope = (await response.json()) as ApiResponseEnvelope<T>;
   } catch (cause) {
-    throw new ApiTransportError("Resposta JSON invalida.", cause);
+    throw new ApiTransportError("Resposta JSON inválida.", cause);
   }
 
   if (!isEnvelope(envelope)) {

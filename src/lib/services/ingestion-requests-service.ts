@@ -56,7 +56,7 @@ type IngestionRequestApiInput =
 
 function requireText(value: unknown, field: string) {
   if (typeof value !== "string" || !value.trim()) {
-    throw badRequest(`${field} obrigatorio.`);
+    throw badRequest(`${field} obrigatório.`);
   }
 
   return value.trim();
@@ -66,7 +66,7 @@ function parseMarket(value: unknown): Market {
   const market = typeof value === "string" ? value.toUpperCase() : "";
 
   if (market !== "BR" && market !== "US") {
-    throw badRequest("market invalido.");
+    throw badRequest("market inválido.");
   }
 
   return market;
@@ -76,7 +76,7 @@ function parseOrigin(value: unknown): Exclude<DataOrigin, "DEMO"> {
   const origin = typeof value === "string" ? value.toUpperCase() : "";
 
   if (origin !== "MANUAL" && origin !== "OFFICIAL" && origin !== "OWNED") {
-    throw badRequest("sourceOrigin invalido.");
+    throw badRequest("sourceOrigin inválido.");
   }
 
   return origin;
@@ -99,7 +99,7 @@ function parseSourceKind(value: unknown): SourceKind {
   ];
 
   if (!allowed.includes(kind as SourceKind)) {
-    throw badRequest("sourceKind invalido.");
+    throw badRequest("sourceKind inválido.");
   }
 
   return kind as SourceKind;
@@ -110,7 +110,7 @@ function parseSignalType(value: unknown): SignalType {
   const allowed: SignalType[] = ["AUDIO", "FORMAT", "HASHTAG", "CREATOR", "REVIVAL", "US_TO_BR"];
 
   if (!allowed.includes(type as SignalType)) {
-    throw badRequest("signalType invalido.");
+    throw badRequest("signalType inválido.");
   }
 
   return type as SignalType;
@@ -164,7 +164,7 @@ export function parseIngestionRequestBody(body: unknown): IngestionRequestApiInp
     };
   }
 
-  throw badRequest("type de ingestao nao suportado.");
+  throw badRequest("type de ingestão não suportado.");
 }
 
 function buildTrendImportRequestKey(input: Extract<IngestionRequestApiInput, { type: "OFFICIAL_SNAPSHOT" }>) {

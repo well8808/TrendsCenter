@@ -28,7 +28,8 @@ function isMissingEmailProvider(error: unknown, message: string) {
       error.code === "SERVICE_UNAVAILABLE" &&
       details.provider === "resend" &&
       details.reason === "missing_env") ||
-    message.includes("nao configurado")
+    message.includes("nao configurado") ||
+    message.includes("não configurado")
   );
 }
 

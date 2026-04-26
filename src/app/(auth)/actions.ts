@@ -75,7 +75,7 @@ async function createVerificationToken({
     actionUrl,
     userId,
     workspaceId,
-    body: `Confirme este e-mail para liberar o workspace. Link valido por 24 horas: ${actionUrl}`,
+    body: `Confirme este e-mail para liberar o workspace. Link válido por 24 horas: ${actionUrl}`,
   });
   await writeAuthEvent({
     client,

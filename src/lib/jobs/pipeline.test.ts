@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createManualIngestEnvelope, phase3BQueues } from "./pipeline";
 
 describe("phase3BQueues", () => {
-  it("mantem filas locais sem rede externa automatica", () => {
+  it("mantém filas locais sem rede externa automática", () => {
     const envelope = createManualIngestEnvelope("src-manual-intake-br", "Teste manual aprovado.");
 
     expect(phase3BQueues.map((item) => item.queue)).toEqual([

@@ -50,7 +50,7 @@ export async function createManualSignalAction(formData: FormData) {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Falha ao registrar ingestao manual.",
+      message: error instanceof Error ? error.message : "Falha ao registrar ingestão manual.",
     };
   }
 }
@@ -76,7 +76,7 @@ export async function attachManualEvidenceAction(formData: FormData) {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Falha ao anexar evidencia.",
+      message: error instanceof Error ? error.message : "Falha ao anexar evidência.",
     };
   }
 }

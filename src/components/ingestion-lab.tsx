@@ -16,9 +16,8 @@ import {
   RadioTower,
   ShieldCheck,
 } from "lucide-react";
-import { type FormEvent, useRef, useState, useTransition } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
-import { attachManualEvidenceAction, createManualSignalAction } from "@/app/actions";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
 import type { SourceRecord, TrendSignal } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -27,14 +26,45 @@ type ActionResult = {
   ok: boolean;
   message: string;
   signalId?: string;
+  evidenceId?: string;
   batchId?: string;
+  requestId?: string;
+  jobId?: string;
   dedupedSignal?: boolean;
   dedupedEvidence?: boolean;
 };
 
+type ManualIngestionPayload =
+  | {
+      type: "SIGNAL_CREATE";
+      signalTitle: string;
+      summary: string;
+      signalType: string;
+      market: string;
+      audience: string;
+      sourceTitle: string;
+      sourceKind: string;
+      sourceOrigin: string;
+      evidenceTitle: string;
+      evidenceUrl?: string;
+      evidenceNote: string;
+    }
+  | {
+      type: "EVIDENCE_APPEND";
+      signalId: string;
+      sourceId: string;
+      signalTitle: string;
+      market: string;
+      sourceOrigin: string;
+      sourceTitle: string;
+      evidenceTitle: string;
+      evidenceUrl?: string;
+      evidenceNote: string;
+    };
+
 const signalTypes = [
   ["FORMAT", "Formato"],
-  ["AUDIO", "Audio"],
+  ["AUDIO", "Áudio"],
   ["HASHTAG", "Hashtag"],
   ["CREATOR", "Creator"],
   ["REVIVAL", "Revival"],
@@ -125,6 +155,55 @@ function ResultBadge({ result }: { result?: ActionResult }) {
   );
 }
 
+function formValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function queueIngestionRequest(payload: ManualIngestionPayload): Promise<ActionResult> {
+  const response = await fetch("/api/v1/ingestion/requests", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = (await response.json().catch(() => null)) as
+    | {
+        ok?: boolean;
+        data?: {
+          request: {
+            id: string;
+            type: string;
+            status: string;
+            title: string;
+          };
+          job: {
+            id: string;
+            status: string;
+          };
+          idempotent: boolean;
+        };
+        error?: { message?: string };
+      }
+    | null;
+
+  if (!response.ok || !body?.ok || !body.data) {
+    return {
+      ok: false,
+      message: body?.error?.message ?? "Falha ao registrar ingestão manual.",
+    };
+  }
+
+  return {
+    ok: true,
+    message: body.data.idempotent
+      ? `Ingestão já registrada; job ${body.data.job.status.toLowerCase()} reaproveitado.`
+      : `Ingestão enfileirada; job ${body.data.job.status.toLowerCase()} criado.`,
+    requestId: body.data.request.id,
+    jobId: body.data.job.id,
+  };
+}
+
 function MetricChip({
   label,
   value,
@@ -166,39 +245,96 @@ export function IngestionLab({
   const evidenceFormRef = useRef<HTMLFormElement>(null);
   const [signalResult, setSignalResult] = useState<ActionResult>();
   const [evidenceResult, setEvidenceResult] = useState<ActionResult>();
-  const [isCreating, startCreating] = useTransition();
-  const [isAttaching, startAttaching] = useTransition();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isAttaching, setIsAttaching] = useState(false);
 
-  function submitSignal(event: FormEvent<HTMLFormElement>) {
+  async function submitSignal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    startCreating(async () => {
-      const result = await createManualSignalAction(formData);
+    setIsCreating(true);
+    setSignalResult(undefined);
+
+    try {
+      const result = await queueIngestionRequest({
+        type: "SIGNAL_CREATE",
+        signalTitle: formValue(formData, "signalTitle"),
+        summary: formValue(formData, "summary") || "Sinal criado manualmente; aguarda evidências adicionais.",
+        signalType: formValue(formData, "signalType"),
+        market: formValue(formData, "market"),
+        audience: formValue(formData, "audience") || "Operação interna",
+        sourceTitle: formValue(formData, "sourceTitle"),
+        sourceKind: formValue(formData, "sourceKind"),
+        sourceOrigin: formValue(formData, "sourceOrigin"),
+        evidenceTitle: formValue(formData, "evidenceTitle"),
+        evidenceUrl: formValue(formData, "evidenceUrl") || undefined,
+        evidenceNote: formValue(formData, "evidenceNote"),
+      });
       setSignalResult(result);
 
       if (result.ok) {
         signalFormRef.current?.reset();
         router.refresh();
       }
-    });
+    } catch (error) {
+      setSignalResult({
+        ok: false,
+        message: error instanceof Error ? error.message : "Falha ao registrar ingestão manual.",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   }
 
-  function submitEvidence(event: FormEvent<HTMLFormElement>) {
+  async function submitEvidence(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const signalId = formValue(formData, "signalId");
+    const sourceId = formValue(formData, "sourceId");
+    const selectedSignal = signals.find((signal) => signal.id === signalId);
+    const selectedSource = sources.find((source) => source.id === sourceId);
 
-    startAttaching(async () => {
-      const result = await attachManualEvidenceAction(formData);
+    setIsAttaching(true);
+    setEvidenceResult(undefined);
+
+    if (!selectedSignal || !selectedSource) {
+      setEvidenceResult({
+        ok: false,
+        message: "Selecione um sinal e uma fonte antes de anexar evidência.",
+      });
+      setIsAttaching(false);
+      return;
+    }
+
+    try {
+      const result = await queueIngestionRequest({
+        type: "EVIDENCE_APPEND",
+        signalId,
+        sourceId,
+        signalTitle: selectedSignal.title,
+        market: selectedSignal.market,
+        sourceOrigin: selectedSource.origin,
+        sourceTitle: selectedSource.title,
+        evidenceTitle: formValue(formData, "appendEvidenceTitle"),
+        evidenceUrl: formValue(formData, "appendEvidenceUrl") || undefined,
+        evidenceNote: formValue(formData, "appendEvidenceNote"),
+      });
       setEvidenceResult(result);
 
       if (result.ok) {
         evidenceFormRef.current?.reset();
         router.refresh();
       }
-    });
+    } catch (error) {
+      setEvidenceResult({
+        ok: false,
+        message: error instanceof Error ? error.message : "Falha ao anexar evidência.",
+      });
+    } finally {
+      setIsAttaching(false);
+    }
   }
 
   const signalOptions = signals.slice(0, 12);
@@ -212,9 +348,9 @@ export function IngestionLab({
             <DatabaseZap className="h-4 w-4" aria-hidden="true" />
             Ingestion Lab
           </div>
-          <h2 className="mt-2 text-2xl font-semibold leading-tight">Operacao rastreavel</h2>
+          <h2 className="mt-2 text-2xl font-semibold leading-tight">Operação rastreável</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)]">
-            Entrada segura para sinais, evidencias e fontes aprovadas. Sem scraping, sem conector externo fragil e sem transformar falha em insight.
+            Entrada segura para sinais, evidências e fontes aprovadas. Sem scraping, sem conector externo frágil e sem transformar falha em insight.
           </p>
         </div>
         <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 2xl:min-w-[460px]">
@@ -239,17 +375,17 @@ export function IngestionLab({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                 novo sinal
               </p>
-              <h3 className="mt-1 text-base font-semibold">Criar com evidencia vinculada</h3>
+              <h3 className="mt-1 text-base font-semibold">Criar com evidência vinculada</h3>
             </div>
             <FileInput className="h-5 w-5 text-[color:var(--muted)]" aria-hidden="true" />
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <Field label="titulo do sinal">
+            <Field label="título do sinal">
               <input className={fieldClass} name="signalTitle" placeholder="Manual: formato em 3 cortes" required />
             </Field>
-            <Field label="audiencia">
-              <input className={fieldClass} name="audience" placeholder="Danca, beleza, lifestyle" />
+            <Field label="audiência">
+              <input className={fieldClass} name="audience" placeholder="Dança, beleza, lifestyle" />
             </Field>
             <Field label="mercado">
               <select className={fieldClass} name="market" defaultValue="BR">
@@ -269,7 +405,7 @@ export function IngestionLab({
             <Field label="fonte">
               <input className={fieldClass} name="sourceTitle" placeholder="Review manual BR" required />
             </Field>
-            <Field label="superficie">
+            <Field label="superfície">
               <select className={fieldClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
                 {sourceKinds.map(([value, label]) => (
                   <option key={value} value={value}>
@@ -282,17 +418,17 @@ export function IngestionLab({
               <select className={fieldClass} name="sourceOrigin" defaultValue="MANUAL">
                 <option value="MANUAL">manual</option>
                 <option value="OFFICIAL">oficial registrado</option>
-                <option value="OWNED">proprio/licenciado</option>
+                <option value="OWNED">próprio/licenciado</option>
               </select>
             </Field>
-            <Field label="evidencia">
-              <input className={fieldClass} name="evidenceTitle" placeholder="Observacao de cluster" required />
+            <Field label="evidência">
+              <input className={fieldClass} name="evidenceTitle" placeholder="Observação de cluster" required />
             </Field>
             <Field label="url opcional">
               <input className={fieldClass} name="evidenceUrl" placeholder="https://..." type="url" />
             </Field>
             <Field label="nota">
-              <input className={fieldClass} name="evidenceNote" placeholder="Evidencia manual, sem coleta automatica" required />
+              <input className={fieldClass} name="evidenceNote" placeholder="Evidência manual, sem coleta automática" required />
             </Field>
           </div>
 
@@ -312,7 +448,7 @@ export function IngestionLab({
               className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.16)] disabled:opacity-60"
             >
               {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              registrar ingestao
+              registrar ingestão
             </button>
           </div>
         </motion.form>
@@ -326,7 +462,7 @@ export function IngestionLab({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
-                  anexar evidencia
+                  anexar evidência
                 </p>
                 <h3 className="mt-1 text-base font-semibold">Vincular a sinal existente</h3>
               </div>
@@ -352,14 +488,14 @@ export function IngestionLab({
                   ))}
                 </select>
               </Field>
-              <Field label="evidencia">
+              <Field label="evidência">
                 <input className={fieldClass} name="appendEvidenceTitle" placeholder="Nova nota de prova" required />
               </Field>
               <Field label="url opcional">
                 <input className={fieldClass} name="appendEvidenceUrl" placeholder="https://..." type="url" />
               </Field>
               <Field label="nota">
-                <input className={fieldClass} name="appendEvidenceNote" placeholder="O que esta evidencia confirma ou limita" required />
+                <input className={fieldClass} name="appendEvidenceNote" placeholder="O que esta evidência confirma ou limita" required />
               </Field>
             </div>
 
@@ -460,7 +596,7 @@ export function IngestionLab({
           <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
               <ClipboardList className="h-4 w-4" aria-hidden="true" />
-              ultimos jobs
+              últimos jobs
             </div>
             <div className="mt-3 grid gap-2">
               {lab.jobs.length === 0 ? (
@@ -492,7 +628,7 @@ export function IngestionLab({
               boundary
             </div>
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-              Ingestao aceita somente entrada manual, propria/licenciada ou superficie oficial registrada. Qualquer falha permanece visivel como falha.
+              Ingestão aceita somente entrada manual, própria/licenciada ou superfície oficial registrada. Qualquer falha permanece visível como falha.
             </p>
           </div>
         </div>

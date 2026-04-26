@@ -361,13 +361,13 @@ export function TrendCard({
             className="mt-5 grid gap-4 border-t border-[color:var(--line)] pt-4 lg:grid-cols-[1.15fr_1fr_0.82fr]"
           >
             <div className="min-w-0">
-              <p className="eyebrow">decisao</p>
+              <p className="eyebrow">decisão</p>
               <p className="mt-2 break-words text-sm font-medium leading-5 text-[color:var(--foreground)]">
                 {signal.decision}
               </p>
             </div>
             <div className="min-w-0">
-              <p className="eyebrow">proxima acao</p>
+              <p className="eyebrow">próxima ação</p>
               <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">
                 {signal.nextAction}
               </p>
@@ -523,7 +523,7 @@ export function TrendCard({
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs text-[color:var(--muted)]">
               <Sparkles className="h-3 w-3" aria-hidden="true" />
-              forca {signal.strength}
+              força {signal.strength}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -82,6 +82,6 @@ export function calculateVideoTrendScore(input: VideoTrendScoreInput): VideoTren
     accelerationScore,
     recencyScore,
     consistencyScore,
-    explanation: `Score v0.1 pondera crescimento, velocidade, aceleracao, recencia e consistencia de snapshots/evidencias.`,
+    explanation: `Score v0.1 pondera crescimento, velocidade, aceleração, recência e consistência de snapshots/evidências.`,
   };
 }

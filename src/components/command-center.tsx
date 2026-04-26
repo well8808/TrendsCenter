@@ -123,7 +123,7 @@ const navItems = [
   { label: "Command Center", icon: LayoutDashboard, active: true, key: "cc" },
   { label: "Radar BR", icon: Radar, key: "radar-br" },
   { label: "US Early Signals", icon: Globe2, key: "us" },
-  { label: "Audios", icon: AudioLines, key: "audios" },
+  { label: "Áudios", icon: AudioLines, key: "audios" },
   { label: "Formatos", icon: Activity, key: "formatos" },
   { label: "Hashtags", icon: Tags, key: "hashtags" },
   { label: "Creators", icon: UserRoundCheck, key: "creators" },
@@ -150,7 +150,7 @@ const marketOptions: { value: MarketFilter; label: string }[] = [
 const typeOptions: { value: TypeFilter; label: string }[] = [
   { value: "ALL", label: "Tudo" },
   { value: "FORMAT", label: "Formatos" },
-  { value: "AUDIO", label: "Audios" },
+  { value: "AUDIO", label: "Áudios" },
   { value: "HASHTAG", label: "Hashtags" },
   { value: "CREATOR", label: "Creators" },
   { value: "REVIVAL", label: "Revival" },
@@ -160,7 +160,7 @@ const typeOptions: { value: TypeFilter; label: string }[] = [
 const priorityOptions: { value: PriorityFilter; label: string }[] = [
   { value: "ALL", label: "Tudo" },
   { value: "now", label: "Agora" },
-  { value: "next", label: "Proximo" },
+  { value: "next", label: "Próximo" },
   { value: "watch", label: "Watch" },
   { value: "hold", label: "Hold" },
 ];
@@ -174,7 +174,7 @@ const sortOptions: { value: SortMode; label: string }[] = [
 
 const priorityLabel: Record<SignalPriority, string> = {
   now: "agora",
-  next: "proximo",
+  next: "próximo",
   watch: "watch",
   hold: "hold",
 };
@@ -192,8 +192,8 @@ function formatSourceDate(dateIso: string) {
 
 const fallbackPersistence: CommandCenterData["persistence"] = {
   mode: "error-fallback",
-  label: "banco indisponivel",
-  detail: "Postgres nao respondeu; nenhum insight ficticio foi carregado.",
+  label: "banco indisponível",
+  detail: "Postgres não respondeu; nenhum insight fictício foi carregado.",
 };
 
 const fallbackIngestionLab: CommandCenterData["ingestionLab"] = {
@@ -550,7 +550,7 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
         />
       </div>
       <p className="relative mt-3 text-xs leading-5 text-[color:var(--muted-strong)]">
-        Transferencia calculada dos sinais persistidos. So vira acao com fonte oficial ou evidencia BR.
+        Transferência calculada dos sinais persistidos. Só vira ação com fonte oficial ou evidência BR.
       </p>
     </motion.div>
   );
@@ -601,7 +601,7 @@ function EvidenceInspector({
             <p className="card-eyebrow text-[color:var(--aqua)]">Evidence desk</p>
             <h2 className="mt-1.5 text-sm font-semibold leading-5">Nenhum sinal selecionado</h2>
             <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-              Clique em um card do signal desk pra abrir evidencias, fonte e historico aqui.
+              Clique em um card do signal desk para abrir evidências, fonte e histórico aqui.
             </p>
           </div>
         </div>
@@ -683,7 +683,7 @@ function EvidenceInspector({
       <div className="mt-4 rounded-[var(--radius-sm)] border border-[rgba(64,224,208,0.24)] bg-[rgba(64,224,208,0.07)] p-3">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)]">workspace flow</p>
         <p className="mt-2 text-sm leading-5 text-[color:var(--muted-strong)]">
-          {savedCount} sinais salvos em {storageLabel}. Proxima acao sugerida: {signal.nextAction}
+          {savedCount} sinais salvos em {storageLabel}. Próxima ação sugerida: {signal.nextAction}
         </p>
       </div>
     </motion.section>
@@ -707,7 +707,7 @@ function SavedAndHistory({
             <LiveDot tone="aqua" />
             Saved / revival
           </p>
-          <h2 className="mt-1.5 text-base font-semibold">Fila de decisao</h2>
+          <h2 className="mt-1.5 text-base font-semibold">Fila de decisão</h2>
         </div>
         <Bookmark className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
       </div>
@@ -784,11 +784,13 @@ function Sidebar({
   activeKey,
   tenant,
   onLogout,
+  onNavigate,
   isLoggingOut,
 }: {
   activeKey: string;
   tenant: CommandCenterData["tenant"];
   onLogout: () => void;
+  onNavigate: (key: string) => void;
   isLoggingOut: boolean;
 }) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
@@ -818,14 +820,16 @@ function Sidebar({
         </motion.div>
 
         <LayoutGroup id="sidebar-nav">
-          <nav className="mt-6 grid gap-0.5" aria-label="Navegacao principal">
+          <nav className="mt-6 grid gap-0.5" aria-label="Navegação principal">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = item.active || item.key === activeKey;
+              const isActive = item.key === activeKey;
               const isHover = hoverKey === item.key;
               return (
                 <motion.button
                   key={item.key}
+                  type="button"
+                  onClick={() => onNavigate(item.key)}
                   onHoverStart={() => setHoverKey(item.key)}
                   onHoverEnd={() => setHoverKey(null)}
                   variants={itemVariants}
@@ -835,7 +839,6 @@ function Sidebar({
                       ? "text-[color:var(--foreground)]"
                       : "text-[color:var(--muted)] hover:text-[color:var(--muted-strong)]",
                   )}
-                  type="button"
                 >
                   {isActive && (
                     <motion.span
@@ -874,7 +877,7 @@ function Sidebar({
             </div>
             <p className="mt-3 break-all text-xs leading-5 text-[color:var(--muted)]">{tenant.userEmail}</p>
             <p className="mt-1.5 text-xs leading-5 text-[color:var(--muted)]">
-              {tenant.role.toLowerCase()} · sessao isolada por workspace.
+              {tenant.role.toLowerCase()} · sessão isolada por workspace.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button
@@ -916,6 +919,7 @@ export function CommandCenter({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
   const [sortMode, setSortMode] = useState<SortMode>("priority");
+  const [activeNavKey, setActiveNavKey] = useState("cc");
   const [selectedSignalId, setSelectedSignalId] = useState(signals[0]?.id);
   const [savedIds, setSavedIds] = useState(() => new Set(signals.filter((signal) => signal.saved).map((signal) => signal.id)));
   const [isSaving, startSavingTransition] = useTransition();
@@ -973,9 +977,74 @@ export function CommandCenter({
     });
   }
 
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function resetSignalFilters() {
+    setQuery("");
+    setMarketFilter("ALL");
+    setTypeFilter("ALL");
+    setPriorityFilter("ALL");
+    setSortMode("priority");
+  }
+
+  function navigateDashboard(key: string) {
+    setActiveNavKey(key);
+    setWorkspaceState("ready");
+
+    if (key === "cc") {
+      resetSignalFilters();
+      scrollToSection("command-center-top");
+      return;
+    }
+
+    if (key === "radar-br") {
+      resetSignalFilters();
+      setMarketFilter("BR");
+      scrollToSection("signal-desk");
+      return;
+    }
+
+    if (key === "us") {
+      resetSignalFilters();
+      setMarketFilter("US");
+      scrollToSection("signal-desk");
+      return;
+    }
+
+    if (key === "audios" || key === "formatos" || key === "hashtags" || key === "creators" || key === "revival") {
+      resetSignalFilters();
+      const typeByKey: Partial<Record<string, TypeFilter>> = {
+        audios: "AUDIO",
+        formatos: "FORMAT",
+        hashtags: "HASHTAG",
+        creators: "CREATOR",
+        revival: "REVIVAL",
+      };
+      setTypeFilter(typeByKey[key] ?? "ALL");
+      scrollToSection("signal-desk");
+      return;
+    }
+
+    if (key === "evidence") {
+      scrollToSection("evidence-desk");
+      return;
+    }
+
+    if (key === "ingestion" || key === "upload") {
+      scrollToSection("ingestion-lab");
+      return;
+    }
+
+    if (key === "compliance") {
+      scrollToSection("safe-mode");
+    }
+  }
+
   const metricTiles = [
     {
-      label: "Sinais visiveis",
+      label: "Sinais visíveis",
       value: String(filteredSignals.length).padStart(2, "0"),
       rawValue: filteredSignals.length,
       delta: `${summary.highPriorityCount} hot`,
@@ -989,14 +1058,14 @@ export function CommandCenter({
       tone: "aqua" as const,
     },
     {
-      label: "Evidencias",
+      label: "Evidências",
       value: String(summary.evidenceCount).padStart(2, "0"),
       rawValue: summary.evidenceCount,
       delta: persistence.mode === "database" ? "persistidas" : "sem fixture",
       tone: "gold" as const,
     },
     {
-      label: "Score medio",
+      label: "Score médio",
       value: String(summary.avgScore),
       rawValue: summary.avgScore,
       delta: "score v0.1",
@@ -1010,9 +1079,9 @@ export function CommandCenter({
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
       <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1840px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[244px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[244px_minmax(0,1fr)_330px] 2xl:grid-cols-[264px_minmax(0,1fr)_360px]">
-        <Sidebar activeKey="cc" tenant={tenant} onLogout={logout} isLoggingOut={isLoggingOut} />
+        <Sidebar activeKey={activeNavKey} tenant={tenant} onLogout={logout} onNavigate={navigateDashboard} isLoggingOut={isLoggingOut} />
 
-        <section className="min-w-0 bg-[rgba(7,7,6,0.44)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[rgba(239,233,220,0.12)]">
+        <section id="command-center-top" className="min-w-0 bg-[rgba(7,7,6,0.44)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[rgba(239,233,220,0.12)]">
           {/* HERO / HEADER — t=0.10, y:-12→0 */}
           <motion.header
             variants={headerVariants}
@@ -1088,6 +1157,8 @@ export function CommandCenter({
                   </span>
                 </motion.label>
                 <motion.button
+                  type="button"
+                  onClick={() => scrollToSection("signal-filters")}
                   variants={itemVariants}
                   className="app-control grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--aqua)]"
                 >
@@ -1095,6 +1166,8 @@ export function CommandCenter({
                   <span className="sr-only">Filtros</span>
                 </motion.button>
                 <motion.button
+                  type="button"
+                  onClick={() => scrollToSection("alerts-rail")}
                   variants={itemVariants}
                   className="app-control relative grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--aqua)]"
                 >
@@ -1132,7 +1205,7 @@ export function CommandCenter({
                 initial="hidden"
                 animate="show"
                 className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4"
-                aria-label="Metricas operacionais"
+                aria-label="Métricas operacionais"
               >
                 {metricTiles.map((metric, idx) => (
                   <MetricTile key={metric.label} {...metric} index={idx} />
@@ -1142,6 +1215,7 @@ export function CommandCenter({
               <MarketBridge signals={rankSignals(signals, "priority")} />
 
               <motion.section
+                id="ingestion-lab"
                 variants={sectionVariants}
                 initial="hidden"
                 animate="show"
@@ -1194,6 +1268,7 @@ export function CommandCenter({
 
               {/* SIGNAL DESK — t=0.30, cards stagger 0.08 */}
               <motion.section
+                id="signal-desk"
                 variants={sectionVariants}
                 initial="hidden"
                 animate="show"
@@ -1208,9 +1283,9 @@ export function CommandCenter({
                       <LiveDot tone="aqua" />
                       Signal desk
                     </p>
-                    <h2 className="mt-2 text-2xl font-semibold leading-tight">Ranking para decisao rapida</h2>
+                    <h2 className="mt-2 text-2xl font-semibold leading-tight">Ranking para decisão rápida</h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]">
-                      Sinais carregados do Postgres. A tela prioriza leitura, comparacao, risco, evidencia e proxima acao.
+                      Sinais carregados do Postgres. A tela prioriza leitura, comparação, risco, evidência e próxima ação.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
@@ -1220,6 +1295,7 @@ export function CommandCenter({
                 </motion.div>
 
                 <motion.div
+                  id="signal-filters"
                   variants={itemVariants}
                   className="app-panel mb-4 rounded-[var(--radius-lg)] p-3 shadow-[var(--shadow-lift)]"
                 >
@@ -1257,7 +1333,7 @@ export function CommandCenter({
                         options={sortOptions}
                         value={sortMode}
                         onChange={setSortMode}
-                        ariaLabel="Ordenacao"
+                        ariaLabel="Ordenação"
                       />
                     </div>
                   </div>
@@ -1270,7 +1346,7 @@ export function CommandCenter({
                       </span>
                       <span>de</span>
                       <span className="metric-number">{signals.length}</span>
-                      <span>sinais visiveis</span>
+                      <span>sinais visíveis</span>
                     </span>
                     <button
                       type="button"
@@ -1303,23 +1379,23 @@ export function CommandCenter({
                         key="empty"
                         variant="empty"
                         title="Sem sinais para operar"
-                        body="Fontes oficiais, manuais e propria/licenciada alimentam o ranking. Sem ingestao, sem ranking."
+                        body="Fontes oficiais, manuais e própria/licenciada alimentam o ranking. Sem ingestão, sem ranking."
                         hint="envie um lote em Ingestion Lab →"
                       />
                     ) : workspaceState === "error" ? (
                       <EmptyState
                         key="error"
                         variant="error"
-                        title="Ingestao bloqueada"
-                        body="A fonte respondeu com erro. Falha nao vira dado — corrija a origem antes de re-rodar o import."
-                        hint="revisar ultimos jobs em Pipeline →"
+                        title="Ingestão bloqueada"
+                        body="A fonte respondeu com erro. Falha não vira dado — corrija a origem antes de re-rodar o import."
+                        hint="revisar últimos jobs em Pipeline →"
                       />
                     ) : filteredSignals.length === 0 ? (
                       <EmptyState
                         key="filtered"
                         variant="filtered"
                         title="Nenhum sinal para este recorte"
-                        body="Combinacao de filtros sem match. Reduza um criterio ou limpe tudo pra voltar ao ranking completo."
+                        body="Combinação de filtros sem match. Reduza um critério ou limpe tudo para voltar ao ranking completo."
                         hint={`${signals.length} sinais ignorados pelos filtros`}
                         onReset={() => {
                           setQuery("");
@@ -1351,6 +1427,7 @@ export function CommandCenter({
 
         {/* RIGHT RAIL — t=0.40, x:+20→0 */}
         <motion.aside
+          id="alerts-rail"
           variants={railVariants}
           initial="hidden"
           animate="show"
@@ -1359,11 +1436,13 @@ export function CommandCenter({
           <div className="xl:sticky xl:top-4 xl:h-[calc(100dvh-32px)] xl:self-start">
             <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-12 xl:pr-3">
               <motion.div variants={sectionVariants}>
-                <EvidenceInspector
-                  signal={selectedSignal}
-                  savedCount={savedIds.size}
-                  storageLabel={persistence.mode === "database" ? "Postgres gerenciado" : "fallback isolado"}
-                />
+                <div id="evidence-desk">
+                  <EvidenceInspector
+                    signal={selectedSignal}
+                    savedCount={savedIds.size}
+                    storageLabel={persistence.mode === "database" ? "Postgres gerenciado" : "fallback isolado"}
+                  />
+                </div>
               </motion.div>
 
               <motion.div variants={sectionVariants}>
@@ -1378,7 +1457,7 @@ export function CommandCenter({
                   <div>
                     <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--acid)]">
                       <LiveDot tone="acid" />
-                      Proveniencia
+                      Proveniência
                     </p>
                     <h2 className="mt-1.5 text-base font-semibold">Fila de fontes</h2>
                   </div>
@@ -1418,6 +1497,7 @@ export function CommandCenter({
               </motion.div>
 
               <motion.section
+                id="safe-mode"
                 variants={sectionVariants}
                 className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.2)] bg-[linear-gradient(180deg,rgba(199,255,93,0.09),rgba(199,255,93,0.04))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
               >
@@ -1430,7 +1510,7 @@ export function CommandCenter({
                   Safe mode
                 </div>
                 <p className="relative mt-2.5 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  Ingestao manual, propria/licenciada ou oficial rastreavel. Falhas seguem como falhas — entradas sem fonte nao viram insight.
+                  Ingestão manual, própria/licenciada ou oficial rastreável. Falhas seguem como falhas — entradas sem fonte não viram insight.
                 </p>
                 <p className="relative mt-3 inline-flex items-center gap-2 rounded-full border border-[rgba(199,255,93,0.22)] bg-[rgba(0,0,0,0.24)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--acid)]">
                   <TrendingUp className="h-3 w-3" aria-hidden="true" />

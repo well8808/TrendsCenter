@@ -16,15 +16,15 @@ export function badRequest(message: string, details?: unknown) {
   return new AppError("BAD_REQUEST", message, 400, details);
 }
 
-export function unauthorized(message = "Sessao obrigatoria.") {
+export function unauthorized(message = "Sessão obrigatória.") {
   return new AppError("UNAUTHORIZED", message, 401);
 }
 
-export function forbidden(message = "Acao nao autorizada.") {
+export function forbidden(message = "Ação não autorizada.") {
   return new AppError("FORBIDDEN", message, 403);
 }
 
-export function notFound(message = "Recurso nao encontrado.") {
+export function notFound(message = "Recurso não encontrado.") {
   return new AppError("NOT_FOUND", message, 404);
 }
 

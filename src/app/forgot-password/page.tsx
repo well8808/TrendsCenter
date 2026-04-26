@@ -20,7 +20,7 @@ export default async function ForgotPasswordPage({
   return (
     <AuthShell
       title="Recuperar senha"
-      subtitle="Informe o e-mail. Se ele existir e estiver verificado, um link temporario sera enfileirado."
+      subtitle="Informe o e-mail. Se ele existir e estiver verificado, um link temporário será enfileirado."
       error={error}
       footerHref="/login"
       footerLabel="Voltar ao login"

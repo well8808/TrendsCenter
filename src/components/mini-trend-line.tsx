@@ -7,7 +7,7 @@ export function MiniTrendLine({ tone = "acid" }: { tone?: "acid" | "aqua" | "cor
   }[tone];
 
   return (
-    <svg viewBox="0 0 120 38" role="img" aria-label="Linha de tendencia" className="h-10 w-full">
+    <svg viewBox="0 0 120 38" role="img" aria-label="Linha de tendência" className="h-10 w-full">
       <path
         d="M2 30 C 15 28, 18 12, 31 17 S 50 34, 64 18 S 82 8, 94 14 S 105 24, 118 6"
         fill="none"

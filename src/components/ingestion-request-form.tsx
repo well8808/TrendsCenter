@@ -49,7 +49,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
     if (!body.sourceTitle || !body.payloadJson) {
       setState({
         kind: "error",
-        message: "sourceTitle e payloadJson sao obrigatorios.",
+        message: "sourceTitle e payloadJson são obrigatórios.",
         code: "BAD_REQUEST",
         status: 400,
         requestId: "n/a",
@@ -96,12 +96,12 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           style={{ animation: "live-pulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite" }}
         />
         <DatabaseZap className="h-4 w-4" aria-hidden="true" />
-        ingestao
+        ingestão
       </div>
-      <h2 className="mt-3 text-lg font-semibold">Indexar lote rastreavel</h2>
+      <h2 className="mt-3 text-lg font-semibold">Indexar lote rastreável</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
         POST <code className="font-mono text-[color:var(--aqua)]">/api/v1/ingestion/requests</code> · idempotente ·
-        enfilera job observavel.
+        enfileira job observável.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
@@ -115,7 +115,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           <select className={controlClass} name="sourceOrigin" defaultValue="MANUAL">
             <option value="MANUAL">manual</option>
             <option value="OFFICIAL">oficial</option>
-            <option value="OWNED">proprio</option>
+            <option value="OWNED">próprio</option>
           </select>
         </div>
         <select className={controlClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
@@ -171,7 +171,7 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
       : ack.job.status === "RUNNING"
       ? "processando"
       : ack.job.status === "SUCCEEDED"
-      ? "concluido"
+      ? "concluído"
       : ack.job.status.toLowerCase();
 
   return (
@@ -184,7 +184,7 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
     >
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-        {ack.idempotent ? "request ja existia (idempotente)" : "request aceita"}
+        {ack.idempotent ? "request já existia (idempotente)" : "request aceita"}
       </p>
       <dl className="mt-3 grid gap-1.5 text-xs leading-5">
         <div className="flex justify-between gap-3">
@@ -192,7 +192,7 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
           <dd className="min-w-0 truncate font-mono text-[color:var(--muted-strong)]">{ack.request.id}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[color:var(--muted)]">titulo</dt>
+          <dt className="text-[color:var(--muted)]">título</dt>
           <dd className="min-w-0 truncate text-[color:var(--foreground)]">{ack.request.title}</dd>
         </div>
         <div className="flex justify-between gap-3">

@@ -211,7 +211,7 @@ export function JobRunsFeed({
               exit={{ opacity: 0 }}
               className="app-rail-empty rounded-[var(--radius-md)] px-3 py-2.5 text-xs leading-5"
             >
-              Nenhum job nos ultimos registros. Dispare uma ingestao pra popular a fila.
+              Nenhum job nos últimos registros. Dispare uma ingestão para popular a fila.
             </motion.p>
           ) : null}
 
@@ -342,7 +342,7 @@ function ErrorBanner({
         className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--line)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.38)] hover:text-[color:var(--aqua)]"
       >
         <RefreshCw className="h-3 w-3" aria-hidden="true" />
-        retry
+        tentar novamente
       </button>
     </div>
   );

@@ -13,7 +13,7 @@ const baselineConnectors = [
     status: "APPROVED",
     market: "BR",
     officialSurface: "Operator entry",
-    policyNotes: "Entrada manual rastreavel; sem scraping e sem coleta externa automatica.",
+    policyNotes: "Entrada manual rastreável; sem scraping e sem coleta externa automática.",
   },
   {
     slug: "official-creative-center-br",
@@ -23,7 +23,7 @@ const baselineConnectors = [
     status: "NEEDS_REVIEW",
     market: "BR",
     officialSurface: "TikTok Creative Center",
-    policyNotes: "Superficie oficial registrada; pendente de credenciais/ingestao aprovada.",
+    policyNotes: "Superfície oficial registrada; pendente de credenciais/ingestão aprovada.",
   },
   {
     slug: "official-commercial-music-library",
@@ -33,7 +33,7 @@ const baselineConnectors = [
     status: "NEEDS_REVIEW",
     market: "BR",
     officialSurface: "Commercial Music Library",
-    policyNotes: "Usar apenas para audios comerciais licenciaveis ou licenca comprovada.",
+    policyNotes: "Usar apenas para áudios comerciais licenciáveis ou licença comprovada.",
   },
   {
     slug: "owned-upload-lab",
@@ -43,7 +43,7 @@ const baselineConnectors = [
     status: "APPROVED",
     market: "BR",
     officialSurface: "Owned media",
-    policyNotes: "Somente arquivos proprios ou licenciados; metadados removidos apenas com relatorio.",
+    policyNotes: "Somente arquivos próprios ou licenciados; metadados removidos apenas com relatório.",
   },
 ] as const;
 
@@ -114,7 +114,7 @@ export async function provisionWorkspaceBaseline(
       dedupeKey: sourceDedupeKey,
       coverage: "entrada operacional manual",
       freshness: "ao vivo via Postgres",
-      gap: "sem coleta externa automatica",
+      gap: "sem coleta externa automática",
       notes: "Fonte baseline real para iniciar o Ingestion Lab.",
     },
   });
@@ -233,7 +233,7 @@ export async function provisionWorkspaceBaseline(
       label: "baseline",
       value: "tenant",
       tone: "aqua",
-      message: "Workspace inicializado com connectors reais e sem dados de tendencia ficticios.",
+      message: "Workspace inicializado com connectors reais e sem dados de tendência fictícios.",
       actor,
       metadata: {
         connectorCount: baselineConnectors.length,

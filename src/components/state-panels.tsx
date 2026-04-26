@@ -10,26 +10,26 @@ const stateCopy = {
   ready: {
     icon: Sparkles,
     title: "Postgres operacional",
-    body: "A interface esta lendo sinais, evidencias, lineage, jobs e fila de decisao do banco gerenciado.",
+    body: "A interface está lendo sinais, evidências, lineage, jobs e fila de decisão do banco gerenciado.",
     action: "Fluxo real ativo",
   },
   loading: {
     icon: Loader2,
     title: "Sincronizando fontes",
-    body: "Estado de carregamento premium para imports oficiais, snapshots manuais e calculo de score.",
+    body: "Estado de carregamento premium para imports oficiais, snapshots manuais e cálculo de score.",
     action: "Fila preparada",
   },
   empty: {
     icon: Database,
     title: "Nenhum sinal importado",
-    body: "Quando uma fonte oficial ou snapshot manual for adicionado, os sinais aparecem aqui com origem, data, confianca e evidencias.",
-    action: "Aguardando evidencia",
+    body: "Quando uma fonte oficial ou snapshot manual for adicionado, os sinais aparecem aqui com origem, data, confiança e evidências.",
+    action: "Aguardando evidência",
   },
   error: {
     icon: AlertTriangle,
     title: "Falha na leitura da fonte",
-    body: "A UI separa erro de fonte, erro de normalizacao e erro de score para nao transformar ausencia de dado em insight falso.",
-    action: "Revisar importacao",
+    body: "A UI separa erro de fonte, erro de normalização e erro de score para não transformar ausência de dado em insight falso.",
+    action: "Revisar importação",
   },
 };
 

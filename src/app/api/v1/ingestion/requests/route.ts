@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch {
-      throw badRequest("JSON invalido no corpo da requisicao.");
+      throw badRequest("JSON inválido no corpo da requisição.");
     }
 
     const data = await queueOperationalIngestionRequest(context, body);

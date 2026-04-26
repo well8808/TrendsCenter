@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const limit = Number(payload.limit ?? "20");
 
     if (Number.isNaN(limit) || limit <= 0) {
-      throw badRequest("limit invalido.");
+      throw badRequest("limit inválido.");
     }
 
     const data = await processAuthOutbox({

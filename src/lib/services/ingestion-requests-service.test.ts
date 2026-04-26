@@ -29,6 +29,6 @@ describe("parseIngestionRequestBody", () => {
       parseIngestionRequestBody({
         type: "UNSUPPORTED",
       }),
-    ).toThrowError(/nao suportado/i);
+    ).toThrowError(/n[aã]o suportado/i);
   });
 });

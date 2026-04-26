@@ -27,7 +27,7 @@ export async function deliverEmail(input: DeliverEmailInput): Promise<DeliveredE
   const config = resendConfig();
 
   if (!config) {
-    throw serviceUnavailable("Email provider nao configurado.", {
+    throw serviceUnavailable("Email provider não configurado.", {
       provider: "resend",
       reason: "missing_env",
     });
@@ -51,7 +51,7 @@ export async function deliverEmail(input: DeliverEmailInput): Promise<DeliveredE
   const payload = (await response.json().catch(() => null)) as { id?: string; message?: string } | null;
 
   if (!response.ok) {
-    throw serviceUnavailable("Falha ao entregar email no provider.", {
+    throw serviceUnavailable("Falha ao entregar e-mail no provider.", {
       provider: "resend",
       status: response.status,
       response: payload,

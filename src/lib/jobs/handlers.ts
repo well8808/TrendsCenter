@@ -19,7 +19,7 @@ export async function runJobHandler(job: JobRun): Promise<JobExecutionResult> {
   if (job.handler !== jobHandlers.ingestionRequestProcess) {
     return {
       status: "dead_lettered",
-      message: `Handler nao suportado: ${job.handler}`,
+      message: `Handler não suportado: ${job.handler}`,
     };
   }
 
@@ -38,14 +38,14 @@ export async function runJobHandler(job: JobRun): Promise<JobExecutionResult> {
   if (!request) {
     return {
       status: "dead_lettered",
-      message: "IngestRequest nao encontrada para este job.",
+      message: "IngestRequest não encontrada para este job.",
     };
   }
 
   if (request.status === "SUCCEEDED") {
     return {
       status: "succeeded",
-      message: "IngestRequest ja concluida anteriormente.",
+      message: "IngestRequest já concluída anteriormente.",
       details: { requestId: request.id, idempotent: true },
     };
   }
@@ -166,6 +166,6 @@ export async function runJobHandler(job: JobRun): Promise<JobExecutionResult> {
 
   return {
     status: "dead_lettered",
-    message: `Payload kind nao suportado: ${String(payload.kind ?? "undefined")}`,
+    message: `Payload kind não suportado: ${String(payload.kind ?? "undefined")}`,
   };
 }

@@ -33,7 +33,7 @@ async function waitForServer(baseUrl: string, timeoutMs: number) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  throw new Error(`Servidor local nao iniciou a tempo. Ultimo erro: ${String(lastError)}`);
+  throw new Error(`Servidor local não iniciou a tempo. Último erro: ${String(lastError)}`);
 }
 
 export async function startNextServer(options: StartServerOptions): Promise<NextServerHarness> {

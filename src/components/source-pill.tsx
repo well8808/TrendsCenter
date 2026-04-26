@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const originLabel = {
   OFFICIAL: "oficial",
-  OWNED: "proprio",
+  OWNED: "próprio",
   MANUAL: "manual",
   DEMO: "demo/mock",
 };
@@ -25,7 +25,7 @@ export function SourcePill({
         "inline-flex max-w-full shrink-0 items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.04)] px-3 py-1 text-xs text-[color:var(--muted-strong)]",
         compact && "px-2.5 py-0.5 text-[11px]",
       )}
-      title={`${source.title} - ${source.evidenceCount} evidencias - ${source.confidence}`}
+      title={`${source.title} - ${source.evidenceCount} evidências - ${source.confidence}`}
     >
       <Icon className="h-3.5 w-3.5 text-[color:var(--acid)]" aria-hidden="true" />
       <span className="font-medium uppercase tracking-[0.18em]">{originLabel[source.origin]}</span>
