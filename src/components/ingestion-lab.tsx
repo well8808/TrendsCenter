@@ -519,9 +519,11 @@ export function IngestionLab({
             </div>
             <div className="mt-3 grid gap-2">
               {lab.connectors.length === 0 ? (
-                <p className="rounded-[var(--radius-sm)] border border-[color:var(--line)] px-3 py-2 text-sm text-[color:var(--muted)]">
-                  Nenhum connector registrado.
-                </p>
+                <div className="flex flex-col items-center gap-2 rounded-[var(--radius-sm)] border border-dashed border-[rgba(64,224,208,0.2)] bg-[rgba(64,224,208,0.03)] px-3 py-4 text-center">
+                  <RadioTower className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
+                  <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum connector registrado</p>
+                  <p className="text-[11px] leading-4 text-[color:var(--muted)]">Adicione uma fonte aprovada para habilitar ingestão automática.</p>
+                </div>
               ) : (
                 lab.connectors.slice(0, 4).map((connector) => (
                   <div key={connector.id} className="flex min-w-0 items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] px-3 py-2">
@@ -548,9 +550,11 @@ export function IngestionLab({
           </div>
           <div className="mt-4 grid gap-3">
             {lab.batches.length === 0 ? (
-              <p className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.035)] p-3 text-sm text-[color:var(--muted)]">
-                Nenhum batch processado ainda.
-              </p>
+              <div className="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[rgba(199,255,93,0.16)] bg-[rgba(199,255,93,0.03)] p-4 text-center">
+                <GitBranch className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
+                <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum batch processado</p>
+                <p className="text-[11px] leading-4 text-[color:var(--muted)]">O lineage aparece aqui assim que o primeiro job for concluído.</p>
+              </div>
             ) : (
               lab.batches.slice(0, 4).map((batch) => (
                 <div key={batch.id} className="app-card rounded-[var(--radius-md)] p-3">
@@ -584,7 +588,9 @@ export function IngestionLab({
                     ))}
                   </div>
                   {batch.error && (
-                    <p className="mt-3 text-xs text-[color:var(--coral)]">{batch.error}</p>
+                    <p className="mt-3 rounded-[var(--radius-sm)] border border-[rgba(255,111,97,0.28)] bg-[rgba(255,111,97,0.06)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--coral)]">
+                      {batch.error}
+                    </p>
                   )}
                 </div>
               ))
@@ -600,9 +606,11 @@ export function IngestionLab({
             </div>
             <div className="mt-3 grid gap-2">
               {lab.jobs.length === 0 ? (
-                <p className="rounded-[var(--radius-sm)] border border-[color:var(--line)] px-3 py-2 text-sm text-[color:var(--muted)]">
-                  Nenhum job registrado.
-                </p>
+                <div className="flex flex-col items-center gap-2 rounded-[var(--radius-sm)] border border-dashed border-[rgba(243,201,105,0.18)] bg-[rgba(243,201,105,0.03)] px-3 py-4 text-center">
+                  <ClipboardList className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
+                  <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum job registrado</p>
+                  <p className="text-[11px] leading-4 text-[color:var(--muted)]">Jobs aparecem após a primeira ingestão enfileirada.</p>
+                </div>
               ) : (
                 lab.jobs.slice(0, 5).map((job) => (
                   <div key={job.id} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] px-3 py-2">
@@ -615,7 +623,11 @@ export function IngestionLab({
                     <p className="mt-1 text-xs text-[color:var(--muted)]">
                       {job.stage ?? "stage"} - {formatOperationDateTime(job.finishedAt)}
                     </p>
-                    {job.error && <p className="mt-1 text-xs text-[color:var(--coral)]">{job.error}</p>}
+                    {job.error && (
+                      <p className="mt-2 rounded-[var(--radius-sm)] border border-[rgba(255,111,97,0.28)] bg-[rgba(255,111,97,0.06)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--coral)]">
+                        {job.error}
+                      </p>
+                    )}
                   </div>
                 ))
               )}

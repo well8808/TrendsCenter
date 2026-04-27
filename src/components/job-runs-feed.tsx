@@ -214,7 +214,7 @@ export function JobRunsFeed({
             >
               <motion.div
                 aria-hidden="true"
-                animate={{ scale: [1, 1.1, 1], opacity: [0.18, 0.36, 0.18] }}
+                animate={{ scale: [1, 1.04, 1], opacity: [0.18, 0.36, 0.18] }}
                 transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
                 className="mx-auto mb-3 h-9 w-9 rounded-full"
                 style={{ background: "radial-gradient(circle, rgba(64,224,208,0.4), transparent 70%)" }}

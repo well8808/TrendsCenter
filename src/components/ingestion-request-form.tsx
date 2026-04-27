@@ -100,38 +100,56 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
       </div>
       <h2 className="mt-3 text-lg font-semibold">Indexar lote rastreável</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-        POST <code className="font-mono text-[color:var(--aqua)]">/api/v1/ingestion/requests</code> · idempotente ·
-        enfileira job observável.
+        Indexa um lote de vídeos rastreáveis. Cada envio cria um job na{" "}
+        <code className="font-mono text-[color:var(--aqua)]">fila ao lado</code>.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
-        <input className={controlClass} name="sourceTitle" placeholder="Fonte / lote" required />
-        <input className={controlClass} name="sourceUrl" placeholder="URL da fonte" type="url" />
-        <div className="grid grid-cols-2 gap-2">
-          <select className={controlClass} name="market" defaultValue="BR">
-            <option value="BR">BR</option>
-            <option value="US">US</option>
-          </select>
-          <select className={controlClass} name="sourceOrigin" defaultValue="MANUAL">
-            <option value="MANUAL">manual</option>
-            <option value="OFFICIAL">oficial</option>
-            <option value="OWNED">próprio</option>
-          </select>
+        <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          nome da fonte
+          <input className={controlClass} name="sourceTitle" placeholder="Ex: Creative Center — BR — Jan 2025" required />
+        </label>
+        <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          url da fonte
+          <input className={controlClass} name="sourceUrl" placeholder="https://..." type="url" />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+            mercado
+            <select className={controlClass} name="market" defaultValue="BR">
+              <option value="BR">BR</option>
+              <option value="US">US</option>
+            </select>
+          </label>
+          <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+            origem
+            <select className={controlClass} name="sourceOrigin" defaultValue="MANUAL">
+              <option value="MANUAL">manual</option>
+              <option value="OFFICIAL">oficial</option>
+              <option value="OWNED">próprio</option>
+            </select>
+          </label>
         </div>
-        <select className={controlClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
-          <option value="MANUAL_RESEARCH">Manual research</option>
-          <option value="CREATIVE_CENTER_TRENDS">Creative Center</option>
-          <option value="TOP_ADS">Top Ads</option>
-          <option value="KEYWORD_INSIGHTS">Keyword Insights</option>
-          <option value="COMMERCIAL_MUSIC_LIBRARY">Commercial Music Library</option>
-          <option value="OWNED_UPLOAD">Owned upload</option>
-        </select>
-        <textarea
-          className="min-h-56 resize-y rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 font-mono text-xs leading-5 text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]"
-          name="payloadJson"
-          placeholder='{"videos":[{"title":"","metrics":{"views":0},"creator":{"handle":""},"sound":{"title":""},"hashtags":[],"evidence":{"title":"","note":""}}]}'
-          required
-        />
+        <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          tipo de fonte
+          <select className={controlClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
+            <option value="MANUAL_RESEARCH">Manual research</option>
+            <option value="CREATIVE_CENTER_TRENDS">Creative Center</option>
+            <option value="TOP_ADS">Top Ads</option>
+            <option value="KEYWORD_INSIGHTS">Keyword Insights</option>
+            <option value="COMMERCIAL_MUSIC_LIBRARY">Commercial Music Library</option>
+            <option value="OWNED_UPLOAD">Owned upload</option>
+          </select>
+        </label>
+        <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          json do lote
+          <textarea
+            className="min-h-48 resize-y rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 font-mono text-xs leading-5 text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]"
+            name="payloadJson"
+            placeholder="Cole o JSON do lote aqui (array de vídeos com título, métricas e evidência)"
+            required
+          />
+        </label>
         <button
           type="submit"
           disabled={submitting}
@@ -184,7 +202,7 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
     >
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-        {ack.idempotent ? "request já existia (idempotente)" : "request aceita"}
+        {ack.idempotent ? "request já registrada (sem duplicata)" : "request aceita"}
       </p>
       <dl className="mt-3 grid gap-1.5 text-xs leading-5">
         <div className="flex justify-between gap-3">

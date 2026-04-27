@@ -185,7 +185,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
 
             {trend.timeline.length === 0 ? (
-              <p className="mt-5 text-sm text-[color:var(--muted)]">Nenhum snapshot registrado.</p>
+              <p className="mt-5 text-sm text-[color:var(--muted-strong)]">Nenhum snapshot registrado.</p>
             ) : (
               <div className="timeline-track relative mt-5 grid gap-0 pl-7">
                 {trend.timeline.map((point, i) => {
@@ -252,7 +252,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
 
             <div className="mt-5 grid gap-2.5">
               {trend.evidence.length === 0 ? (
-                <p className="text-sm text-[color:var(--muted)]">Nenhuma evidência registrada.</p>
+                <p className="text-sm text-[color:var(--muted-strong)]">Nenhuma evidência registrada.</p>
               ) : (
                 trend.evidence.map((item) => (
                   <div key={item.id} className="evidence-item rounded-[var(--radius-md)] p-4">
@@ -354,7 +354,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                   )}
                 </>
               ) : (
-                <p className="mt-3 text-sm text-[color:var(--muted)]">Sem creator vinculado.</p>
+                <p className="mt-3 text-sm text-[color:var(--muted-strong)]">Sem creator vinculado.</p>
               )}
             </section>
 
@@ -375,7 +375,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                   </div>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-[color:var(--muted)]">Sem som vinculado.</p>
+                <p className="mt-3 text-sm text-[color:var(--muted-strong)]">Sem som vinculado.</p>
               )}
             </section>
 
@@ -396,7 +396,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                     </span>
                   ))
                 ) : (
-                  <span className="text-sm text-[color:var(--muted)]">Sem hashtags vinculadas.</span>
+                  <span className="text-sm text-[color:var(--muted-strong)]">Sem hashtags vinculadas.</span>
                 )}
               </div>
             </section>
@@ -431,7 +431,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                     );
                   })
                 ) : (
-                  <p className="text-sm text-[color:var(--muted)]">Sem relacionados suficientes.</p>
+                  <p className="text-sm text-[color:var(--muted-strong)]">Sem relacionados suficientes.</p>
                 )}
               </div>
             </section>
