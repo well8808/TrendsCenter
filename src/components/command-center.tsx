@@ -363,7 +363,7 @@ function MetricTile({
       variants={tileVariants}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.16, ease }}
-      className="group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[var(--card-bg)] p-5"
+      className="group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[var(--card-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
     >
       <motion.span
         aria-hidden="true"
@@ -519,7 +519,7 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
       variants={bridgeItemVariants}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[rgba(169,140,255,0.28)] bg-[linear-gradient(180deg,rgba(169,140,255,0.08),rgba(7,7,6,0.32))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] lg:col-span-2 2xl:col-span-1"
+      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[rgba(169,140,255,0.28)] bg-[linear-gradient(180deg,rgba(169,140,255,0.08),rgba(7,7,6,0.32))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] lg:col-span-2 xl:col-span-1"
     >
       <motion.span
         aria-hidden="true"
@@ -566,7 +566,7 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
       variants={bridgeContainerVariants}
       initial="hidden"
       animate="show"
-      className="app-panel grid min-w-0 gap-3 rounded-[var(--radius-lg)] p-4 lg:grid-cols-2 2xl:grid-cols-[1fr_1fr_260px]"
+      className="app-panel grid min-w-0 gap-3 rounded-[var(--radius-lg)] p-4 lg:grid-cols-2 xl:grid-cols-[1fr_1fr_260px]"
     >
       <MarketBridgeBR signal={brTop} />
       <MarketBridgeUS signal={usTop} />
@@ -588,24 +588,38 @@ function EvidenceInspector({
 }) {
   if (!signal) {
     return (
-      <section className="app-rail-card relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] p-5">
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease }}
+        className="app-rail-card relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] p-5"
+      >
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[rgba(64,224,208,0.08)] blur-3xl"
         />
-        <div className="relative flex items-start gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.24)]">
-            <Inbox className="h-4 w-4 text-[color:var(--aqua)]" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <p className="card-eyebrow text-[color:var(--aqua)]">Evidence desk</p>
-            <h2 className="mt-1.5 text-sm font-semibold leading-5">Nenhum sinal selecionado</h2>
-            <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-              Clique em um card do signal desk para abrir evidências, fonte e histórico aqui.
+        <div className="relative">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--aqua)]">
+            <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
+            Evidence desk
+          </p>
+          <h2 className="mt-3 text-base font-semibold">Selecione um sinal</h2>
+          <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
+            Clique em qualquer card do Signal Desk para abrir evidências, fonte rastreável e histórico de snapshots aqui.
+          </p>
+          <div className="mt-4 flex items-center gap-2.5 rounded-[var(--radius-sm)] border border-dashed border-[rgba(64,224,208,0.2)] bg-[rgba(64,224,208,0.04)] px-3 py-2.5">
+            <motion.div
+              aria-hidden="true"
+              animate={{ opacity: [0.4, 0.9, 0.4] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--aqua)]"
+            />
+            <p className="text-[11px] leading-4 text-[color:var(--muted)]">
+              Evidências e fonte rastreável aparecem aqui
             </p>
           </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
@@ -737,12 +751,17 @@ function SavedAndHistory({
           ) : (
             <motion.div
               key="empty-saved"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="app-rail-empty rounded-[var(--radius-md)] px-3 py-2.5 text-xs leading-5"
+              transition={{ duration: 0.28, ease }}
+              className="rounded-[var(--radius-md)] border border-dashed border-[rgba(199,255,93,0.14)] bg-[rgba(199,255,93,0.03)] p-4 text-center"
             >
-              Nenhum sinal salvo ainda. Marque um card pra montar a fila.
+              <Bookmark className="mx-auto h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
+              <p className="mt-2 text-xs font-semibold text-[color:var(--muted-strong)]">Fila vazia</p>
+              <p className="mt-1 text-[11px] leading-4 text-[color:var(--muted)]">
+                Marque um card para montar a fila de decisão.
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -768,8 +787,9 @@ function SavedAndHistory({
               </motion.div>
             ))
           ) : (
-            <div className="app-rail-empty rounded-[var(--radius-md)] px-3 py-2.5 text-xs leading-5">
-              Sem revival ativo nesta leitura.
+            <div className="rounded-[var(--radius-sm)] border border-dashed border-[rgba(169,140,255,0.16)] bg-[rgba(169,140,255,0.04)] px-3 py-3 text-center">
+              <RotateCcw className="mx-auto h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
+              <p className="mt-1.5 text-[11px] leading-4 text-[color:var(--muted)]">Sem revival ativo nesta leitura.</p>
             </div>
           )}
         </div>
@@ -1068,7 +1088,7 @@ export function CommandCenter({
       label: "Score médio",
       value: String(summary.avgScore),
       rawValue: summary.avgScore,
-      delta: "score v0.1",
+      delta: "weighted avg",
       tone: "coral" as const,
     },
   ];
@@ -1081,7 +1101,7 @@ export function CommandCenter({
       <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1840px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[244px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[244px_minmax(0,1fr)_330px] 2xl:grid-cols-[264px_minmax(0,1fr)_360px]">
         <Sidebar activeKey={activeNavKey} tenant={tenant} onLogout={logout} onNavigate={navigateDashboard} isLoggingOut={isLoggingOut} />
 
-        <section id="command-center-top" className="min-w-0 bg-[rgba(7,7,6,0.44)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[rgba(239,233,220,0.12)]">
+        <section id="command-center-top" className="min-w-0 bg-[rgba(7,7,6,0.52)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[rgba(239,233,220,0.14)]">
           {/* HERO / HEADER — t=0.10, y:-12→0 */}
           <motion.header
             variants={headerVariants}
@@ -1135,7 +1155,11 @@ export function CommandCenter({
                     variants={itemVariants}
                     className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]"
                   >
-                    {persistence.detail} Workspace: {tenant.workspaceName} — {tenant.role.toLowerCase()}.
+                    Sinais, evidências e decisões operacionais para o workspace{" "}
+                    <span className="text-[color:var(--foreground)]">{tenant.workspaceName}</span>
+                    {persistence.mode !== "database" && (
+                      <span className="text-[color:var(--gold)]"> · {persistence.detail}</span>
+                    )}
                   </motion.p>
                 </div>
               </motion.div>
@@ -1197,14 +1221,14 @@ export function CommandCenter({
             </div>
           </motion.header>
 
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-7 px-4 py-7 md:px-6">
-            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 md:px-6">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
               {/* METRICS — t=0.20, stagger 0.06 × 4 */}
               <motion.section
                 variants={tilesContainerVariants}
                 initial="hidden"
                 animate="show"
-                className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4"
+                className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
                 aria-label="Métricas operacionais"
               >
                 {metricTiles.map((metric, idx) => (
@@ -1234,7 +1258,7 @@ export function CommandCenter({
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <p className="eyebrow text-[color:var(--acid)]">Estado do workspace</p>
+                    <p className="eyebrow text-[color:var(--acid)]">Workspace</p>
                     <h2 className="mt-2 text-lg font-semibold">Estado operacional</h2>
                   </div>
                   <SegmentGroup
@@ -1285,21 +1309,21 @@ export function CommandCenter({
                     </p>
                     <h2 className="mt-2 text-2xl font-semibold leading-tight">Ranking para decisão rápida</h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]">
-                      Sinais carregados do Postgres. A tela prioriza leitura, comparação, risco, evidência e próxima ação.
+                      Cada sinal tem origem, score e janela temporal verificados. Priorize pelo score, confira a evidência, decida a ação.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
                     <Gauge className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
-                    score v0.1
+                    scoring engine
                   </div>
                 </motion.div>
 
                 <motion.div
                   id="signal-filters"
                   variants={itemVariants}
-                  className="app-panel mb-4 rounded-[var(--radius-lg)] p-3 shadow-[var(--shadow-lift)]"
+                  className="app-panel mb-4 rounded-[var(--radius-lg)] p-4 shadow-[var(--shadow-lift)]"
                 >
-                  <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
+                  <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-between">
                     <SegmentGroup
                       groupId="market-filter"
                       options={marketOptions}
@@ -1316,8 +1340,8 @@ export function CommandCenter({
                     />
                   </div>
 
-                  <div className="mt-3 flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-                    <div className="scrollbar-soft overflow-x-auto pb-1">
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-between">
+                    <div className="scrollbar-soft overflow-x-auto pb-0.5">
                       <SegmentGroup
                         groupId="type-filter"
                         options={typeOptions}
@@ -1326,7 +1350,7 @@ export function CommandCenter({
                         ariaLabel="Tipo"
                       />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <ArrowDownUp className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                       <SegmentGroup
                         groupId="sort-filter"

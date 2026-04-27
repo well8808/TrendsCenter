@@ -56,19 +56,21 @@ export function AuthShell({
                 Autenticação, sessão e workspace isolado antes de qualquer dado operacional.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-xs text-[color:var(--muted)]">
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] p-3">
-                <p className="text-[color:var(--aqua)]">01</p>
-                <p className="mt-2">sessão HTTP-only</p>
-              </div>
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] p-3">
-                <p className="text-[color:var(--gold)]">02</p>
-                <p className="mt-2">tenant scope</p>
-              </div>
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] p-3">
-                <p className="text-[color:var(--acid)]">03</p>
-                <p className="mt-2">safe mode</p>
-              </div>
+            <div className="grid grid-cols-3 gap-2.5 text-xs">
+              {[
+                { num: "01", label: "sessão HTTP-only", color: "var(--aqua)", border: "rgba(64,224,208,0.22)", bg: "rgba(64,224,208,0.06)" },
+                { num: "02", label: "tenant scope", color: "var(--gold)", border: "rgba(243,201,105,0.22)", bg: "rgba(243,201,105,0.06)" },
+                { num: "03", label: "safe mode", color: "var(--acid)", border: "rgba(199,255,93,0.24)", bg: "rgba(199,255,93,0.06)" },
+              ].map(({ num, label, color, border, bg }) => (
+                <div
+                  key={num}
+                  className="rounded-[var(--radius-md)] p-3.5"
+                  style={{ border: `1px solid ${border}`, background: bg }}
+                >
+                  <p className="font-mono font-semibold" style={{ color }}>{num}</p>
+                  <p className="mt-2 text-[color:var(--muted)]">{label}</p>
+                </div>
+              ))}
             </div>
           </div>
           <div className="p-5 sm:p-8">

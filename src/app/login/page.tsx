@@ -37,7 +37,7 @@ export default async function LoginPage({
         <label className="group flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-3 py-3 text-sm text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.36)]">
           <span>
             <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--foreground)]">
-              Manter Conectado
+              manter conectado
             </span>
             <span className="mt-1 block text-xs text-[color:var(--muted)]">Mantém a sessão por até 30 dias.</span>
           </span>

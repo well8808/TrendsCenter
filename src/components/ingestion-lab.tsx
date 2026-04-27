@@ -342,7 +342,7 @@ export function IngestionLab({
 
   return (
     <section className="app-panel min-w-0 rounded-[var(--radius-lg)] p-4 md:p-5">
-      <div className="flex min-w-0 flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
             <DatabaseZap className="h-4 w-4" aria-hidden="true" />
@@ -353,7 +353,7 @@ export function IngestionLab({
             Entrada segura para sinais, evidências e fontes aprovadas. Sem scraping, sem conector externo frágil e sem transformar falha em insight.
           </p>
         </div>
-        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 2xl:min-w-[460px]">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[460px]">
           <MetricChip label="connectors ok" value={String(lab.stats.approvedConnectors)} tone="acid" />
           <MetricChip label="requests abertos" value={String(lab.stats.openRequests)} tone="aqua" />
           <MetricChip label="batches ok" value={String(lab.stats.succeededBatches)} tone="gold" />
@@ -361,7 +361,7 @@ export function IngestionLab({
         </div>
       </div>
 
-      <div className="mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 2xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <motion.form
           ref={signalFormRef}
           onSubmit={submitSignal}
@@ -540,7 +540,7 @@ export function IngestionLab({
         </div>
       </div>
 
-      <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
             <GitBranch className="h-4 w-4" aria-hidden="true" />
@@ -576,9 +576,9 @@ export function IngestionLab({
                     <ArrowRight className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
                     <span>{batch.evidenceTitles.length} evid.</span>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-7">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     {batch.steps.map((step) => (
-                      <div key={`${batch.id}-${step.name}`} className={cn("rounded-full border px-2 py-1 text-center text-[10px] uppercase tracking-[0.1em]", statusTone(step.status))}>
+                      <div key={`${batch.id}-${step.name}`} className={cn("rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.1em]", statusTone(step.status))}>
                         {step.name}
                       </div>
                     ))}

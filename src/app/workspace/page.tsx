@@ -201,9 +201,18 @@ export default async function WorkspacePage({
                     </div>
                   ))
                 ) : (
-                  <p className="app-card rounded-[var(--radius-md)] p-4 text-sm leading-6 text-[color:var(--muted-strong)]">
-                    Nenhum convite pendente. O workspace está fechado por padrão.
-                  </p>
+                  <div className="rounded-[var(--radius-md)] border border-dashed border-[rgba(243,201,105,0.18)] bg-[rgba(243,201,105,0.04)] p-6 text-center">
+                    <div className="mx-auto grid h-10 w-10 place-items-center rounded-full border border-[rgba(243,201,105,0.22)] bg-[rgba(243,201,105,0.06)]">
+                      <ShieldCheck className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
+                    </div>
+                    <p className="mt-3 text-sm font-semibold">Workspace fechado</p>
+                    <p className="mt-1.5 text-xs leading-5 text-[color:var(--muted)]">
+                      Nenhum convite pendente. O acesso é controlado por origem — cada entrada fica registrada com papel e data.
+                    </p>
+                    <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                      lineage protegido
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

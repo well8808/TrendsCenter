@@ -585,6 +585,35 @@ select option {
   );
 }
 
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.018) 0%,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(255, 255, 255, 0.018) 100%
+    );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+  }
+}
+
 .hairline-top {
   position: relative;
 }
@@ -601,4 +630,142 @@ select option {
     transparent
   );
   pointer-events: none;
+}
+
+/* ─── Section head: icon + label + optional right slot ─────────────────── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ─── Interactive card: stronger hover with top accent line ─────────────── */
+.app-card-interactive:hover::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(239, 233, 220, 0.32), transparent);
+  pointer-events: none;
+}
+
+/* ─── Metric cell: clean metric display in data grids ────────────────────── */
+.metric-cell {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.25rem;
+}
+.metric-cell-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.metric-cell-value {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Confidence badges ──────────────────────────────────────────────────── */
+.badge-high {
+  border: 1px solid rgba(121, 232, 132, 0.4);
+  background: rgba(121, 232, 132, 0.1);
+  color: var(--success);
+}
+.badge-medium {
+  border: 1px solid rgba(243, 201, 105, 0.38);
+  background: rgba(243, 201, 105, 0.1);
+  color: var(--gold);
+}
+.badge-low {
+  border: 1px solid rgba(255, 111, 97, 0.36);
+  background: rgba(255, 111, 97, 0.09);
+  color: var(--coral);
+}
+
+/* ─── Timeline track: left border visual line ────────────────────────────── */
+.timeline-track {
+  position: relative;
+}
+.timeline-track::before {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  bottom: 0;
+  left: 0.6875rem;
+  width: 1px;
+  background: linear-gradient(180deg, var(--aqua) 0%, rgba(64, 224, 208, 0.08) 100%);
+  pointer-events: none;
+}
+
+/* ─── Score display ─────────────────────────────────────────────────────── */
+.score-hero {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-size: clamp(3rem, 4vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+}
+
+/* ─── Tag variants for market/status ────────────────────────────────────── */
+.tag-acid {
+  border: 1px solid rgba(199, 255, 93, 0.32);
+  background: rgba(199, 255, 93, 0.08);
+  color: var(--acid);
+}
+.tag-aqua {
+  border: 1px solid rgba(64, 224, 208, 0.3);
+  background: rgba(64, 224, 208, 0.08);
+  color: var(--aqua);
+}
+.tag-gold {
+  border: 1px solid rgba(243, 201, 105, 0.32);
+  background: rgba(243, 201, 105, 0.08);
+  color: var(--gold);
+}
+.tag-violet {
+  border: 1px solid rgba(169, 140, 255, 0.32);
+  background: rgba(169, 140, 255, 0.08);
+  color: var(--violet);
+}
+.tag-neutral {
+  border: 1px solid rgba(239, 233, 220, 0.15);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted-strong);
+}
+
+/* ─── App section: internal content panel header ────────────────────────── */
+.app-section-panel {
+  border: 1px solid var(--line);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(24px);
+  border-radius: var(--radius-lg);
+}
+
+/* ─── Evidence item ──────────────────────────────────────────────────────── */
+.evidence-item {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.026);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition:
+    border-color var(--motion-fast) var(--ease-premium),
+    background var(--motion-fast) var(--ease-premium);
+}
+.evidence-item:hover {
+  border-color: rgba(64, 224, 208, 0.28);
+  background: rgba(64, 224, 208, 0.04);
 }

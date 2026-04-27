@@ -16,6 +16,11 @@ export interface EnqueueJobInput {
   payload?: Prisma.InputJsonValue;
 }
 
+export interface ClaimDueJobsOptions {
+  workspaceId?: string;
+  queue?: string;
+}
+
 export async function enqueueJob(input: EnqueueJobInput) {
   if (input.dedupeKey) {
     const existing = await getPrisma().jobRun.findUnique({
@@ -68,9 +73,16 @@ export async function getJobRunById(id: string) {
   });
 }
 
-export async function claimDueJobs(limit: number, claimToken: string, leaseExpiresAt: Date) {
+export async function claimDueJobs(
+  limit: number,
+  claimToken: string,
+  leaseExpiresAt: Date,
+  options: ClaimDueJobsOptions = {},
+) {
   const now = new Date();
   const claimableWhere = {
+    workspaceId: options.workspaceId,
+    queue: options.queue,
     OR: [
       {
         status: { in: ["QUEUED", "FAILED"] as JobStatus[] },

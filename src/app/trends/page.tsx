@@ -33,9 +33,6 @@ function formatDate(value?: string) {
   return value ? dateFormatter.format(new Date(value)) : "sem data";
 }
 
-const controlClass =
-  "app-control rounded-[var(--radius-sm)] px-3 py-3 text-sm outline-none placeholder:text-[color:var(--muted)]";
-
 function jobRunsUpdatedAt(data: JobRunsListDto) {
   return data.items.reduce((latest, job) => Math.max(latest, Date.parse(job.updatedAt)), 0) || undefined;
 }
@@ -143,34 +140,48 @@ export default async function TrendsPage({
             )}
 
             <form
-              className="relative mt-7 grid gap-3 rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.13)] bg-[rgba(0,0,0,0.28)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] xl:grid-cols-[minmax(0,1fr)_150px_180px_120px]"
+              className="relative mt-7 overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.14)] bg-[rgba(0,0,0,0.32)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
               action="/trends"
             >
-              <label className={`${controlClass} flex min-w-0 items-center gap-2 rounded-[var(--radius-md)] border-transparent bg-[rgba(255,255,255,0.04)]`}>
-                <Search className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-                <input
-                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted)]"
-                  name="q"
-                  defaultValue={data.params.query}
-                  placeholder="keyword, @creator, #hashtag, som..."
-                />
-                <span className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)] sm:inline">
-                  ⌘ K
-                </span>
-              </label>
-              <select className={controlClass} name="market" defaultValue={data.params.market}>
-                <option value="ALL">Todos mercados</option>
-                <option value="BR">Brasil</option>
-                <option value="US">EUA</option>
-              </select>
-              <select className={controlClass} name="sort" defaultValue={data.params.sort}>
-                <option value="score">Trend score</option>
-                <option value="growth">Crescimento</option>
-                <option value="recency">Recência</option>
-              </select>
-              <button type="submit" className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.14)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.2)]">
-                buscar
-              </button>
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(239,233,220,0.2)] to-transparent" />
+              <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_148px_176px_112px]">
+                <label className="flex min-w-0 items-center gap-2.5 border-b border-[rgba(239,233,220,0.1)] px-4 py-3 xl:border-b-0 xl:border-r xl:border-[rgba(239,233,220,0.1)]">
+                  <Search className="h-4 w-4 shrink-0 text-[color:var(--muted)]" aria-hidden="true" />
+                  <input
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted)]"
+                    name="q"
+                    defaultValue={data.params.query}
+                    placeholder="keyword, @creator, #hashtag, som..."
+                  />
+                  <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)] sm:inline">
+                    ⌘ K
+                  </span>
+                </label>
+                <select
+                  className="app-control rounded-none border-0 border-b border-r border-[rgba(239,233,220,0.1)] bg-transparent px-4 py-3 text-sm xl:border-b-0"
+                  name="market"
+                  defaultValue={data.params.market}
+                >
+                  <option value="ALL">Todos mercados</option>
+                  <option value="BR">Brasil</option>
+                  <option value="US">EUA</option>
+                </select>
+                <select
+                  className="app-control rounded-none border-0 border-b border-r border-[rgba(239,233,220,0.1)] bg-transparent px-4 py-3 text-sm xl:border-b-0"
+                  name="sort"
+                  defaultValue={data.params.sort}
+                >
+                  <option value="score">Trend score</option>
+                  <option value="growth">Crescimento</option>
+                  <option value="recency">Recência</option>
+                </select>
+                <button
+                  type="submit"
+                  className="flex min-h-[var(--control-height)] items-center justify-center gap-2 bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]"
+                >
+                  buscar
+                </button>
+              </div>
             </form>
           </header>
 
@@ -189,29 +200,30 @@ export default async function TrendsPage({
             />
 
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5 backdrop-blur-2xl">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--gold)]">
-                <Gauge className="h-4 w-4" aria-hidden="true" />
-                score v0.1
+              <div className="section-head text-[color:var(--gold)]">
+                <Gauge className="h-4 w-4 shrink-0" aria-hidden="true" />
+                como o score é calculado
               </div>
-              <div className="mt-4 grid gap-3">
+              <div className="mt-4 divide-y divide-[rgba(239,233,220,0.07)]">
                 {[
-                  ["crescimento", "views atuais contra snapshot anterior", "acid"],
-                  ["velocidade", "crescimento por janela temporal", "aqua"],
-                  ["aceleração", "mudança de velocidade", "gold"],
-                  ["recência", "idade do vídeo no momento observado", "violet"],
-                  ["consistência", "snapshots + evidências", "aqua"],
-                ].map(([label, body, tone]) => (
-                  <div
-                    key={label}
-                    className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] p-3"
-                  >
-                    <p
-                      className="text-xs font-semibold uppercase tracking-[0.16em]"
-                      style={{ color: `var(--${tone})` }}
-                    >
-                      {label}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">{body}</p>
+                  { label: "crescimento", body: "views atuais contra snapshot anterior", tone: "--acid" },
+                  { label: "velocidade", body: "crescimento por janela temporal", tone: "--aqua" },
+                  { label: "aceleração", body: "mudança de velocidade entre janelas", tone: "--gold" },
+                  { label: "recência", body: "idade do vídeo no momento observado", tone: "--violet" },
+                  { label: "consistência", body: "snapshots + evidências encadeadas", tone: "--aqua" },
+                ].map(({ label, body, tone }) => (
+                  <div key={label} className="flex items-start gap-3 py-3">
+                    <span
+                      className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ background: `var(${tone})`, boxShadow: `0 0 8px var(${tone})` }}
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: `var(${tone})` }}>
+                        {label}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">{body}</p>
+                    </div>
                   </div>
                 ))}
               </div>

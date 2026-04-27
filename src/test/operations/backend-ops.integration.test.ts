@@ -50,8 +50,9 @@ describe("backend operational integrations", () => {
       },
     });
 
-    const firstClaim = await claimDueJobs(1, `claim-a-${job.id}`, new Date(Date.now() + 60_000));
-    const secondClaim = await claimDueJobs(1, `claim-b-${job.id}`, new Date(Date.now() + 60_000));
+    const claimScope = { workspaceId: workspace.id, queue: "integration" };
+    const firstClaim = await claimDueJobs(1, `claim-a-${job.id}`, new Date(Date.now() + 60_000), claimScope);
+    const secondClaim = await claimDueJobs(1, `claim-b-${job.id}`, new Date(Date.now() + 60_000), claimScope);
 
     expect(firstClaim).toHaveLength(1);
     expect(firstClaim[0].id).toBe(job.id);

@@ -204,15 +204,30 @@ export function JobRunsFeed({
       <div className="mt-3 grid gap-2">
         <AnimatePresence mode="popLayout" initial={false}>
           {items.length === 0 && resource.status === "success" ? (
-            <motion.p
+            <motion.div
               key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="app-rail-empty rounded-[var(--radius-md)] px-3 py-2.5 text-xs leading-5"
+              transition={{ duration: 0.32, ease }}
+              className="rounded-[var(--radius-md)] border border-dashed border-[rgba(239,233,220,0.12)] bg-[rgba(255,255,255,0.016)] p-5 text-center"
             >
-              Nenhum job nos últimos registros. Dispare uma ingestão para popular a fila.
-            </motion.p>
+              <motion.div
+                aria-hidden="true"
+                animate={{ scale: [1, 1.1, 1], opacity: [0.18, 0.36, 0.18] }}
+                transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+                className="mx-auto mb-3 h-9 w-9 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(64,224,208,0.4), transparent 70%)" }}
+              />
+              <CircleDashed className="mx-auto mb-2 h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
+              <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Fila operacional vazia</p>
+              <p className="mt-1 text-[11px] leading-5 text-[color:var(--muted)]">
+                Dispare uma ingestão para popular a fila de jobs.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                pronto · aguardando job
+              </div>
+            </motion.div>
           ) : null}
 
           {items.map((job) => (

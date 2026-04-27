@@ -40,14 +40,14 @@ const typeLabel = {
 
 const priorityLabel = {
   now: "prioridade agora",
-  next: "proximo teste",
+  next: "próximo teste",
   watch: "watchlist",
   hold: "aguardar",
 };
 
 const riskLabel = {
   low: "risco baixo",
-  medium: "risco medio",
+  medium: "risco médio",
   high: "risco alto",
 };
 
@@ -60,7 +60,7 @@ const stageLabel = {
 };
 
 function scoreTone(score: number) {
-  if (score >= 68) return "var(--acid)";
+  if (score >= 78) return "var(--acid)";
   if (score >= 52) return "var(--gold)";
   return "var(--aqua)";
 }
@@ -314,7 +314,9 @@ export function TrendCard({
           >
             <span className="font-mono tabular-nums">#{String(index + 1).padStart(2, "0")}</span>
             <span aria-hidden="true" className="h-px w-4 bg-[color:var(--line-strong)]" />
-            <span style={{ color: "var(--acid)" }}>{signal.market}</span>
+            <span style={{ color: signal.market === "BR" ? "var(--acid)" : "var(--aqua)" }}>
+              {signal.market}
+            </span>
             <span aria-hidden="true" className="opacity-40">·</span>
             <span>{typeLabel[signal.type]}</span>
             <span aria-hidden="true" className="opacity-40">·</span>

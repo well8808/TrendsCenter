@@ -9,27 +9,27 @@ import { cn } from "@/lib/utils";
 const stateCopy = {
   ready: {
     icon: Sparkles,
-    title: "Postgres operacional",
-    body: "A interface está lendo sinais, evidências, lineage, jobs e fila de decisão do banco gerenciado.",
-    action: "Fluxo real ativo",
+    title: "Workspace ao vivo",
+    body: "Sinais, evidências e fila de decisão em leitura direta. Cada movimento na fila reflete em segundos.",
+    action: "Fluxo real",
   },
   loading: {
     icon: Loader2,
-    title: "Sincronizando fontes",
-    body: "Estado de carregamento premium para imports oficiais, snapshots manuais e cálculo de score.",
-    action: "Fila preparada",
+    title: "Sincronizando",
+    body: "Lendo o último snapshot e recalculando score. A fila volta em segundos — sem inventar dado no caminho.",
+    action: "Sync em andamento",
   },
   empty: {
     icon: Database,
-    title: "Nenhum sinal importado",
-    body: "Quando uma fonte oficial ou snapshot manual for adicionado, os sinais aparecem aqui com origem, data, confiança e evidências.",
-    action: "Aguardando evidência",
+    title: "Sem sinal nesta janela",
+    body: "Importe um lote oficial ou abra o Ingestion Lab para começar. Cada sinal entra com origem, data e evidência rastreável.",
+    action: "Próxima ação · ingestar",
   },
   error: {
     icon: AlertTriangle,
-    title: "Falha na leitura da fonte",
-    body: "A UI separa erro de fonte, erro de normalização e erro de score para não transformar ausência de dado em insight falso.",
-    action: "Revisar importação",
+    title: "Ingestão bloqueada",
+    body: "A fonte respondeu com erro. Falha permanece falha — corrija a origem antes de re-rodar o import para não virar insight falso.",
+    action: "Revisar último job",
   },
 };
 
@@ -76,12 +76,47 @@ export function StatePanel({ state }: { state: WorkspaceState }) {
 
 export function LoadingSkeleton() {
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" aria-busy="true" aria-live="polite">
       {[0, 1, 2].map((item) => (
         <div
           key={item}
-          className="app-card h-24 animate-pulse rounded-[var(--radius-md)]"
-        />
+          className="app-card relative overflow-hidden rounded-[var(--radius-lg)]"
+          style={{ opacity: 1 - item * 0.2 }}
+        >
+          <div className="skeleton-shimmer absolute inset-0" aria-hidden="true" />
+          <div className="relative grid xl:grid-cols-[minmax(0,1fr)_160px_220px]">
+            <div className="min-w-0 p-5 md:p-6">
+              <div className="flex flex-wrap items-center gap-1.5" aria-hidden="true">
+                <div className="h-5 w-12 rounded-full" style={{ background: "rgba(199,255,93,0.07)" }} />
+                <div className="h-5 w-10 rounded-full" style={{ background: "rgba(239,233,220,0.06)" }} />
+                <div className="h-5 w-16 rounded-full" style={{ background: "rgba(239,233,220,0.04)" }} />
+              </div>
+              <div className="mt-4 h-6 rounded-full" style={{ background: "rgba(239,233,220,0.09)", width: "58%" }} aria-hidden="true" />
+              <div className="mt-2 h-4 rounded-full" style={{ background: "rgba(239,233,220,0.06)", width: "80%" }} aria-hidden="true" />
+              <div className="mt-1.5 h-4 rounded-full" style={{ background: "rgba(239,233,220,0.05)", width: "45%" }} aria-hidden="true" />
+              <div className="mt-4 flex gap-3" aria-hidden="true">
+                <div className="h-3 w-16 rounded-full" style={{ background: "rgba(239,233,220,0.05)" }} />
+                <div className="h-3 w-20 rounded-full" style={{ background: "rgba(239,233,220,0.04)" }} />
+              </div>
+              <div className="mt-4 h-3 w-24 rounded-full" style={{ background: "rgba(64,224,208,0.06)" }} aria-hidden="true" />
+            </div>
+            <div className="hidden items-center justify-center border-l border-[color:var(--line)] bg-[rgba(0,0,0,0.18)] py-6 xl:flex" aria-hidden="true">
+              <div className="h-[88px] w-[88px] rounded-full" style={{ background: "rgba(239,233,220,0.05)" }} />
+            </div>
+            <div className="hidden flex-col border-l border-[color:var(--line)] bg-[rgba(0,0,0,0.12)] px-4 xl:flex" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-4 py-2.5"
+                  style={{ borderBottom: i < 5 ? "1px solid rgba(239,233,220,0.05)" : undefined }}
+                >
+                  <div className="h-2.5 rounded-full" style={{ background: "rgba(239,233,220,0.06)", width: `${44 + i * 6}px` }} />
+                  <div className="h-3 rounded-full" style={{ background: "rgba(239,233,220,0.08)", width: `${28 + i * 4}px` }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );
