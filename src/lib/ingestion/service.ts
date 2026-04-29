@@ -63,6 +63,21 @@ function assertSafeText(...values: string[]) {
   }
 }
 
+const operationalSourceKinds = new Set<SourceKind>([
+  "INSTAGRAM_REELS_TRENDS",
+  "INSTAGRAM_GRAPH_API",
+  "INSTAGRAM_PROFESSIONAL_DASHBOARD",
+  "META_AD_LIBRARY",
+  "META_BUSINESS_SUITE",
+  "META_CREATOR_MARKETPLACE",
+  "OWNED_UPLOAD",
+  "MANUAL_RESEARCH",
+]);
+
+function mapOperationalSourceKind(kind: string): SourceKind {
+  return operationalSourceKinds.has(kind as SourceKind) ? (kind as SourceKind) : "MANUAL_RESEARCH";
+}
+
 function connectorSlug(kind: SourceKind, origin: DataOrigin) {
   if (origin === "OFFICIAL") {
     return `official-${kind.toLowerCase()}`;
@@ -544,7 +559,7 @@ export async function attachManualEvidence(input: ManualEvidenceInput, context: 
       externalNetwork: false,
     };
     const connector = source.connector ?? (await ensureConnector(tx, context, {
-      kind: source.kind,
+      kind: mapOperationalSourceKind(source.kind),
       origin: source.origin,
       market: source.market,
     }));

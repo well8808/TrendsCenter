@@ -9,15 +9,12 @@ import { calculateVideoTrendScore } from "@/lib/trends/scoring";
 const allowedMarkets: Market[] = ["BR", "US"];
 const allowedOrigins: DataOrigin[] = ["MANUAL", "OFFICIAL", "OWNED"];
 const allowedSourceKinds: SourceKind[] = [
-  "CREATIVE_CENTER_TRENDS",
-  "TOP_ADS",
-  "KEYWORD_INSIGHTS",
-  "CREATIVE_INSIGHTS",
-  "AUDIENCE_INSIGHTS",
-  "TIKTOK_ONE",
-  "MARKET_SCOPE",
-  "DISPLAY_API",
-  "COMMERCIAL_MUSIC_LIBRARY",
+  "INSTAGRAM_REELS_TRENDS",
+  "INSTAGRAM_GRAPH_API",
+  "INSTAGRAM_PROFESSIONAL_DASHBOARD",
+  "META_AD_LIBRARY",
+  "META_BUSINESS_SUITE",
+  "META_CREATOR_MARKETPLACE",
   "OWNED_UPLOAD",
   "MANUAL_RESEARCH",
 ];

@@ -22,7 +22,6 @@ import {
   FileWarning,
   Filter,
   Flame,
-  Gauge,
   Globe2,
   History,
   Inbox,
@@ -44,7 +43,6 @@ import { toggleSavedSignalAction } from "@/app/actions";
 import { IngestionLab } from "@/components/ingestion-lab";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { SourcePill } from "@/components/source-pill";
-import { StatePanel, LoadingSkeleton } from "@/components/state-panels";
 import { TrendCard } from "@/components/trend-card";
 import type { JobRunsListDto } from "@/lib/api";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
@@ -57,7 +55,7 @@ import {
   type SortMode,
   type TypeFilter,
 } from "@/lib/signal-analysis";
-import type { SignalPriority, TrendSignal, WorkspaceState } from "@/lib/types";
+import type { SignalPriority, TrendSignal, TrendSourceRecord, WorkspaceState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -120,25 +118,25 @@ const itemVariants: Variants = {
 };
 
 const navItems = [
-  { label: "Command Center", icon: LayoutDashboard, active: true, key: "cc" },
+  { label: "Reels Center", icon: LayoutDashboard, key: "cc" },
   { label: "Radar BR", icon: Radar, key: "radar-br" },
   { label: "US Early Signals", icon: Globe2, key: "us" },
+  { label: "Fontes", icon: Database, key: "instagram-sources" },
+  { label: "Evidence", icon: Inbox, key: "evidence" },
+];
+
+const navCategoryItems = [
   { label: "Áudios", icon: AudioLines, key: "audios" },
   { label: "Formatos", icon: Activity, key: "formatos" },
   { label: "Hashtags", icon: Tags, key: "hashtags" },
   { label: "Creators", icon: UserRoundCheck, key: "creators" },
-  { label: "Revival Lab", icon: History, key: "revival" },
-  { label: "Evidence Inbox", icon: Inbox, key: "evidence" },
+  { label: "Revival", icon: History, key: "revival" },
+];
+
+const navOpsItems = [
   { label: "Ingestion Lab", icon: DatabaseZap, key: "ingestion" },
   { label: "Upload Lab", icon: LockKeyhole, key: "upload" },
   { label: "Compliance", icon: ShieldCheck, key: "compliance" },
-];
-
-const stateOptions: { value: WorkspaceState; label: string }[] = [
-  { value: "ready", label: "Live" },
-  { value: "loading", label: "Loading" },
-  { value: "empty", label: "Empty" },
-  { value: "error", label: "Error" },
 ];
 
 const marketOptions: { value: MarketFilter; label: string }[] = [
@@ -186,8 +184,37 @@ const sourceDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
 });
 
+const trendSourceDateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "America/Sao_Paulo",
+});
+
+const trendSourceTypeLabel: Record<TrendSourceRecord["sourceType"], string> = {
+  reel: "Reels",
+  audio: "Audio",
+  creator: "Creators",
+  hashtag: "Hashtags",
+  account_insights: "Insights",
+  meta_ad_library: "Meta Ads",
+  manual: "Manual",
+};
+
+const trendSourceStatusLabel: Record<TrendSourceRecord["status"], string> = {
+  active: "ativo",
+  paused: "pausado",
+  error: "erro",
+};
+
 function formatSourceDate(dateIso: string) {
   return sourceDateFormatter.format(new Date(dateIso));
+}
+
+function formatTrendSourceDate(dateIso?: string) {
+  return dateIso ? trendSourceDateFormatter.format(new Date(dateIso)) : "Ainda não verificado";
 }
 
 const fallbackPersistence: CommandCenterData["persistence"] = {
@@ -240,26 +267,6 @@ function AnimatedNumber({
   return <>{text}</>;
 }
 
-/* ---------- Live indicator ---------- */
-
-function LiveDot({ tone = "success" }: { tone?: "success" | "acid" | "aqua" | "coral" }) {
-  const color = {
-    success: "var(--success)",
-    acid: "var(--acid)",
-    aqua: "var(--aqua)",
-    coral: "var(--coral)",
-  }[tone];
-  return (
-    <span className="relative inline-flex h-2 w-2 items-center justify-center" aria-hidden="true">
-      <span
-        className="absolute inset-0 rounded-full"
-        style={{ background: color, animation: "live-pulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite" }}
-      />
-      <span className="relative h-2 w-2 rounded-full" style={{ background: color }} />
-    </span>
-  );
-}
-
 /* ---------- Segment with sliding indicator ---------- */
 
 function SegmentGroup<T extends string>({
@@ -300,7 +307,7 @@ function SegmentGroup<T extends string>({
                 <motion.span
                   layoutId={`seg-${groupId}`}
                   transition={{ type: "spring", stiffness: 520, damping: 44 }}
-                  className="absolute inset-0 -z-10 rounded-full border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.12)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                  className="absolute inset-0 -z-10 rounded-full border border-[rgba(237, 73, 86,0.34)] bg-[rgba(237, 73, 86,0.12)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
                 />
               )}
               {option.label}
@@ -329,82 +336,32 @@ function MetricTile({
   tone: "acid" | "aqua" | "coral" | "gold";
   index: number;
 }) {
-  const toneMap = {
-    acid: {
-      bg: "rgba(199,255,93,0.12)",
-      text: "var(--acid)",
-      border: "rgba(199,255,93,0.22)",
-      glow: "rgba(199,255,93,0.18)",
-    },
-    aqua: {
-      bg: "rgba(64,224,208,0.12)",
-      text: "var(--aqua)",
-      border: "rgba(64,224,208,0.22)",
-      glow: "rgba(64,224,208,0.15)",
-    },
-    gold: {
-      bg: "rgba(243,201,105,0.12)",
-      text: "var(--gold)",
-      border: "rgba(243,201,105,0.22)",
-      glow: "rgba(243,201,105,0.15)",
-    },
-    coral: {
-      bg: "rgba(255,111,97,0.12)",
-      text: "var(--coral)",
-      border: "rgba(255,111,97,0.22)",
-      glow: "rgba(255,111,97,0.15)",
-    },
-  }[tone];
-
   const isPlainNumber = /^\d+$/.test(value);
+  // Só destaca em vermelho quando é alto (>= 78). Caso contrário fica em
+  // foreground neutro — sem ig-gradient-text que colorizava todo primeiro KPI.
+  const isHigh = tone === "acid" && rawValue >= 78;
 
   return (
     <motion.div
       variants={tileVariants}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -1 }}
       transition={{ duration: 0.16, ease }}
-      className="group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[var(--card-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+      className="group relative rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-5 transition-colors hover:border-[rgba(255,255,255,0.18)]"
     >
-      <motion.span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl"
-        style={{ background: toneMap.glow }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.55 }}
-        transition={{ duration: 0.6, delay: 0.25 + index * 0.05, ease }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-4 top-0 h-px"
-        style={{
-          background: `linear-gradient(90deg, transparent, ${toneMap.border}, transparent)`,
-        }}
-      />
-      <div className="relative flex min-h-[2.5rem] items-start justify-between gap-3">
-        <p className="card-eyebrow flex-1 leading-[1.4]" style={{ color: toneMap.text }}>
-          {label}
-        </p>
-        <span
-          className="shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em]"
-          style={{ borderColor: toneMap.border, background: toneMap.bg, color: toneMap.text }}
-        >
-          {delta}
-        </span>
-      </div>
-      <div className="relative mt-4 flex items-baseline gap-2">
-        <p className="metric-value-hero text-[color:var(--foreground)]">
-          {isPlainNumber ? <AnimatedNumber value={rawValue} delay={0.28 + index * 0.06} pad={value.length} /> : value}
-        </p>
-      </div>
-      <div className="relative mt-3 h-0.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.05)]">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: `linear-gradient(90deg, transparent, ${toneMap.text}, transparent)` }}
-          initial={{ x: "-100%" }}
-          animate={{ x: "100%" }}
-          transition={{ duration: 2.4, delay: 0.4 + index * 0.06, ease: "linear", repeat: Infinity, repeatDelay: 1.6 }}
-        />
-      </div>
+      <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[color:var(--muted)]">
+        {label}
+      </p>
+      <p
+        className="metric-value-hero mt-3"
+        style={{ color: isHigh ? "var(--hot)" : "var(--foreground)" }}
+      >
+        {isPlainNumber ? (
+          <AnimatedNumber value={rawValue} delay={0.28 + index * 0.06} pad={value.length} />
+        ) : (
+          value
+        )}
+      </p>
+      <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted)]">{delta}</p>
     </motion.div>
   );
 }
@@ -416,47 +373,46 @@ function MetricTile({
  * US    → aqua + US→BR arrow animation
  * BRIDGE → violet + transfer % hero number */
 
+// MarketBridge cards — antes: cada um tinha cor própria de borda+bg+blob
+// blur+gradient line top. Três blocos saturados disputando a mesma faixa
+// horizontal. Agora: estrutura uniforme em fundo neutro, cor reservada
+// para o eyebrow e o número. O sinal HOT/NOW segue em vermelho como
+// único accent forte. Resultado: o olho lê BR > US > BRIDGE em sequência,
+// não três cards berrando ao mesmo tempo.
+
 function MarketBridgeBR({ signal }: { signal?: TrendSignal }) {
   return (
     <motion.div
       variants={bridgeItemVariants}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -1 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[rgba(199,255,93,0.28)] bg-[linear-gradient(180deg,rgba(199,255,93,0.07),rgba(7,7,6,0.32))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]"
+      className="relative min-w-0 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-4 transition-colors hover:border-[rgba(237,73,86,0.32)]"
     >
-      <motion.span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[rgba(199,255,93,0.18)] blur-3xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.6 }}
-        transition={{ duration: 0.6, delay: 0.4, ease }}
-      />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(199,255,93,0.48)] to-transparent" />
-      <div className="relative flex items-center justify-between gap-2">
-        <p className="card-eyebrow text-[color:var(--acid)]">top BR agora</p>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(199,255,93,0.36)] bg-[rgba(199,255,93,0.1)] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-[color:var(--acid)]">
+      <div className="flex items-center justify-between gap-2">
+        <p className="card-eyebrow text-[color:var(--hot)]">top BR agora</p>
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
           <span className="relative inline-flex h-1.5 w-1.5" aria-hidden="true">
-            <span className="signal-now-pulse absolute inset-0 rounded-full bg-[color:var(--acid)]" />
-            <span className="relative h-1.5 w-1.5 rounded-full bg-[color:var(--acid)]" />
+            <span className="signal-now-pulse absolute inset-0 rounded-full bg-[color:var(--hot)]" />
+            <span className="relative h-1.5 w-1.5 rounded-full bg-[color:var(--hot)]" />
           </span>
-          HOT · NOW
+          hot · agora
         </span>
       </div>
       {signal ? (
         <>
-          <h2 className="relative mt-3 min-w-0 break-words text-base font-semibold leading-snug tracking-tight">
+          <h2 className="mt-3 min-w-0 break-words text-[15px] font-semibold leading-snug tracking-tight">
             {signal.title}
           </h2>
-          <div className="relative mt-3 flex items-baseline gap-3">
+          <div className="mt-3 flex items-baseline gap-2">
             <p className="metric-value-xl text-[color:var(--foreground)]">
               <AnimatedNumber value={signal.score.value} delay={0.4} />
             </p>
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted)]">/100</span>
+            <span className="font-mono text-[11px] text-[color:var(--muted)]">/100</span>
           </div>
-          <p className="relative mt-2 text-xs leading-5 text-[color:var(--muted-strong)]">{signal.decision}</p>
+          <p className="mt-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">{signal.decision}</p>
         </>
       ) : (
-        <p className="relative mt-3 text-sm text-[color:var(--muted)]">Sem sinal BR no filtro atual.</p>
+        <p className="mt-3 text-[13px] text-[color:var(--muted)]">Sem sinal BR no filtro atual.</p>
       )}
     </motion.div>
   );
@@ -466,48 +422,40 @@ function MarketBridgeUS({ signal }: { signal?: TrendSignal }) {
   return (
     <motion.div
       variants={bridgeItemVariants}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -1 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[rgba(64,224,208,0.26)] bg-[linear-gradient(180deg,rgba(64,224,208,0.06),rgba(7,7,6,0.32))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]"
+      className="relative min-w-0 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-4 transition-colors hover:border-[rgba(255,255,255,0.18)]"
     >
-      <motion.span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[rgba(64,224,208,0.16)] blur-3xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.6 }}
-        transition={{ duration: 0.6, delay: 0.5, ease }}
-      />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(64,224,208,0.44)] to-transparent" />
-      <div className="relative flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <p className="card-eyebrow text-[color:var(--aqua)]">early signal EUA</p>
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
           <span>US</span>
           <motion.span
             aria-hidden="true"
             className="inline-block"
-            animate={{ x: [0, 6, 0] }}
-            transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }}
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity }}
           >
-            <ArrowUpRight className="h-3 w-3 -rotate-90" />
+            <ArrowUpRight className="h-3 w-3 -rotate-90 text-[color:var(--aqua)]" />
           </motion.span>
           <span>BR</span>
         </span>
       </div>
       {signal ? (
         <>
-          <h2 className="relative mt-3 min-w-0 break-words text-base font-semibold leading-snug tracking-tight">
+          <h2 className="mt-3 min-w-0 break-words text-[15px] font-semibold leading-snug tracking-tight">
             {signal.title}
           </h2>
-          <div className="relative mt-3 flex items-baseline gap-3">
+          <div className="mt-3 flex items-baseline gap-2">
             <p className="metric-value-xl text-[color:var(--foreground)]">
               <AnimatedNumber value={signal.score.value} delay={0.5} />
             </p>
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted)]">/100</span>
+            <span className="font-mono text-[11px] text-[color:var(--muted)]">/100</span>
           </div>
-          <p className="relative mt-2 text-xs leading-5 text-[color:var(--muted-strong)]">{signal.decision}</p>
+          <p className="mt-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">{signal.decision}</p>
         </>
       ) : (
-        <p className="relative mt-3 text-sm text-[color:var(--muted)]">Sem early signal dos EUA no recorte.</p>
+        <p className="mt-3 text-[13px] text-[color:var(--muted)]">Sem early signal dos EUA no recorte.</p>
       )}
     </motion.div>
   );
@@ -517,39 +465,31 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
   return (
     <motion.div
       variants={bridgeItemVariants}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -1 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border border-[rgba(169,140,255,0.28)] bg-[linear-gradient(180deg,rgba(169,140,255,0.08),rgba(7,7,6,0.32))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] lg:col-span-2 xl:col-span-1"
+      className="relative min-w-0 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-4 transition-colors hover:border-[rgba(255,255,255,0.18)] lg:col-span-2 xl:col-span-1"
     >
-      <motion.span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-12 -bottom-12 h-40 w-40 rounded-full bg-[rgba(169,140,255,0.22)] blur-3xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.7 }}
-        transition={{ duration: 0.6, delay: 0.6, ease }}
-      />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(169,140,255,0.48)] to-transparent" />
-      <div className="relative flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <p className="card-eyebrow text-[color:var(--violet)]">ponte US → BR</p>
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-[color:var(--violet)]">
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
           transferibilidade
         </span>
       </div>
-      <div className="relative mt-4 flex items-baseline gap-3">
+      <div className="mt-3 flex items-baseline gap-2">
         <p className="metric-value-hero text-[color:var(--foreground)]">
           <AnimatedNumber value={transfer} delay={0.6} />
         </p>
-        <span className="font-mono text-sm uppercase tracking-[0.2em] text-[color:var(--violet)]">%</span>
+        <span className="font-mono text-sm text-[color:var(--muted)]">%</span>
       </div>
-      <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.05)]">
+      <div className="mt-3 h-1 overflow-hidden rounded-full bg-[rgba(255,255,255,0.04)]">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${transfer}%` }}
           transition={{ duration: 0.9, delay: 0.7, ease }}
-          className="h-full rounded-full bg-[linear-gradient(90deg,var(--violet),var(--aqua))]"
+          className="h-full rounded-full bg-[color:var(--violet)]"
         />
       </div>
-      <p className="relative mt-3 text-xs leading-5 text-[color:var(--muted-strong)]">
+      <p className="mt-3 text-[12px] leading-5 text-[color:var(--muted-strong)]">
         Transferência calculada dos sinais persistidos. Só vira ação com fonte oficial ou evidência BR.
       </p>
     </motion.div>
@@ -575,6 +515,114 @@ function MarketBridge({ signals }: { signals: TrendSignal[] }) {
   );
 }
 
+/* ---------- Real Instagram source registry ---------- */
+
+function InstagramSourcesPanel({ sources }: { sources: TrendSourceRecord[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const activeCount = sources.filter((s) => s.status === "active").length;
+
+  return (
+    <section
+      id="instagram-sources"
+      className="min-w-0 rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-[color:var(--foreground)]">Fontes</h2>
+          <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+            {sources.length === 0
+              ? "Nenhuma fonte registrada"
+              : `${activeCount} ativas de ${sources.length}`}
+          </p>
+        </div>
+        <Link
+          className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] px-2.5 py-1 text-[11px] text-[color:var(--muted)] transition hover:border-[rgba(225,48,108,0.32)] hover:text-[color:var(--foreground)]"
+          href="/sources"
+        >
+          Ver tudo
+          <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+        </Link>
+      </div>
+
+      {sources.length > 0 && (
+        <div className="mt-3 grid gap-1.5">
+          {sources.slice(0, 4).map((source) => {
+            const isOpen = expandedId === source.id;
+            return (
+              <article
+                key={source.id}
+                className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)]"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(isOpen ? null : source.id)}
+                  className="flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left"
+                >
+                  <div className="min-w-0">
+                    <p className="break-words text-[13px] font-medium leading-5 text-[color:var(--foreground)]">
+                      {source.title}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+                      {trendSourceTypeLabel[source.sourceType]} · {source.region}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px]",
+                      source.status === "active"
+                        ? "bg-[rgba(34,197,94,0.12)] text-[color:var(--success)]"
+                        : source.status === "error"
+                        ? "bg-[rgba(255,77,77,0.12)] text-[color:var(--coral)]"
+                        : "bg-[rgba(255,255,255,0.05)] text-[color:var(--muted)]",
+                    )}
+                  >
+                    {trendSourceStatusLabel[source.status]}
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen ? (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.22, ease }}
+                      className="overflow-hidden border-t border-[color:var(--line)] bg-[rgba(0,0,0,0.12)] px-3 py-2.5 text-[11px] text-[color:var(--muted)]"
+                    >
+                      <p className="break-all font-mono leading-4 text-[color:var(--muted-strong)]">
+                        {source.sourceUrl}
+                      </p>
+                      <p className="mt-1.5">
+                        Atualizado em {formatTrendSourceDate(source.updatedAt)}
+                      </p>
+                      <a
+                        className="mt-2 inline-flex items-center gap-1 text-[color:var(--foreground)] transition hover:text-[color:var(--ig-3)]"
+                        href={source.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Abrir fonte
+                        <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </article>
+            );
+          })}
+          {sources.length > 4 ? (
+            <Link
+              className="mt-1 inline-flex justify-center rounded-full border border-dashed border-[color:var(--line)] py-1.5 text-[11px] text-[color:var(--muted)] transition hover:text-[color:var(--foreground)]"
+              href="/sources"
+            >
+              + {sources.length - 4} fontes
+            </Link>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ---------- Evidence inspector (right rail top) ---------- */
 
 function EvidenceInspector({
@@ -592,32 +640,14 @@ function EvidenceInspector({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease }}
-        className="app-rail-card relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] p-5"
+        className="relative min-w-0 overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-5"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[rgba(64,224,208,0.08)] blur-3xl"
-        />
-        <div className="relative">
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--aqua)]">
-            <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
-            Evidence desk
+        <div className="grid place-items-center gap-3 py-4 text-center">
+          <Inbox className="h-5 w-5 text-[color:var(--muted)]" aria-hidden="true" />
+          <h2 className="text-base font-semibold">Selecione um sinal</h2>
+          <p className="max-w-xs text-[12px] leading-5 text-[color:var(--muted)]">
+            Toque em qualquer card pra abrir evidências, fonte e histórico aqui.
           </p>
-          <h2 className="mt-3 text-base font-semibold">Selecione um sinal</h2>
-          <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-            Clique em qualquer card do Signal Desk para abrir evidências, fonte rastreável e histórico de snapshots aqui.
-          </p>
-          <div className="mt-4 flex items-center gap-2.5 rounded-[var(--radius-sm)] border border-dashed border-[rgba(64,224,208,0.2)] bg-[rgba(64,224,208,0.04)] px-3 py-2.5">
-            <motion.div
-              aria-hidden="true"
-              animate={{ opacity: [0.4, 0.9, 0.4] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--aqua)]"
-            />
-            <p className="text-[11px] leading-4 text-[color:var(--muted)]">
-              Evidências e fonte rastreável aparecem aqui
-            </p>
-          </div>
         </div>
       </motion.section>
     );
@@ -629,17 +659,14 @@ function EvidenceInspector({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease }}
-      className="app-rail-card min-w-0 overflow-hidden rounded-[var(--radius-lg)] p-4"
+      className="min-w-0 overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--acid)]">
-            <LiveDot tone="acid" />
-            Evidence desk
-          </p>
-          <h2 className="mt-2 break-words text-lg font-semibold leading-6">{signal.title}</h2>
+          <p className="text-[11px] text-[color:var(--muted)]">Evidências</p>
+          <h2 className="mt-1 break-words text-base font-semibold leading-6">{signal.title}</h2>
         </div>
-        <span className="shrink-0 rounded-full border border-[rgba(199,255,93,0.3)] bg-[rgba(199,255,93,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)]">
+        <span className="shrink-0 rounded-full bg-[rgba(225,48,108,0.08)] px-2.5 py-1 text-[11px] text-[color:var(--foreground)]">
           {priorityLabel[signal.priority]}
         </span>
       </div>
@@ -714,14 +741,13 @@ function SavedAndHistory({
   revivalSignals: TrendSignal[];
 }) {
   return (
-    <section className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-4">
+    <section className="min-w-0 rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--aqua)]">
-            <LiveDot tone="aqua" />
-            Saved / revival
+          <h2 className="text-sm font-semibold">Fila de decisão</h2>
+          <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+            Salvos e revival
           </p>
-          <h2 className="mt-1.5 text-base font-semibold">Fila de decisão</h2>
         </div>
         <Bookmark className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
       </div>
@@ -737,7 +763,7 @@ function SavedAndHistory({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 16, scale: 0.96 }}
                 transition={{ duration: 0.3, delay: idx * 0.04, ease }}
-                className="app-rail-item rounded-[var(--radius-md)] border-[rgba(199,255,93,0.18)] bg-[rgba(199,255,93,0.05)] p-3"
+                className="app-rail-item rounded-[var(--radius-md)] border-[rgba(237, 73, 86,0.18)] bg-[rgba(237, 73, 86,0.05)] p-3"
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="min-w-0 truncate text-sm font-medium leading-5">{signal.title}</p>
@@ -755,7 +781,7 @@ function SavedAndHistory({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.28, ease }}
-              className="rounded-[var(--radius-md)] border border-dashed border-[rgba(199,255,93,0.14)] bg-[rgba(199,255,93,0.03)] p-4 text-center"
+              className="rounded-[var(--radius-md)] border border-dashed border-[rgba(237, 73, 86,0.14)] bg-[rgba(237, 73, 86,0.03)] p-4 text-center"
             >
               <Bookmark className="mx-auto h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
               <p className="mt-2 text-xs font-semibold text-[color:var(--muted-strong)]">Fila vazia</p>
@@ -800,6 +826,71 @@ function SavedAndHistory({
 
 /* ---------- Sidebar ---------- */
 
+function SidebarNavGroup({
+  label,
+  items,
+  activeKey,
+  hoverKey,
+  setHoverKey,
+  onNavigate,
+}: {
+  label?: string;
+  items: { label: string; icon: typeof LayoutDashboard; key: string }[];
+  activeKey: string;
+  hoverKey: string | null;
+  setHoverKey: (k: string | null) => void;
+  onNavigate: (key: string) => void;
+}) {
+  return (
+    <div className="grid gap-0.5">
+      {label ? (
+        <p className="mb-1.5 mt-3 px-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          {label}
+        </p>
+      ) : null}
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = item.key === activeKey;
+        const isHover = hoverKey === item.key;
+        return (
+          <motion.button
+            key={item.key}
+            type="button"
+            onClick={() => onNavigate(item.key)}
+            onHoverStart={() => setHoverKey(item.key)}
+            onHoverEnd={() => setHoverKey(null)}
+            variants={itemVariants}
+            className={cn(
+              "nav-item relative flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-left text-sm transition-colors duration-200",
+              isActive
+                ? "text-[color:var(--foreground)]"
+                : "text-[color:var(--muted)] hover:text-[color:var(--muted-strong)]",
+            )}
+          >
+            {isActive && (
+              <motion.span
+                layoutId="sidebar-active"
+                transition={{ type: "spring", stiffness: 520, damping: 44 }}
+                className="nav-active-fill absolute inset-0 -z-10 rounded-[var(--radius-md)]"
+              />
+            )}
+            {isActive && <span aria-hidden="true" className="nav-item-indicator" />}
+            {!isActive && isHover && (
+              <motion.span
+                layoutId="sidebar-hover"
+                transition={{ type: "spring", stiffness: 520, damping: 44 }}
+                className="absolute inset-0 -z-10 rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.025)]"
+              />
+            )}
+            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{item.label}</span>
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+}
+
 function Sidebar({
   activeKey,
   tenant,
@@ -824,96 +915,70 @@ function Sidebar({
       <div className="flex min-h-full flex-col">
         <motion.div
           variants={itemVariants}
-          className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(8,8,7,0.6)] p-3"
+          className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(8,8,7,0.6)] p-3"
         >
-          <div className="relative grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black shadow-[0_0_32px_rgba(199,255,93,0.3)]">
+          <div className="brand-mark relative grid h-10 w-10 place-items-center rounded-[var(--radius-md)]">
             <Command className="h-5 w-5" aria-hidden="true" />
-            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#070706] bg-[color:var(--success)]" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-none tracking-tight">Market Intel</p>
-            <p className="mt-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
-              <LiveDot />
-              tiktok / ops
+            <p className="mt-1.5 truncate text-[11px] text-[color:var(--muted)]">
+              {tenant.workspaceName}
             </p>
           </div>
         </motion.div>
 
         <LayoutGroup id="sidebar-nav">
           <nav className="mt-6 grid gap-0.5" aria-label="Navegação principal">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.key === activeKey;
-              const isHover = hoverKey === item.key;
-              return (
-                <motion.button
-                  key={item.key}
-                  type="button"
-                  onClick={() => onNavigate(item.key)}
-                  onHoverStart={() => setHoverKey(item.key)}
-                  onHoverEnd={() => setHoverKey(null)}
-                  variants={itemVariants}
-                  className={cn(
-                    "nav-item relative flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-sm transition-colors duration-200",
-                    isActive
-                      ? "text-[color:var(--foreground)]"
-                      : "text-[color:var(--muted)] hover:text-[color:var(--muted-strong)]",
-                  )}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="sidebar-active"
-                      transition={{ type: "spring", stiffness: 520, damping: 44 }}
-                      className="absolute inset-0 -z-10 rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.055)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                    />
-                  )}
-                  {isActive && <span aria-hidden="true" className="nav-item-indicator" />}
-                  {!isActive && isHover && (
-                    <motion.span
-                      layoutId="sidebar-hover"
-                      transition={{ type: "spring", stiffness: 520, damping: 44 }}
-                      className="absolute inset-0 -z-10 rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.028)]"
-                    />
-                  )}
-                  <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-[color:var(--acid)]")} aria-hidden="true" />
-                  <span className="truncate">{item.label}</span>
-                  {isActive && (
-                    <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
-                      live
-                    </span>
-                  )}
-                </motion.button>
-              );
-            })}
+            <SidebarNavGroup
+              items={navItems}
+              activeKey={activeKey}
+              hoverKey={hoverKey}
+              setHoverKey={setHoverKey}
+              onNavigate={onNavigate}
+            />
+            <SidebarNavGroup
+              label="Categorias"
+              items={navCategoryItems}
+              activeKey={activeKey}
+              hoverKey={hoverKey}
+              setHoverKey={setHoverKey}
+              onNavigate={onNavigate}
+            />
+            <SidebarNavGroup
+              label="Operações"
+              items={navOpsItems}
+              activeKey={activeKey}
+              hoverKey={hoverKey}
+              setHoverKey={setHoverKey}
+              onNavigate={onNavigate}
+            />
           </nav>
         </LayoutGroup>
 
-        <motion.div variants={itemVariants} className="mt-auto">
-          <div className="divider-gradient mb-4" />
-          <div className="app-rail-card rounded-[var(--radius-md)] p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)]">
-              <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="truncate">{tenant.workspaceName}</span>
-            </div>
-            <p className="mt-3 break-all text-xs leading-5 text-[color:var(--muted)]">{tenant.userEmail}</p>
-            <p className="mt-1.5 text-xs leading-5 text-[color:var(--muted)]">
-              {tenant.role.toLowerCase()} · sessão isolada por workspace.
+        <motion.div variants={itemVariants} className="mt-auto pt-6">
+          <div className="rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-3">
+            <p className="truncate text-[11px] text-[color:var(--muted-strong)]">
+              {tenant.userEmail}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <p className="mt-1 truncate text-[11px] text-[color:var(--muted)]">
+              {tenant.role.toLowerCase()}
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Link
+                className="inline-flex flex-1 items-center justify-center rounded-full border border-[color:var(--line)] px-3 py-2 text-xs text-[color:var(--muted-strong)] transition hover:border-[rgba(225,48,108,0.32)] hover:text-[color:var(--foreground)]"
+                href="/workspace"
+              >
+                Ajustes
+              </Link>
               <button
-                className="rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)] disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full border border-[color:var(--line)] px-3 py-2 text-xs text-[color:var(--muted)] transition hover:border-[rgba(255,111,97,0.36)] hover:text-[color:var(--coral)] disabled:opacity-60"
                 type="button"
                 onClick={onLogout}
                 disabled={isLoggingOut}
               >
-                sair
+                Sair
               </button>
-              <Link
-                className="inline-flex rounded-full border border-[rgba(64,224,208,0.28)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.08)]"
-                href="/workspace"
-              >
-                settings
-              </Link>
             </div>
           </div>
         </motion.div>
@@ -927,6 +992,7 @@ function Sidebar({
 export function CommandCenter({
   signals,
   sources,
+  trendSources = [],
   persistence = fallbackPersistence,
   ingestionLab = fallbackIngestionLab,
   tenant,
@@ -940,9 +1006,10 @@ export function CommandCenter({
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
   const [sortMode, setSortMode] = useState<SortMode>("priority");
   const [activeNavKey, setActiveNavKey] = useState("cc");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedSignalId, setSelectedSignalId] = useState(signals[0]?.id);
   const [savedIds, setSavedIds] = useState(() => new Set(signals.filter((signal) => signal.saved).map((signal) => signal.id)));
-  const [isSaving, startSavingTransition] = useTransition();
+  const [, startSavingTransition] = useTransition();
   const [isLoggingOut, startLogoutTransition] = useTransition();
 
   const filters = useMemo(
@@ -1052,6 +1119,11 @@ export function CommandCenter({
       return;
     }
 
+    if (key === "instagram-sources") {
+      scrollToSection("instagram-sources");
+      return;
+    }
+
     if (key === "ingestion" || key === "upload") {
       scrollToSection("ingestion-lab");
       return;
@@ -1064,31 +1136,31 @@ export function CommandCenter({
 
   const metricTiles = [
     {
-      label: "Sinais visíveis",
+      label: "Sinais ativos",
       value: String(filteredSignals.length).padStart(2, "0"),
       rawValue: filteredSignals.length,
-      delta: `${summary.highPriorityCount} hot`,
+      delta: `${summary.highPriorityCount} em prioridade alta`,
       tone: "acid" as const,
     },
     {
-      label: "Radar BR + US",
+      label: "Radar BR / US",
       value: `${summary.brCount}/${summary.usCount}`,
       rawValue: summary.brCount,
-      delta: persistence.mode === "database" ? "Postgres" : "fallback",
+      delta: "sinais por mercado",
       tone: "aqua" as const,
     },
     {
       label: "Evidências",
       value: String(summary.evidenceCount).padStart(2, "0"),
       rawValue: summary.evidenceCount,
-      delta: persistence.mode === "database" ? "persistidas" : "sem fixture",
+      delta: "fontes verificadas",
       tone: "gold" as const,
     },
     {
       label: "Score médio",
       value: String(summary.avgScore),
       rawValue: summary.avgScore,
-      delta: "weighted avg",
+      delta: "média ponderada",
       tone: "coral" as const,
     },
   ];
@@ -1107,118 +1179,82 @@ export function CommandCenter({
             variants={headerVariants}
             initial="hidden"
             animate="show"
-            className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-4 py-5 md:px-6 lg:rounded-t-[var(--radius-lg)]"
+            className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 lg:rounded-t-[var(--radius-lg)]"
           >
-            <div
-              aria-hidden="true"
-              className="scan-line pointer-events-none absolute inset-0 opacity-60"
-            />
-            <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-              <motion.div variants={itemVariants} className="flex items-start gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[color:var(--acid)] text-black shadow-[0_0_30px_rgba(199,255,93,0.25)] lg:hidden">
+            <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+              <motion.div variants={itemVariants} className="flex items-center gap-3">
+                <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
                   <Command className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2">
-                    <motion.span
-                      variants={itemVariants}
-                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.12)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]"
-                    >
-                      <LiveDot tone="acid" />
-                      {persistence.mode === "database" ? "live data" : "safe fallback"}
-                    </motion.span>
-                    <motion.span
-                      variants={itemVariants}
-                      className={cn(
-                        "rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
-                        persistence.mode === "database"
-                          ? "border-[rgba(64,224,208,0.42)] bg-[rgba(64,224,208,0.12)] text-[color:var(--aqua)]"
-                          : "border-[rgba(243,201,105,0.42)] bg-[rgba(243,201,105,0.12)] text-[color:var(--gold)]",
-                      )}
-                    >
-                      {isSaving ? "gravando..." : persistence.label}
-                    </motion.span>
-                    <motion.span
-                      variants={itemVariants}
-                      className="hidden items-center gap-1.5 rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)] sm:inline-flex"
-                    >
-                      tenant / {tenant.workspaceName.toLowerCase()}
-                    </motion.span>
-                  </motion.div>
                   <motion.h1
                     variants={itemVariants}
-                    className="mt-3 text-3xl font-semibold leading-[1.02] tracking-tight md:text-5xl"
+                    className="text-2xl font-semibold leading-tight tracking-tight md:text-[28px]"
                   >
-                    Command Center
+                    Reels Center
                   </motion.h1>
                   <motion.p
                     variants={itemVariants}
-                    className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]"
+                    className="mt-1 text-[13px] leading-5 text-[color:var(--muted)]"
                   >
-                    Sinais, evidências e decisões operacionais para o workspace{" "}
-                    <span className="text-[color:var(--foreground)]">{tenant.workspaceName}</span>
+                    Sinais, fontes e decisões em{" "}
+                    <span className="text-[color:var(--muted-strong)]">{tenant.workspaceName}</span>
                     {persistence.mode !== "database" && (
-                      <span className="text-[color:var(--gold)]"> · {persistence.detail}</span>
+                      <>
+                        {" · "}
+                        <span className="text-[color:var(--gold)]">modo seguro</span>
+                      </>
                     )}
                   </motion.p>
                 </div>
               </motion.div>
 
-              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:justify-end">
+              <motion.div variants={sectionVariants} className="flex items-center gap-2 xl:justify-end">
                 <motion.label
                   variants={itemVariants}
-                  className="app-control flex min-h-[var(--control-height)] min-w-0 flex-1 items-center gap-2 rounded-full px-3 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[320px] xl:w-[390px] xl:flex-none"
+                  className="app-control flex min-h-[var(--control-height)] min-w-0 flex-1 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] xl:w-[360px] xl:flex-none"
                 >
                   <Search className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Buscar sinais, fontes, creators..."
+                    placeholder="Buscar sinais, creators…"
                     className="min-w-0 flex-1 bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted)]"
                   />
-                  <span className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)] sm:inline">
-                    ⌘ K
+                  <span className="hidden font-mono text-[10px] tracking-[0.14em] text-[color:var(--muted)] sm:inline">
+                    ⌘K
                   </span>
                 </motion.label>
                 <motion.button
                   type="button"
-                  onClick={() => scrollToSection("signal-filters")}
-                  variants={itemVariants}
-                  className="app-control grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--aqua)]"
-                >
-                  <Filter className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">Filtros</span>
-                </motion.button>
-                <motion.button
-                  type="button"
                   onClick={() => scrollToSection("alerts-rail")}
                   variants={itemVariants}
-                  className="app-control relative grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--aqua)]"
+                  aria-label="Alertas"
+                  className="app-control relative grid h-[var(--control-height)] w-[var(--control-height)] place-items-center rounded-full text-[color:var(--muted-strong)] hover:text-[color:var(--foreground)]"
                 >
                   <Bell className="h-4 w-4" aria-hidden="true" />
-                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[color:var(--acid)] shadow-[0_0_8px_rgba(199,255,93,0.8)]" />
-                  <span className="sr-only">Alertas</span>
-                </motion.button>
-                <motion.button
-                  variants={itemVariants}
-                  className="h-[var(--control-height)] rounded-full border border-[color:var(--line)] bg-[var(--control-bg)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted-strong)] transition hover:border-[rgba(255,111,97,0.42)] hover:text-[color:var(--coral)]"
-                  type="button"
-                  onClick={logout}
-                  disabled={isLoggingOut}
-                >
-                  sair
+                  <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-[color:var(--ig-3)]" />
                 </motion.button>
                 <motion.div variants={itemVariants}>
                   <Link
-                    className="inline-flex h-[var(--control-height)] items-center rounded-full border border-[rgba(199,255,93,0.34)] bg-[rgba(199,255,93,0.1)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]"
+                    className="cta-ig inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-full px-5 text-[13px] font-medium"
                     href="/trends"
                   >
-                    trend search
-                    <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                    Buscar trend
+                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </motion.div>
               </motion.div>
             </div>
+
+            {persistence.mode !== "database" && (
+              <motion.p
+                variants={itemVariants}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(243,201,105,0.32)] bg-[rgba(243,201,105,0.06)] px-3 py-1.5 text-[11px] text-[color:var(--gold)]"
+              >
+                {persistence.detail}
+              </motion.p>
+            )}
           </motion.header>
 
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 md:px-6">
@@ -1236,7 +1272,9 @@ export function CommandCenter({
                 ))}
               </motion.section>
 
-              <MarketBridge signals={rankSignals(signals, "priority")} />
+              {signals.length > 0 && signals.some((s) => s.market === "US") ? (
+                <MarketBridge signals={rankSignals(signals, "priority")} />
+              ) : null}
 
               <motion.section
                 id="ingestion-lab"
@@ -1248,47 +1286,6 @@ export function CommandCenter({
                 <IngestionLab lab={ingestionLab} signals={signals} sources={sources} />
               </motion.section>
 
-              {/* WORKSPACE STATE */}
-              <motion.section
-                variants={sectionVariants}
-                initial="hidden"
-                animate="show"
-                transition={{ delay: 0.5 }}
-                className="app-panel rounded-[var(--radius-lg)] p-4 md:p-5"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <p className="eyebrow text-[color:var(--acid)]">Workspace</p>
-                    <h2 className="mt-2 text-lg font-semibold">Estado operacional</h2>
-                  </div>
-                  <SegmentGroup
-                    groupId="workspace-state"
-                    options={stateOptions}
-                    value={workspaceState}
-                    onChange={setWorkspaceState}
-                    ariaLabel="Estado operacional"
-                  />
-                </div>
-
-                <div className="mt-5">
-                  <AnimatePresence mode="wait">
-                    {workspaceState === "loading" ? (
-                      <motion.div
-                        key="loading-state"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="grid gap-4"
-                      >
-                        <StatePanel state="loading" />
-                        <LoadingSkeleton />
-                      </motion.div>
-                    ) : (
-                      <StatePanel key={workspaceState} state={workspaceState} />
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.section>
 
               {/* SIGNAL DESK — t=0.30, cards stagger 0.08 */}
               <motion.section
@@ -1300,77 +1297,103 @@ export function CommandCenter({
               >
                 <motion.div
                   variants={sectionVariants}
-                  className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
+                  className="mb-4"
                 >
-                  <div>
-                    <p className="flex items-center gap-2 eyebrow text-[color:var(--aqua)]">
-                      <LiveDot tone="aqua" />
-                      Signal desk
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold leading-tight">Ranking para decisão rápida</h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted-strong)]">
-                      Cada sinal tem origem, score e janela temporal verificados. Priorize pelo score, confira a evidência, decida a ação.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-full border border-[color:var(--line)] px-3 py-2 text-xs uppercase tracking-[0.16em] text-[color:var(--muted-strong)]">
-                    <Gauge className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
-                    scoring engine
-                  </div>
+                  <h2 className="text-xl font-semibold leading-tight md:text-2xl">Ranking de sinais</h2>
+                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
+                    Origem, score e janela verificados. Priorize, confira a evidência, decida.
+                  </p>
                 </motion.div>
 
                 <motion.div
                   id="signal-filters"
                   variants={itemVariants}
-                  className="app-panel mb-4 rounded-[var(--radius-lg)] p-4 shadow-[var(--shadow-lift)]"
+                  className="mb-4 rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-3 backdrop-blur-xl"
                 >
-                  <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-between">
-                    <SegmentGroup
-                      groupId="market-filter"
-                      options={marketOptions}
-                      value={marketFilter}
-                      onChange={setMarketFilter}
-                      ariaLabel="Mercado"
-                    />
-                    <SegmentGroup
-                      groupId="priority-filter"
-                      options={priorityOptions}
-                      value={priorityFilter}
-                      onChange={setPriorityFilter}
-                      ariaLabel="Prioridade"
-                    />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <SegmentGroup
+                        groupId="market-filter"
+                        options={marketOptions}
+                        value={marketFilter}
+                        onChange={setMarketFilter}
+                        ariaLabel="Mercado"
+                      />
+                      <SegmentGroup
+                        groupId="priority-filter"
+                        options={priorityOptions}
+                        value={priorityFilter}
+                        onChange={setPriorityFilter}
+                        ariaLabel="Prioridade"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedFilters((v) => !v)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition",
+                          showAdvancedFilters || typeFilter !== "ALL"
+                            ? "border-[rgba(225,48,108,0.32)] bg-[rgba(225,48,108,0.08)] text-[color:var(--foreground)]"
+                            : "border-[color:var(--line)] text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+                        )}
+                      >
+                        <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                        Filtros
+                        {typeFilter !== "ALL" && (
+                          <span className="ml-0.5 inline-flex h-1.5 w-1.5 rounded-full bg-[color:var(--ig-3)]" />
+                        )}
+                      </button>
+                      <div className="hidden items-center gap-1.5 md:inline-flex">
+                        <ArrowDownUp className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
+                        <select
+                          value={sortMode}
+                          onChange={(e) => setSortMode(e.target.value as SortMode)}
+                          aria-label="Ordenação"
+                          className="rounded-full border border-[color:var(--line)] bg-transparent px-2.5 py-1.5 text-xs text-[color:var(--muted-strong)] outline-none transition hover:text-[color:var(--foreground)]"
+                        >
+                          {sortOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="mt-2.5 flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-between">
-                    <div className="scrollbar-soft overflow-x-auto pb-0.5">
-                      <SegmentGroup
-                        groupId="type-filter"
-                        options={typeOptions}
-                        value={typeFilter}
-                        onChange={setTypeFilter}
-                        ariaLabel="Tipo"
-                      />
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <ArrowDownUp className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-                      <SegmentGroup
-                        groupId="sort-filter"
-                        options={sortOptions}
-                        value={sortMode}
-                        onChange={setSortMode}
-                        ariaLabel="Ordenação"
-                      />
-                    </div>
-                  </div>
+                  <AnimatePresence initial={false}>
+                    {showAdvancedFilters ? (
+                      <motion.div
+                        key="advanced-filters"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.24, ease }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-3 border-t border-[color:var(--line)] pt-3">
+                          <p className="mb-2 text-[11px] text-[color:var(--muted)]">Categoria do sinal</p>
+                          <div className="scrollbar-soft overflow-x-auto pb-0.5">
+                            <SegmentGroup
+                              groupId="type-filter"
+                              options={typeOptions}
+                              value={typeFilter}
+                              onChange={setTypeFilter}
+                              ariaLabel="Tipo"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-xs text-[color:var(--muted)]">
-                    <span className="inline-flex items-center gap-2">
-                      <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                      <span className="metric-number">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="metric-number text-[color:var(--foreground)]">
                         <AnimatedNumber value={filteredSignals.length} delay={0.15} duration={0.6} />
                       </span>
-                      <span>de</span>
-                      <span className="metric-number">{signals.length}</span>
-                      <span>sinais visíveis</span>
+                      <span>de {signals.length} sinais</span>
                     </span>
                     <button
                       type="button"
@@ -1380,10 +1403,11 @@ export function CommandCenter({
                         setTypeFilter("ALL");
                         setPriorityFilter("ALL");
                         setSortMode("priority");
+                        setShowAdvancedFilters(false);
                       }}
-                      className="rounded-full border border-[color:var(--line)] px-3 py-1.5 text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.38)] hover:text-[color:var(--aqua)]"
+                      className="rounded-full border border-[color:var(--line)] px-3 py-1.5 text-[color:var(--muted)] transition hover:border-[rgba(225,48,108,0.32)] hover:text-[color:var(--foreground)]"
                     >
-                      resetar filtros
+                      Limpar
                     </button>
                   </div>
                 </motion.div>
@@ -1473,44 +1497,42 @@ export function CommandCenter({
                 <SavedAndHistory savedSignals={savedSignals} revivalSignals={revivalSignals} />
               </motion.div>
 
-              <motion.section
-                variants={sectionVariants}
-                className="app-rail-card min-w-0 rounded-[var(--radius-lg)] p-4"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--acid)]">
-                      <LiveDot tone="acid" />
-                      Proveniência
-                    </p>
-                    <h2 className="mt-1.5 text-base font-semibold">Fila de fontes</h2>
+              <motion.div variants={sectionVariants}>
+                <InstagramSourcesPanel sources={trendSources} />
+              </motion.div>
+
+              {sources.length > 0 ? (
+                <motion.section
+                  variants={sectionVariants}
+                  className="min-w-0 rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4"
+                >
+                  <h2 className="text-sm font-semibold">Proveniência</h2>
+                  <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+                    {sources.length} fonte{sources.length === 1 ? "" : "s"} de coleta
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {sources.slice(0, 4).map((source, idx) => (
+                      <motion.div
+                        key={source.id}
+                        initial={{ opacity: 0, x: 8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.32, delay: 0.05 * idx, ease }}
+                        className="rounded-[var(--radius-md)] bg-[rgba(0,0,0,0.16)] p-2.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 break-words text-[13px] leading-5 text-[color:var(--foreground)]">
+                            {source.title}
+                          </p>
+                          <SourcePill source={source} compact />
+                        </div>
+                        <p className="mt-1 text-[11px] text-[color:var(--muted)]">
+                          {source.market} · {formatSourceDate(source.collectedAt)}
+                        </p>
+                      </motion.div>
+                    ))}
                   </div>
-                  <Database className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-                </div>
-                <div className="mt-3.5 grid gap-2.5">
-                  {sources.map((source, idx) => (
-                    <motion.div
-                      key={source.id}
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.32, delay: 0.05 * idx, ease }}
-                      className="app-rail-item rounded-[var(--radius-md)] p-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="min-w-0 break-words text-sm font-medium leading-5">{source.title}</p>
-                        <SourcePill source={source} compact />
-                      </div>
-                      <p className="mt-2.5 text-xs leading-5 text-[color:var(--muted)]">
-                        {source.coverage}. {source.gap}.
-                      </p>
-                      <div className="mt-2.5 flex items-center justify-between text-[11px] text-[color:var(--muted)]">
-                        <span className="font-mono uppercase tracking-[0.16em]">{source.market}</span>
-                        <span className="font-mono">{formatSourceDate(source.collectedAt)}</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.section>
+                </motion.section>
+              ) : null}
 
               <motion.div variants={sectionVariants}>
                 <JobRunsFeed
@@ -1523,22 +1545,18 @@ export function CommandCenter({
               <motion.section
                 id="safe-mode"
                 variants={sectionVariants}
-                className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.2)] bg-[linear-gradient(180deg,rgba(199,255,93,0.09),rgba(199,255,93,0.04))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4"
               >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-10 -bottom-10 h-36 w-36 rounded-full bg-[rgba(199,255,93,0.14)] blur-3xl"
-                />
-                <div className="relative flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--acid)]">
-                  <Flame className="h-4 w-4" aria-hidden="true" />
+                <div className="flex items-center gap-2 text-[12px] font-medium text-[color:var(--foreground)]">
+                  <Flame className="h-3.5 w-3.5 text-[color:var(--success)]" aria-hidden="true" />
                   Safe mode
+                  <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-[rgba(34,197,94,0.1)] px-2 py-0.5 text-[10px] text-[color:var(--success)]">
+                    <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
+                    ativo
+                  </span>
                 </div>
-                <p className="relative mt-2.5 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  Ingestão manual, própria/licenciada ou oficial rastreável. Falhas seguem como falhas — entradas sem fonte não viram insight.
-                </p>
-                <p className="relative mt-3 inline-flex items-center gap-2 rounded-full border border-[rgba(199,255,93,0.22)] bg-[rgba(0,0,0,0.24)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--acid)]">
-                  <TrendingUp className="h-3 w-3" aria-hidden="true" />
-                  ops-guard ativo
+                <p className="mt-2 text-[12px] leading-5 text-[color:var(--muted)]">
+                  Ingestão manual e oficial rastreável. Entradas sem fonte não viram insight.
                 </p>
               </motion.section>
             </div>

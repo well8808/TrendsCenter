@@ -22,6 +22,7 @@ export default async function Home() {
     commandCenterData.persistence.label,
     commandCenterData.tenant.workspaceSlug,
     commandCenterData.signals.map((signal) => `${signal.id}:${signal.saved}:${signal.evidence.length}`).join("|"),
+    commandCenterData.trendSources.map((source) => `${source.id}:${source.status}:${source.updatedAt}`).join("|"),
   ].join("::");
 
   return (

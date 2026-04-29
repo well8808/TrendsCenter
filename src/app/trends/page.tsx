@@ -77,7 +77,7 @@ export default async function TrendsPage({
   }));
 
   const stats = [
-    { label: "vídeos", value: data.stats.total, tone: "acid" as const },
+    { label: "Reels", value: data.stats.total, tone: "acid" as const },
     { label: "BR", value: data.stats.br, tone: "aqua" as const },
     { label: "US", value: data.stats.us, tone: "gold" as const },
     { label: "score med.", value: data.stats.avgScore, tone: "violet" as const },
@@ -101,25 +101,23 @@ export default async function TrendsPage({
                   command center
                 </Link>
 
-                <div className="mt-5 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(199,255,93,0.32)] bg-[rgba(199,255,93,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
+                <div className="mt-5 flex flex-wrap items-center gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                  <span className="inline-flex items-center gap-2 text-[color:var(--hot)]">
                     <span className="live-dot" aria-hidden="true" />
                     trend search core
                   </span>
-                  <span className="rounded-full border border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
-                    {context.workspaceName}
-                  </span>
-                  <span className="hidden items-center gap-1.5 rounded-full border border-[color:var(--line)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--muted)] sm:inline-flex">
-                    tenant / {context.workspaceName.toLowerCase()}
+                  <span aria-hidden="true" className="text-[color:var(--line-strong)]">/</span>
+                  <span className="font-mono text-[color:var(--muted-strong)]">
+                    {context.workspaceName.toLowerCase()}
                   </span>
                 </div>
 
-                <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-tight md:text-6xl">
-                  <span className="terminal-caret">Buscar trends indexadas</span>
+                <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">
+                  Buscar trends indexadas
                 </h1>
-                <p className="mt-4 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)] md:text-base">
-                  Vídeos, creators, sons e hashtags persistidos com snapshot temporal e fonte rastreável.
-                  Ingestão manual ou oficial — sem scraping, sem dado sem origem.
+                <p className="mt-4 max-w-2xl text-[14px] leading-6 text-[color:var(--muted)] md:text-[15px]">
+                  Reels, creators, sons e hashtags persistidos com snapshot temporal e fonte rastreavel.
+                  Analise 18+ fica limitada a padroes de marketing, formato e funil; sem scraping e sem dado sem origem.
                 </p>
               </div>
 
@@ -132,7 +130,7 @@ export default async function TrendsPage({
                   "relative mt-5 rounded-[var(--radius-md)] border px-4 py-3 text-sm",
                   params.error
                     ? "border-[rgba(255,111,97,0.34)] bg-[rgba(255,111,97,0.08)] text-[color:var(--coral)]"
-                    : "border-[rgba(199,255,93,0.3)] bg-[rgba(199,255,93,0.08)] text-[color:var(--acid)]",
+                    : "border-[rgba(237, 73, 86,0.3)] bg-[rgba(237, 73, 86,0.08)] text-[color:var(--acid)]",
                 )}
               >
                 {params.error ?? params.status}
@@ -151,7 +149,7 @@ export default async function TrendsPage({
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted)]"
                     name="q"
                     defaultValue={data.params.query}
-                    placeholder="keyword, @creator, #hashtag, som..."
+                    placeholder="Reel, @creator, #hashtag, audio..."
                   />
                   <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)] sm:inline">
                     ⌘ K
@@ -177,7 +175,7 @@ export default async function TrendsPage({
                 </select>
                 <button
                   type="submit"
-                  className="flex min-h-[var(--control-height)] items-center justify-center gap-2 bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]"
+                  className="flex min-h-[var(--control-height)] items-center justify-center gap-2 bg-[rgba(237, 73, 86,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.18)]"
                 >
                   buscar
                 </button>
@@ -200,63 +198,58 @@ export default async function TrendsPage({
             />
 
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5 backdrop-blur-2xl">
-              <div className="section-head text-[color:var(--gold)]">
-                <Gauge className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                <Gauge className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 como o score é calculado
               </div>
-              <div className="mt-4 divide-y divide-[rgba(239,233,220,0.07)]">
+              <ol className="mt-5 grid gap-4">
                 {[
-                  { label: "crescimento", body: "views atuais contra snapshot anterior", tone: "--acid" },
-                  { label: "velocidade", body: "crescimento por janela temporal", tone: "--aqua" },
-                  { label: "aceleração", body: "mudança de velocidade entre janelas", tone: "--gold" },
-                  { label: "recência", body: "idade do vídeo no momento observado", tone: "--violet" },
-                  { label: "consistência", body: "snapshots + evidências encadeadas", tone: "--aqua" },
-                ].map(({ label, body, tone }) => (
-                  <div key={label} className="flex items-start gap-3 py-3">
-                    <span
-                      className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ background: `var(${tone})`, boxShadow: `0 0 8px var(${tone})` }}
-                      aria-hidden="true"
-                    />
+                  { label: "crescimento", body: "views atuais contra snapshot anterior" },
+                  { label: "velocidade", body: "crescimento por janela temporal" },
+                  { label: "aceleração", body: "mudança de velocidade entre janelas" },
+                  { label: "recência", body: "idade do Reel no momento observado" },
+                  { label: "consistência", body: "snapshots + evidências encadeadas" },
+                ].map(({ label, body }, idx) => (
+                  <li key={label} className="flex items-start gap-3">
+                    <span className="mt-0.5 font-mono text-[10px] tabular-nums text-[color:var(--muted)]">
+                      0{idx + 1}
+                    </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: `var(${tone})` }}>
+                      <p className="text-[12px] font-semibold text-[color:var(--foreground)]">
                         {label}
                       </p>
-                      <p className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">{body}</p>
+                      <p className="mt-0.5 text-[11px] leading-5 text-[color:var(--muted)]">{body}</p>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </section>
 
-            <section className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.2)] bg-[rgba(199,255,93,0.055)] p-5">
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-10 -bottom-10 h-36 w-36 rounded-full bg-[rgba(199,255,93,0.14)] blur-3xl"
-              />
-              <div className="relative flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            <section className="relative rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-5">
+              <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--hot)]">
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 safe mode
               </div>
-              <p className="relative mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-                Sem scraping e sem insights sem fonte. Entradas bloqueadas continuam registradas como falha operacional.
+              <p className="mt-3 text-[13px] leading-6 text-[color:var(--muted-strong)]">
+                Sem scraping e sem insights sem fonte. Conteudo adulto só entra como análise segura 18+; entradas bloqueadas continuam registradas como falha operacional.
               </p>
-              <div className="relative mt-4 grid gap-2 text-xs text-[color:var(--muted)]">
+              <dl className="mt-5 grid gap-2.5 text-[11px] text-[color:var(--muted)]">
                 <div className="flex items-center gap-2">
-                  <History className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
-                  <span className="font-mono">
-                    último índice: {formatDate(data.stats.latestIndexedAt)}
-                  </span>
+                  <History className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
+                  <dt className="sr-only">último índice</dt>
+                  <dd className="font-mono">último índice: {formatDate(data.stats.latestIndexedAt)}</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ArrowDownUp className="h-4 w-4 text-[color:var(--aqua)]" aria-hidden="true" />
-                  <span className="font-mono uppercase tracking-[0.14em]">ordenação: {data.params.sort}</span>
+                  <ArrowDownUp className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
+                  <dt className="sr-only">ordenação</dt>
+                  <dd className="font-mono">ordenação: {data.params.sort}</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-[color:var(--acid)]" aria-hidden="true" />
-                  <span className="font-mono uppercase tracking-[0.14em]">mercado: {data.params.market}</span>
+                  <TrendingUp className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
+                  <dt className="sr-only">mercado</dt>
+                  <dd className="font-mono">mercado: {data.params.market}</dd>
                 </div>
-              </div>
+              </dl>
             </section>
           </div>
         </aside>

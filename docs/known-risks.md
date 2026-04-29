@@ -8,7 +8,7 @@ O submit de ingestao apenas enfileira o job. A evolucao para `RUNNING` e `SUCCEE
 
 ## Fontes oficiais
 
-As superficies oficiais estao modeladas, mas conectores reais de TikTok Creative Center, Ads Manager, TikTok One, Market Scope, Display API e Commercial Music Library ainda dependem de credenciais/elegibilidade. Nao tratar dados manuais como coleta oficial.
+As superficies oficiais estao modeladas, mas conectores reais de Instagram Graph API, Instagram Insights, Meta Business Suite e Meta Ad Library ainda dependem de credenciais/elegibilidade. Nao tratar dados manuais como coleta oficial.
 
 ## Banco compartilhado
 

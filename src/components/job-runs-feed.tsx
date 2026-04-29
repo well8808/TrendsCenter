@@ -57,7 +57,7 @@ const toneClass = {
 } as const;
 
 const toneBadgeClass = {
-  acid: "border-[rgba(199,255,93,0.3)] bg-[rgba(199,255,93,0.08)] text-[color:var(--acid)]",
+  acid: "border-[rgba(237, 73, 86,0.3)] bg-[rgba(237, 73, 86,0.08)] text-[color:var(--acid)]",
   aqua: "border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)] text-[color:var(--aqua)]",
   gold: "border-[rgba(243,201,105,0.3)] bg-[rgba(243,201,105,0.08)] text-[color:var(--gold)]",
   coral: "border-[rgba(255,111,97,0.32)] bg-[rgba(255,111,97,0.08)] text-[color:var(--coral)]",

@@ -1,8 +1,8 @@
 {
-  "name": "tiktok-market-command-center",
+  "name": "instagram-reels-command-center",
   "version": "0.1.0",
   "private": true,
-  "description": "Premium TikTok market intelligence command center focused on Brazil with US early-signal monitoring.",
+  "description": "Premium Instagram Reels market intelligence command center focused on Brazil with US early-signal monitoring.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

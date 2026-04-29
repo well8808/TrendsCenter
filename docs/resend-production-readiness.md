@@ -55,7 +55,7 @@ auth.seudominio.com
 Remetente recomendado:
 
 ```text
-TikTok Market Command Center <no-reply@auth.seudominio.com>
+Instagram Market Command Center <no-reply@auth.seudominio.com>
 ```
 
 Evite usar o dominio raiz e evite misturar email transacional com marketing. Se no futuro houver alertas operacionais independentes, use outro subdominio, por exemplo `alerts.seudominio.com`.

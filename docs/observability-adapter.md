@@ -77,7 +77,7 @@ Comandos de rotina:
 ```powershell
 vercel logs --environment production --query "/api/internal/cron/dispatch" --since 48h --no-color --no-follow --no-branch --expand
 vercel logs --environment production --level error --since 1h --no-color --no-follow --no-branch --expand
-curl.exe -sS https://tiktok-market-command-center.vercel.app/api/health
+curl.exe -sS https://instagram-market-command-center.vercel.app/api/health
 ```
 
 Limite honesto: esse fallback melhora visibilidade, mas nao substitui alertas externos de logs.
@@ -118,7 +118,7 @@ Outbox/email:
 
 Health:
 
-- Check externo `GET https://tiktok-market-command-center.vercel.app/api/health` a cada 5 minutos.
+- Check externo `GET https://instagram-market-command-center.vercel.app/api/health` a cada 5 minutos.
 - Alertar se status HTTP != 200.
 - Alertar se `data.status != "ok"`.
 - Alertar se `data.database != "ok"`.
@@ -174,7 +174,7 @@ Comandos uteis:
 ```powershell
 vercel logs --environment production --level error --since 1h --no-color --no-follow --no-branch --expand
 vercel logs --environment production --query "/api/internal/cron/dispatch" --since 48h --no-color --no-follow --no-branch --expand
-curl.exe -sS https://tiktok-market-command-center.vercel.app/api/health
+curl.exe -sS https://instagram-market-command-center.vercel.app/api/health
 ```
 
 ## Criterio para declarar observabilidade minima pronta

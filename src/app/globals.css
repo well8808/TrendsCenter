@@ -12,20 +12,52 @@
   --surface-soft: #1f1e19;
   --surface-glass: rgba(15, 15, 12, 0.72);
   --surface-quiet: rgba(255, 255, 255, 0.035);
-  --line: rgba(239, 233, 220, 0.15);
-  --line-strong: rgba(239, 233, 220, 0.26);
-  --muted: #b2aa9a;
-  --muted-strong: #ded4c1;
-  --acid: #c7ff5d;
-  --aqua: #40e0d0;
-  --coral: #ff6f61;
-  --gold: #f3c969;
-  --violet: #a98cff;
+  --line: rgba(239, 233, 220, 0.12);
+  --line-strong: rgba(239, 233, 220, 0.22);
+  --muted: #a8a08e;
+  --muted-strong: #d4cab7;
+
+  /* ─── PALETA — primário vermelho Instagram (heart) ───────────────────────
+   * --hot é a cor de ênfase única. Usar com disciplina:
+   *   • score >= 78 / prioridade NOW / CTA principal / item ativo crítico
+   * Tudo o mais permanece em neutro quente. Cores secundárias (aqua/gold/
+   * violet) só aparecem quando há diferença SEMÂNTICA real (mercado, revival,
+   * info), nunca como decoração.
+   */
+  --hot: #ed4956;
+  --hot-soft: rgba(237, 73, 86, 0.14);
+  --hot-line: rgba(237, 73, 86, 0.34);
+  --hot-glow: rgba(237, 73, 86, 0.45);
+
+  /* legacy alias — código existente referencia --acid; mantém valor sincronizado */
+  --acid: var(--hot);
+
+  /* Cores semânticas — chroma reduzido para baixar o ruído visual.
+   * Continuam disponíveis, mas o sistema deve usá-las menos: uma região,
+   * uma decisão, sem decorar. */
+  --aqua: #58c8be;     /* info / mercado US — antes #40e0d0, mais saturado */
+  --gold: #e6b765;     /* atenção média — antes #f3c969 */
+  --violet: #9d83ec;   /* revival/transfer — antes #a98cff */
+  --coral: #ff6f61;    /* alerta/risco alto */
   --danger: #ff4d4d;
-  --success: #79e884;
+  --success: #6dd485;
+
+  /* Instagram brand gradient — usar SOMENTE em CTA principal, item ativo
+   * de sidebar e marca. Nunca em texto de dado, nunca em borda de card. */
+  --ig-1: #833ab4;
+  --ig-2: #c13584;
+  --ig-3: #e1306c;
+  --ig-4: #f77737;
+  --ig-5: #fcaf45;
+  --ig-grad: linear-gradient(135deg, #833ab4 0%, #c13584 30%, #e1306c 55%, #f77737 80%, #fcaf45 100%);
+  --ig-grad-soft: linear-gradient(135deg, rgba(131, 58, 180, 0.18) 0%, rgba(193, 53, 132, 0.16) 35%, rgba(225, 48, 108, 0.14) 60%, rgba(247, 119, 55, 0.14) 80%, rgba(252, 175, 69, 0.16) 100%);
+  --ig-grad-whisper: linear-gradient(135deg, rgba(131, 58, 180, 0.10) 0%, rgba(225, 48, 108, 0.08) 50%, rgba(252, 175, 69, 0.10) 100%);
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
   --shadow-soft: 0 28px 90px rgba(0, 0, 0, 0.44);
   --shadow-lift: 0 18px 70px rgba(0, 0, 0, 0.35);
   --panel-bg:
@@ -47,16 +79,16 @@
   --motion-medium: 260ms;
   --motion-slow: 440ms;
 
-  /* Score semântica — usar estas cores sempre que representar score */
-  --score-high: var(--acid);
+  /* Score semântica — vermelho ancora prioridade hot */
+  --score-high: var(--hot);
   --score-mid: var(--gold);
   --score-low: var(--aqua);
-  --score-glow-high: rgba(199, 255, 93, 0.42);
-  --score-glow-mid: rgba(243, 201, 105, 0.38);
-  --score-glow-low: rgba(64, 224, 208, 0.34);
+  --score-glow-high: var(--hot-glow);
+  --score-glow-mid: rgba(230, 183, 101, 0.32);
+  --score-glow-low: rgba(88, 200, 190, 0.28);
 
-  /* Feedback */
-  --focus-ring: 0 0 0 1px rgba(64, 224, 208, 0.35), 0 0 22px rgba(64, 224, 208, 0.18);
+  /* Feedback — focus ring agora é hot para alinhar com identidade IG */
+  --focus-ring: 0 0 0 1px rgba(237, 73, 86, 0.42), 0 0 22px rgba(237, 73, 86, 0.18);
   --hover-glow: 0 18px 56px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(239, 233, 220, 0.03);
 }
 
@@ -79,10 +111,10 @@ html {
 
 body {
   background:
-    radial-gradient(circle at 18% -10%, rgba(199, 255, 93, 0.1), transparent 25rem),
-    radial-gradient(circle at 84% 0%, rgba(64, 224, 208, 0.08), transparent 29rem),
-    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.03), transparent 42rem),
-    linear-gradient(180deg, #050505 0%, #0a0a08 46%, #060606 100%);
+    radial-gradient(circle at 14% -12%, rgba(193, 53, 132, 0.045), transparent 32rem),
+    radial-gradient(circle at 88% 6%, rgba(252, 175, 69, 0.035), transparent 34rem),
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.018), transparent 44rem),
+    linear-gradient(180deg, #050505 0%, #0a0908 48%, #060606 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, sans-serif;
   min-height: 100svh;
@@ -106,7 +138,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--aqua);
+  outline: 2px solid var(--hot);
   outline-offset: 2px;
 }
 
@@ -128,7 +160,7 @@ select option {
 }
 
 ::selection {
-  background: rgba(199, 255, 93, 0.24);
+  background: rgba(237, 73, 86, 0.26);
   color: var(--foreground);
 }
 
@@ -221,10 +253,10 @@ select option {
   .app-hero {
     border: 1px solid var(--line);
     background:
-      radial-gradient(circle at 8% 0%, rgba(199, 255, 93, 0.12), transparent 22rem),
-      radial-gradient(circle at 88% 12%, rgba(64, 224, 208, 0.1), transparent 24rem),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
-      rgba(12, 12, 10, 0.82);
+      radial-gradient(circle at 6% 0%, rgba(193, 53, 132, 0.06), transparent 26rem),
+      radial-gradient(circle at 92% 10%, rgba(252, 175, 69, 0.05), transparent 26rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+      rgba(12, 12, 10, 0.86);
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(28px);
   }
@@ -259,22 +291,33 @@ select option {
 
   .app-control:focus-within,
   .app-control:focus {
-    border-color: rgba(64, 224, 208, 0.52);
-    box-shadow: 0 0 0 1px rgba(64, 224, 208, 0.12);
+    border-color: rgba(237, 73, 86, 0.42);
+    box-shadow: 0 0 0 1px rgba(237, 73, 86, 0.12);
   }
 
   .app-pill {
-    border: 1px solid rgba(239, 233, 220, 0.15);
-    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(239, 233, 220, 0.12);
+    background: rgba(255, 255, 255, 0.025);
     color: var(--muted-strong);
   }
 
+  /* Eyebrow — calibrado para baixar competição visual.
+   * Antes: 0.66rem, weight 600, tracking 0.14em — gritava em toda página.
+   * Agora: 0.7rem, weight 500, tracking 0.08em — presença, sem dominar. */
   .eyebrow {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
+  }
+
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-transform: none;
   }
 
   .metric-number {
@@ -299,10 +342,10 @@ select option {
 @keyframes signal-core {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(199, 255, 93, 0.55), 0 0 14px 2px rgba(199, 255, 93, 0.45);
+    box-shadow: 0 0 0 0 rgba(237, 73, 86, 0.55), 0 0 14px 2px rgba(237, 73, 86, 0.45);
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(199, 255, 93, 0), 0 0 22px 4px rgba(199, 255, 93, 0.28);
+    box-shadow: 0 0 0 4px rgba(237, 73, 86, 0), 0 0 22px 4px rgba(237, 73, 86, 0.28);
   }
 }
 
@@ -334,31 +377,20 @@ select option {
   animation: signal-core 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Removido: o shine constante somava ruído visual em qualquer card de prioridade.
+ * O sinal de "now" agora vive só no signal-now-pulse (ponto vermelho pulsando). */
 .priority-shine::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    transparent 40%,
-    rgba(255, 255, 255, 0.24) 50%,
-    transparent 60%,
-    transparent 100%
-  );
-  animation: priority-shine 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  pointer-events: none;
-  mix-blend-mode: screen;
+  content: none;
 }
 
 .trend-card-now-border {
   background:
     linear-gradient(
       135deg,
-      rgba(199, 255, 93, 0.45) 0%,
+      rgba(237, 73, 86, 0.45) 0%,
       rgba(64, 224, 208, 0.12) 40%,
-      rgba(199, 255, 93, 0.3) 80%,
-      rgba(199, 255, 93, 0.45) 100%
+      rgba(237, 73, 86, 0.3) 80%,
+      rgba(237, 73, 86, 0.45) 100%
     );
   background-size: 220% 220%;
   animation: border-drift 6s ease-in-out infinite;
@@ -460,7 +492,7 @@ select option {
     90deg,
     transparent 0%,
     rgba(64, 224, 208, 0.22) 45%,
-    rgba(199, 255, 93, 0.22) 55%,
+    rgba(237, 73, 86, 0.22) 55%,
     transparent 100%
   );
   animation: data-stream 2.4s linear infinite;
@@ -476,7 +508,7 @@ select option {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(199, 255, 93, 0.28) 50%,
+    rgba(237, 73, 86, 0.28) 50%,
     transparent
   );
   animation: scan-line 6s linear infinite;
@@ -492,7 +524,7 @@ select option {
 
 /* Score tier glows — usar em containers que precisam sinalizar nível */
 .score-glow-high {
-  box-shadow: 0 0 42px var(--score-glow-high), inset 0 0 0 1px rgba(199, 255, 93, 0.22);
+  box-shadow: 0 0 42px var(--score-glow-high), inset 0 0 0 1px rgba(237, 73, 86, 0.22);
 }
 .score-glow-mid {
   box-shadow: 0 0 38px var(--score-glow-mid), inset 0 0 0 1px rgba(243, 201, 105, 0.2);
@@ -503,13 +535,12 @@ select option {
 
 /* Surface elevations para sidebar / control panel */
 .app-surface-console {
-  border: 1px solid rgba(239, 233, 220, 0.09);
+  border: 1px solid rgba(239, 233, 220, 0.08);
   background:
-    linear-gradient(180deg, rgba(12, 12, 10, 0.94), rgba(6, 6, 5, 0.88)),
-    radial-gradient(circle at 0% 0%, rgba(199, 255, 93, 0.06), transparent 30%);
+    linear-gradient(180deg, rgba(12, 12, 10, 0.96), rgba(6, 6, 5, 0.92));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    inset -1px 0 0 rgba(239, 233, 220, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset -1px 0 0 rgba(239, 233, 220, 0.04);
 }
 
 .nav-item {
@@ -522,8 +553,65 @@ select option {
   left: 0;
   width: 2px;
   border-radius: 9999px;
-  background: linear-gradient(180deg, var(--acid), var(--aqua));
-  box-shadow: 0 0 14px rgba(199, 255, 93, 0.55);
+  background: linear-gradient(180deg, var(--ig-2), var(--ig-3) 50%, var(--ig-4));
+  box-shadow: 0 0 14px rgba(225, 48, 108, 0.42);
+}
+
+/* Sidebar nav active fill — gradiente Instagram em opacidade muito baixa */
+.nav-active-fill {
+  background: var(--ig-grad-whisper);
+  border: 1px solid rgba(225, 48, 108, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* CTA principal com brilho Instagram — usar com moderação */
+.cta-ig {
+  position: relative;
+  isolation: isolate;
+  background: var(--ig-grad);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 8px 24px rgba(225, 48, 108, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform var(--motion-fast) var(--ease-premium),
+    box-shadow var(--motion-fast) var(--ease-premium);
+}
+.cta-ig:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 32px rgba(225, 48, 108, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.cta-ig::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.14) 48%, transparent 65%);
+  opacity: 0;
+  transition: opacity var(--motion-medium) var(--ease-premium);
+  pointer-events: none;
+}
+.cta-ig:hover::before {
+  opacity: 1;
+}
+
+/* Brand mark — substitui o quadrado acid maciço */
+.brand-mark {
+  background: var(--ig-grad);
+  color: #fff;
+  box-shadow:
+    0 6px 20px rgba(225, 48, 108, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Texto com gradiente Instagram — apenas em headers de marca */
+.ig-gradient-text {
+  background: var(--ig-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .metric-value-xl {
@@ -558,11 +646,12 @@ select option {
   line-height: 1;
 }
 
-/* Card eyebrow — sits ABOVE titles, reinforces region/type. */
+/* Card eyebrow — calibrado abaixo do peso anterior (0.22em → 0.1em).
+ * Era o maior somador de ruído nas páginas densas. */
 .card-eyebrow {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
   font-feature-settings: "ss01";
@@ -716,8 +805,8 @@ select option {
 
 /* ─── Tag variants for market/status ────────────────────────────────────── */
 .tag-acid {
-  border: 1px solid rgba(199, 255, 93, 0.32);
-  background: rgba(199, 255, 93, 0.08);
+  border: 1px solid rgba(237, 73, 86, 0.32);
+  background: rgba(237, 73, 86, 0.08);
   color: var(--acid);
 }
 .tag-aqua {

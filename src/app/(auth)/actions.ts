@@ -71,7 +71,7 @@ async function createVerificationToken({
     client,
     kind: "EMAIL_VERIFICATION",
     toEmail: email,
-    subject: "Verifique seu acesso ao TikTok Market Command Center",
+    subject: "Verifique seu acesso ao Instagram Reels Command Center",
     actionUrl,
     userId,
     workspaceId,
@@ -178,7 +178,7 @@ export async function loginAction(formData: FormData) {
 export async function signupAction(formData: FormData) {
   const email = normalizeEmail(formValue(formData, "email"));
   const name = formValue(formData, "name") || null;
-  const workspaceName = formValue(formData, "workspaceName") || "TikTok Market Workspace";
+  const workspaceName = formValue(formData, "workspaceName") || "Instagram Reels Workspace";
   const password = formValue(formData, "password");
 
   try {

@@ -3,15 +3,12 @@ export type Market = "BR" | "US";
 export type DataOrigin = "OFFICIAL" | "OWNED" | "MANUAL" | "DEMO";
 
 export type SourceKind =
-  | "CREATIVE_CENTER_TRENDS"
-  | "TOP_ADS"
-  | "KEYWORD_INSIGHTS"
-  | "CREATIVE_INSIGHTS"
-  | "AUDIENCE_INSIGHTS"
-  | "TIKTOK_ONE"
-  | "MARKET_SCOPE"
-  | "DISPLAY_API"
-  | "COMMERCIAL_MUSIC_LIBRARY"
+  | "INSTAGRAM_REELS_TRENDS"
+  | "INSTAGRAM_GRAPH_API"
+  | "INSTAGRAM_PROFESSIONAL_DASHBOARD"
+  | "META_AD_LIBRARY"
+  | "META_BUSINESS_SUITE"
+  | "META_CREATOR_MARKETPLACE"
   | "OWNED_UPLOAD"
   | "MANUAL_RESEARCH"
   | "DEMO";
@@ -33,6 +30,33 @@ export type SignalPriority = "now" | "next" | "watch" | "hold";
 export type RiskLevel = "low" | "medium" | "high";
 
 export type TrendStage = "emerging" | "accelerating" | "proving" | "revival" | "monitor";
+
+export type TrendSourcePlatform = "instagram";
+
+export type TrendSourceType =
+  | "reel"
+  | "audio"
+  | "creator"
+  | "hashtag"
+  | "account_insights"
+  | "meta_ad_library"
+  | "manual";
+
+export type TrendSourceStatus = "active" | "paused" | "error";
+
+export interface TrendSourceRecord {
+  id: string;
+  platform: TrendSourcePlatform;
+  title: string;
+  sourceType: TrendSourceType;
+  sourceUrl: string;
+  region: string;
+  category: string;
+  status: TrendSourceStatus;
+  lastCheckedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface SourceRecord {
   id: string;

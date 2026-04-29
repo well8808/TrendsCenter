@@ -4,9 +4,9 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TikTok Market Command Center",
+  title: "Instagram Reels Command Center",
   description:
-    "Premium TikTok market intelligence command center for Brazil and US early signals.",
+    "Premium Instagram Reels intelligence command center for Brazil and US early signals.",
 };
 
 export default function RootLayout({

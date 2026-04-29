@@ -28,7 +28,7 @@ Execucao automatica confirmada em producao:
 
 - Data local: 2026-04-25 03:54:06 BRT
 - Data UTC aproximada: 2026-04-25 06:54:06 UTC
-- Host: `tiktok-market-command-center-qo00s24cf.vercel.app`
+- Host: `instagram-market-command-center-qo00s24cf.vercel.app`
 - Metodo/rota: `GET /api/internal/cron/dispatch`
 - Status: `200`
 - Log estruturado: `route_completed`
@@ -101,7 +101,7 @@ vercel crons ls --no-color
 vercel env ls production --debug --no-color
 vercel logs --environment production --query "/api/internal/cron/dispatch" --since 48h --no-color --no-follow --no-branch --limit 50 --expand
 vercel logs --environment production --status-code 200 --since 48h --no-color --no-follow --no-branch --limit 50
-curl.exe -i https://tiktok-market-command-center.vercel.app/api/internal/cron/dispatch
+curl.exe -i https://instagram-market-command-center.vercel.app/api/internal/cron/dispatch
 ```
 
 Nao rode chamada autorizada de producao apenas para smoke enquanto a rota nao tiver `dryRun`: qualquer chamada valida processa jobs e outbox reais.

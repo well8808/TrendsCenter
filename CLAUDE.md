@@ -1,4 +1,4 @@
-# CLAUDE.md — TikTok Market Intelligence
+# CLAUDE.md — Instagram Market Intelligence
 
 > Lê isso antes de tocar em qualquer arquivo. Este é o briefing completo do produto.
 
@@ -6,8 +6,8 @@
 
 ## O que é este produto
 
-**Nome interno:** TikTok Market Command Center
-**Propósito:** Plataforma de inteligência de mercado para identificar trends do TikTok antes de explodirem no Brasil. Monitora sinais do mercado americano (10%) que migram para o BR (90%), com foco no nicho hot.
+**Nome interno:** Instagram Market Command Center
+**Propósito:** Plataforma de inteligência de mercado para identificar trends do Instagram antes de explodirem no Brasil. Monitora sinais do mercado americano (10%) que migram para o BR (90%), com foco no nicho hot.
 
 O usuário deste produto é um **profissional de marketing/conteúdo** que toma decisões rápidas com base em sinais de tendência. Ele não tem tempo pra erro. Cada sessão é uma missão de coleta de inteligência.
 
@@ -262,7 +262,7 @@ Server Component (padrão):
 
 ### Linguagem do produto
 - Português BR nos labels voltados ao usuário
-- Termos técnicos de TikTok permanecem em inglês (trend, signal, hashtag, creator)
+- Termos técnicos de Instagram permanecem em inglês (trend, signal, hashtag, creator)
 - Tom: direto, confiante, sem floreio — como um analista sênior falaria
 
 ### Prioridade visual de uma TrendCard

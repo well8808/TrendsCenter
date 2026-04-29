@@ -73,10 +73,10 @@ const signalTypes = [
 
 const sourceKinds = [
   ["MANUAL_RESEARCH", "Manual research"],
-  ["CREATIVE_CENTER_TRENDS", "Creative Center"],
-  ["TOP_ADS", "Top Ads"],
-  ["KEYWORD_INSIGHTS", "Keyword Insights"],
-  ["COMMERCIAL_MUSIC_LIBRARY", "Commercial Music"],
+  ["INSTAGRAM_REELS_TRENDS", "Instagram Reels"],
+  ["INSTAGRAM_PROFESSIONAL_DASHBOARD", "Instagram Insights"],
+  ["INSTAGRAM_GRAPH_API", "Instagram Graph API"],
+  ["META_AD_LIBRARY", "Meta Ad Library"],
   ["OWNED_UPLOAD", "Owned upload"],
 ] as const;
 
@@ -97,7 +97,7 @@ function formatOperationDateTime(dateIso: string | null | undefined) {
 
 function statusTone(status: string) {
   if (status === "SUCCEEDED" || status === "APPROVED") {
-    return "border-[rgba(199,255,93,0.32)] bg-[rgba(199,255,93,0.09)] text-[color:var(--acid)]";
+    return "border-[rgba(237, 73, 86,0.32)] bg-[rgba(237, 73, 86,0.09)] text-[color:var(--acid)]";
   }
 
   if (status === "FAILED" || status === "BLOCKED") {
@@ -139,7 +139,7 @@ function ResultBadge({ result }: { result?: ActionResult }) {
       className={cn(
         "rounded-[var(--radius-sm)] border px-3 py-2 text-sm",
         result.ok
-          ? "border-[rgba(199,255,93,0.28)] bg-[rgba(199,255,93,0.075)] text-[color:var(--muted-strong)]"
+          ? "border-[rgba(237, 73, 86,0.28)] bg-[rgba(237, 73, 86,0.075)] text-[color:var(--muted-strong)]"
           : "border-[rgba(255,111,97,0.34)] bg-[rgba(255,111,97,0.075)] text-[color:var(--muted-strong)]",
       )}
     >
@@ -445,7 +445,7 @@ export function IngestionLab({
             <button
               type="submit"
               disabled={isCreating}
-              className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.16)] disabled:opacity-60"
+              className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-[rgba(237, 73, 86,0.38)] bg-[rgba(237, 73, 86,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.16)] disabled:opacity-60"
             >
               {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               registrar ingestão
@@ -550,7 +550,7 @@ export function IngestionLab({
           </div>
           <div className="mt-4 grid gap-3">
             {lab.batches.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[rgba(199,255,93,0.16)] bg-[rgba(199,255,93,0.03)] p-4 text-center">
+              <div className="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[rgba(237, 73, 86,0.16)] bg-[rgba(237, 73, 86,0.03)] p-4 text-center">
                 <GitBranch className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                 <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum batch processado</p>
                 <p className="text-[11px] leading-4 text-[color:var(--muted)]">O lineage aparece aqui assim que o primeiro job for concluído.</p>
@@ -634,7 +634,7 @@ export function IngestionLab({
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-lg)] border border-[rgba(199,255,93,0.2)] bg-[rgba(199,255,93,0.065)] p-4">
+          <div className="rounded-[var(--radius-lg)] border border-[rgba(237, 73, 86,0.2)] bg-[rgba(237, 73, 86,0.065)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
               boundary

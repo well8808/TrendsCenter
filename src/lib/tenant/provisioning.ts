@@ -1,6 +1,12 @@
 import type { Prisma } from "@prisma/client";
 
 import { buildSourceDedupeKey } from "@/lib/ingestion/dedupe";
+import {
+  assertAllowedInstagramSourceUrl,
+  instagramOfficialSources,
+  type InstagramTrendSourceStatus,
+  type InstagramTrendSourceType,
+} from "@/lib/instagram/official-sources";
 
 type Tx = Prisma.TransactionClient;
 
@@ -17,23 +23,23 @@ const baselineConnectors = [
   },
   {
     slug: "official-creative-center-br",
-    title: "TikTok Creative Center BR",
-    kind: "CREATIVE_CENTER_TRENDS",
+    title: "Instagram Reels official surfaces BR",
+    kind: "INSTAGRAM_REELS_TRENDS",
     origin: "OFFICIAL",
     status: "NEEDS_REVIEW",
     market: "BR",
-    officialSurface: "TikTok Creative Center",
-    policyNotes: "Superfície oficial registrada; pendente de credenciais/ingestão aprovada.",
+    officialSurface: "Instagram Reels / Professional Dashboard",
+    policyNotes: "Superficie oficial registrada; pendente de credenciais/ingestao aprovada.",
   },
   {
-    slug: "official-commercial-music-library",
-    title: "TikTok Commercial Music Library",
-    kind: "COMMERCIAL_MUSIC_LIBRARY",
+    slug: "official-meta-ad-library",
+    title: "Meta Ad Library - Instagram placements",
+    kind: "META_AD_LIBRARY",
     origin: "OFFICIAL",
     status: "NEEDS_REVIEW",
     market: "BR",
-    officialSurface: "Commercial Music Library",
-    policyNotes: "Usar apenas para áudios comerciais licenciáveis ou licença comprovada.",
+    officialSurface: "Meta Ad Library",
+    policyNotes: "Usar apenas como transparencia/analise de criativos; sem copiar midia ou remover watermark.",
   },
   {
     slug: "owned-upload-lab",
@@ -43,7 +49,7 @@ const baselineConnectors = [
     status: "APPROVED",
     market: "BR",
     officialSurface: "Owned media",
-    policyNotes: "Somente arquivos próprios ou licenciados; metadados removidos apenas com relatório.",
+    policyNotes: "Somente arquivos proprios/licenciados e conteudo adulto com idade 18+ inequivoca; metadados removidos apenas com relatorio.",
   },
 ] as const;
 
@@ -55,6 +61,30 @@ const manualSource = {
 } as const;
 
 const ingestionStepNames = ["RECEIVE", "VALIDATE", "NORMALIZE", "DEDUPE", "PERSIST", "SCORE", "AUDIT"] as const;
+
+const trendSourceTypeMap: Record<InstagramTrendSourceType, Prisma.TrendSourceCreateInput["sourceType"]> = {
+  reel: "REEL",
+  audio: "AUDIO",
+  account_insights: "ACCOUNT_INSIGHTS",
+  meta_ad_library: "META_AD_LIBRARY",
+  hashtag: "HASHTAG",
+  creator: "CREATOR",
+  manual: "MANUAL",
+};
+
+const trendSourceStatusMap: Record<InstagramTrendSourceStatus, Prisma.TrendSourceCreateInput["status"]> = {
+  active: "ACTIVE",
+  paused: "PAUSED",
+  error: "ERROR",
+};
+
+function toTrendSourceType(value: InstagramTrendSourceType) {
+  return trendSourceTypeMap[value];
+}
+
+function toTrendSourceStatus(value: InstagramTrendSourceStatus) {
+  return trendSourceStatusMap[value];
+}
 
 export async function provisionWorkspaceBaseline(
   tx: Tx,
@@ -119,12 +149,49 @@ export async function provisionWorkspaceBaseline(
     },
   });
 
+  for (const trendSource of instagramOfficialSources) {
+    await tx.trendSource.upsert({
+      where: {
+        workspaceId_platform_sourceType_sourceUrl: {
+          workspaceId,
+          platform: "INSTAGRAM",
+          sourceType: toTrendSourceType(trendSource.sourceType),
+          sourceUrl: assertAllowedInstagramSourceUrl(trendSource.sourceUrl),
+        },
+      },
+      update: {
+        title: trendSource.title,
+        region: trendSource.region,
+        category: trendSource.category,
+        status: toTrendSourceStatus(trendSource.status),
+        updatedAt: now,
+      },
+      create: {
+        workspaceId,
+        platform: "INSTAGRAM",
+        title: trendSource.title,
+        sourceType: toTrendSourceType(trendSource.sourceType),
+        sourceUrl: assertAllowedInstagramSourceUrl(trendSource.sourceUrl),
+        region: trendSource.region,
+        category: trendSource.category,
+        status: toTrendSourceStatus(trendSource.status),
+      },
+    });
+  }
+
   const request = await tx.ingestRequest.upsert({
     where: { workspaceId_requestKey: { workspaceId, requestKey: "baseline:connector-registry" } },
     update: {
       status: "SUCCEEDED",
       completedAt: now,
       processedAt: now,
+      payload: {
+        connectorSlugs: baselineConnectors.map((connector) => connector.slug),
+        trendSources: instagramOfficialSources.map((sourceItem) => sourceItem.id),
+        itemCount: baselineConnectors.length + instagramOfficialSources.length,
+        payloadHash: "baseline-connector-registry-v4-instagram-reels-sources",
+        externalIntegrations: false,
+      },
     },
     create: {
       workspaceId,
@@ -165,10 +232,11 @@ export async function provisionWorkspaceBaseline(
       requestId: request.id,
       sourceId: source.id,
       title: "Baseline connector registry",
-      itemCount: baselineConnectors.length,
-      payloadHash: "baseline-connector-registry-v2",
+      itemCount: baselineConnectors.length + instagramOfficialSources.length,
+      payloadHash: "baseline-connector-registry-v4-instagram-reels-sources",
       payload: {
         connectorSlugs: baselineConnectors.map((connector) => connector.slug),
+        trendSources: instagramOfficialSources.map((sourceItem) => sourceItem.id),
         externalIntegrations: false,
       },
       collectedAt: now,
@@ -237,6 +305,7 @@ export async function provisionWorkspaceBaseline(
       actor,
       metadata: {
         connectorCount: baselineConnectors.length,
+        trendSourceCount: instagramOfficialSources.length,
         externalIntegrations: false,
       },
     },
@@ -244,6 +313,7 @@ export async function provisionWorkspaceBaseline(
 
   return {
     connectorCount: baselineConnectors.length,
+    trendSourceCount: instagramOfficialSources.length,
     sourceId: source.id,
     requestId: request.id,
     batchId: batch.id,

@@ -46,7 +46,7 @@ export default async function WorkspacePage({
             command center
           </Link>
           <div className="mt-8">
-            <div className="inline-flex rounded-full border border-[rgba(199,255,93,0.28)] bg-[rgba(199,255,93,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
+            <div className="inline-flex rounded-full border border-[rgba(237, 73, 86,0.28)] bg-[rgba(237, 73, 86,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
               workspace settings
             </div>
             <h1 className="mt-5 text-3xl font-semibold leading-tight">{data.workspace.name}</h1>
@@ -132,7 +132,7 @@ export default async function WorkspacePage({
                           </option>
                         ))}
                       </select>
-                      <button className="min-h-[var(--control-height)] rounded-full border border-[rgba(199,255,93,0.4)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.1)]" type="submit">
+                      <button className="min-h-[var(--control-height)] rounded-full border border-[rgba(237, 73, 86,0.4)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.1)]" type="submit">
                         salvar
                       </button>
                     </form>
@@ -168,7 +168,7 @@ export default async function WorkspacePage({
                       <option value="MEMBER">member</option>
                     </select>
                   </label>
-                  <button className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.4)] bg-[rgba(199,255,93,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.18)]" type="submit">
+                  <button className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(237, 73, 86,0.4)] bg-[rgba(237, 73, 86,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.18)]" type="submit">
                     criar convite
                   </button>
                 </form>

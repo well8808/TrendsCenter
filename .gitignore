@@ -24,3 +24,8 @@ Thumbs.db
 
 .vercel
 .env*.local
+
+# local visual audit artifacts
+.screenshots/
+.scripts/
+.dev-server.log

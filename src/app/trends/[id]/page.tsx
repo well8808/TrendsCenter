@@ -36,9 +36,9 @@ function formatDate(value: string) {
 function scoreTone(score: number): { text: string; border: string; bg: string; glow: string } {
   if (score >= 78) return {
     text: "text-[color:var(--acid)]",
-    border: "border-[rgba(199,255,93,0.3)]",
-    bg: "bg-[rgba(199,255,93,0.07)]",
-    glow: "rgba(199,255,93,0.35)",
+    border: "border-[rgba(237, 73, 86,0.3)]",
+    bg: "bg-[rgba(237, 73, 86,0.07)]",
+    glow: "rgba(237, 73, 86,0.35)",
   };
   if (score >= 52) return {
     text: "text-[color:var(--gold)]",

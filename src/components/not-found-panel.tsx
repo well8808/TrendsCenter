@@ -49,7 +49,7 @@ export function NotFoundPanel({
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Link
               href={primaryCta.href}
-              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.14)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(199,255,93,0.2)]"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[rgba(237, 73, 86,0.42)] bg-[rgba(237, 73, 86,0.14)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.2)]"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               {primaryCta.label}

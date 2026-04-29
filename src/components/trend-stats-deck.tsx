@@ -33,33 +33,6 @@ function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number })
 
 type StatTone = "acid" | "aqua" | "gold" | "violet";
 
-const toneMap: Record<StatTone, { text: string; border: string; bg: string; glow: string }> = {
-  acid: {
-    text: "var(--acid)",
-    border: "rgba(199,255,93,0.26)",
-    bg: "rgba(199,255,93,0.08)",
-    glow: "rgba(199,255,93,0.18)",
-  },
-  aqua: {
-    text: "var(--aqua)",
-    border: "rgba(64,224,208,0.26)",
-    bg: "rgba(64,224,208,0.08)",
-    glow: "rgba(64,224,208,0.14)",
-  },
-  gold: {
-    text: "var(--gold)",
-    border: "rgba(243,201,105,0.26)",
-    bg: "rgba(243,201,105,0.08)",
-    glow: "rgba(243,201,105,0.14)",
-  },
-  violet: {
-    text: "var(--violet)",
-    border: "rgba(169,140,255,0.26)",
-    bg: "rgba(169,140,255,0.08)",
-    glow: "rgba(169,140,255,0.14)",
-  },
-};
-
 export interface TrendStat {
   label: string;
   value: number;
@@ -67,67 +40,43 @@ export interface TrendStat {
   suffix?: string;
 }
 
+// Antes: 4 cores diferentes, glow blur, scan-line animado, gradient bg.
+// Agora: tiles uniformes em neutro com hairline divider. O número é o
+// protagonista. O `tone` ainda é aceito por compat, mas só o primeiro stat
+// (dominante) recebe accent vermelho — os outros ficam em foreground.
 export function TrendStatsDeck({ stats }: { stats: TrendStat[] }) {
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[520px]"
+      className="grid min-w-0 grid-cols-2 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] sm:grid-cols-4 xl:min-w-[480px]"
     >
       {stats.map((stat, idx) => {
-        const t = toneMap[stat.tone];
+        const isPrimary = idx === 0;
         return (
           <motion.div
             key={stat.label}
             variants={itemVariants}
-            whileHover={{ y: -2 }}
-            transition={{ duration: 0.2, ease }}
-            className="group relative overflow-hidden rounded-[var(--radius-md)] border p-3"
-            style={{
-              borderColor: t.border,
-              background: `linear-gradient(180deg, ${t.bg}, rgba(0,0,0,0.24))`,
-            }}
+            className={
+              "relative px-4 py-3 " +
+              (idx > 0 ? "border-l border-[color:var(--line)] " : "")
+            }
           >
-            <motion.span
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full blur-3xl"
-              style={{ background: t.glow }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              transition={{ duration: 0.6, delay: 0.2 + idx * 0.06, ease }}
-            />
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-3 top-0 h-px"
-              style={{ background: `linear-gradient(90deg, transparent, ${t.border}, transparent)` }}
-            />
-            <p className="relative eyebrow" style={{ color: t.text }}>
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[color:var(--muted)]">
               {stat.label}
             </p>
-            <p className="relative metric-value-xl mt-3 text-[color:var(--foreground)]">
+            <p
+              className="metric-value-xl mt-2.5"
+              style={{ color: isPrimary ? "var(--hot)" : "var(--foreground)" }}
+            >
               <AnimatedNumber value={stat.value} delay={0.2 + idx * 0.06} />
               {stat.suffix ? (
-                <span className="ml-1 font-mono text-[11px] tracking-[0.14em] text-[color:var(--muted)]">
+                <span className="ml-1 font-mono text-[11px] tracking-[0.1em] text-[color:var(--muted)]">
                   {stat.suffix}
                 </span>
               ) : null}
             </p>
-            <div className="relative mt-2 h-[2px] overflow-hidden rounded-full bg-[rgba(255,255,255,0.045)]">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: `linear-gradient(90deg, transparent, ${t.text}, transparent)` }}
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{
-                  duration: 2.6,
-                  delay: 0.5 + idx * 0.06,
-                  ease: "linear",
-                  repeat: Infinity,
-                  repeatDelay: 1.6,
-                }}
-              />
-            </div>
           </motion.div>
         );
       })}

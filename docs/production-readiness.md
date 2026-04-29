@@ -17,8 +17,8 @@ Email transacional real via Resend nao faz parte do requisito obrigatorio deste 
 
 ## Estado confirmado
 
-- Projeto Vercel linkado: `tiktok-market-command-center`.
-- Production URL: `https://tiktok-market-command-center.vercel.app`.
+- Projeto Vercel linkado: `instagram-market-command-center`.
+- Production URL: `https://instagram-market-command-center.vercel.app`.
 - Deployment de producao inspecionado como `Ready`.
 - `vercel.json` declara 1 cron real para `/api/internal/cron/dispatch`.
 - Execucao real do cron em producao confirmada com status 200 em 2026-04-25.
@@ -96,7 +96,7 @@ Recomendados:
 - Cron diario e confiavel para baseline, mas pode ser lento para fila operacional.
 - Nao ha worker dedicado separado; cron processa jobs e outbox.
 - O endpoint de cron nao tem `dryRun`; chamada autorizada manual processa fila real.
-- Conectores oficiais TikTok continuam pendentes de credenciais/elegibilidade.
+- Conectores oficiais Instagram continuam pendentes de credenciais/elegibilidade.
 - Build local ainda alerta sobre multiplos `package-lock.json` e root inferido pelo Next.
 
 ## Criterio para producao madura basica do MVP atual

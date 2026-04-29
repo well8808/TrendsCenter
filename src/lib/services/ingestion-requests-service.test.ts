@@ -6,8 +6,8 @@ describe("parseIngestionRequestBody", () => {
   it("accepts a trend snapshot payload", () => {
     const parsed = parseIngestionRequestBody({
       type: "OFFICIAL_SNAPSHOT",
-      sourceTitle: "Creative Center BR",
-      sourceKind: "CREATIVE_CENTER_TRENDS",
+      sourceTitle: "Instagram Reels BR",
+      sourceKind: "INSTAGRAM_REELS_TRENDS",
       sourceOrigin: "OFFICIAL",
       market: "BR",
       payloadJson: '{"videos":[]}',
@@ -15,8 +15,8 @@ describe("parseIngestionRequestBody", () => {
 
     expect(parsed).toEqual({
       type: "OFFICIAL_SNAPSHOT",
-      sourceTitle: "Creative Center BR",
-      sourceKind: "CREATIVE_CENTER_TRENDS",
+      sourceTitle: "Instagram Reels BR",
+      sourceKind: "INSTAGRAM_REELS_TRENDS",
       sourceOrigin: "OFFICIAL",
       market: "BR",
       sourceUrl: undefined,

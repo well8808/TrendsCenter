@@ -28,6 +28,12 @@ enum SourceKind {
   MARKET_SCOPE
   DISPLAY_API
   COMMERCIAL_MUSIC_LIBRARY
+  INSTAGRAM_REELS_TRENDS
+  INSTAGRAM_GRAPH_API
+  INSTAGRAM_PROFESSIONAL_DASHBOARD
+  META_AD_LIBRARY
+  META_BUSINESS_SUITE
+  META_CREATOR_MARKETPLACE
   OWNED_UPLOAD
   MANUAL_RESEARCH
   DEMO
@@ -217,6 +223,36 @@ enum TrendEntityType {
   HASHTAG
 }
 
+enum TrendSourcePlatform {
+  INSTAGRAM
+}
+
+enum TrendSourceType {
+  HASHTAG
+  AUDIO
+  CREATOR
+  REEL
+  ACCOUNT_INSIGHTS
+  META_AD_LIBRARY
+  MANUAL
+}
+
+enum TrendSourceStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+}
+
+enum ExternalOAuthProvider {
+  INSTAGRAM
+}
+
+enum ExternalOAuthConnectionStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+}
+
 model User {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
@@ -238,39 +274,41 @@ model User {
 }
 
 model Workspace {
-  id                 String              @id @default(cuid())
-  slug               String              @unique
-  name               String
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  members            WorkspaceMember[]
-  sessions           AuthSession[]
-  connectors         Connector[]
-  sources            Source[]
-  sourceSnapshots    SourceSnapshot[]
-  signals            Signal[]
-  observations       SignalObservation[]
-  scores             SignalScore[]
-  evidence           Evidence[]
-  decisionQueueItems DecisionQueueItem[]
-  auditEvents        AuditEvent[]
-  complianceFlags    ComplianceFlag[]
-  mediaAssets        MediaAsset[]
-  mediaDerivatives   MediaDerivative[]
-  jobRuns            JobRun[]
-  ingestRequests     IngestRequest[]
-  importBatches      ImportBatch[]
-  ingestionSteps     IngestionStep[]
-  invites            WorkspaceInvite[]
-  authEmailOutbox    AuthEmailOutbox[]
-  authEvents         AuthEvent[]
-  creators           Creator[]
-  sounds             Sound[]
-  hashtags           Hashtag[]
-  videos             Video[]
-  trendSnapshots     TrendSnapshot[]
-  trendEvidence      TrendEvidence[]
-  searchQueryLogs    SearchQueryLog[]
+  id                       String                    @id @default(cuid())
+  slug                     String                    @unique
+  name                     String
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  members                  WorkspaceMember[]
+  sessions                 AuthSession[]
+  connectors               Connector[]
+  sources                  Source[]
+  sourceSnapshots          SourceSnapshot[]
+  signals                  Signal[]
+  observations             SignalObservation[]
+  scores                   SignalScore[]
+  evidence                 Evidence[]
+  decisionQueueItems       DecisionQueueItem[]
+  auditEvents              AuditEvent[]
+  complianceFlags          ComplianceFlag[]
+  mediaAssets              MediaAsset[]
+  mediaDerivatives         MediaDerivative[]
+  jobRuns                  JobRun[]
+  ingestRequests           IngestRequest[]
+  importBatches            ImportBatch[]
+  ingestionSteps           IngestionStep[]
+  invites                  WorkspaceInvite[]
+  authEmailOutbox          AuthEmailOutbox[]
+  authEvents               AuthEvent[]
+  creators                 Creator[]
+  sounds                   Sound[]
+  hashtags                 Hashtag[]
+  videos                   Video[]
+  trendSnapshots           TrendSnapshot[]
+  trendEvidence            TrendEvidence[]
+  searchQueryLogs          SearchQueryLog[]
+  trendSources             TrendSource[]
+  externalOAuthConnections ExternalOAuthConnection[]
 }
 
 model WorkspaceMember {
@@ -724,39 +762,39 @@ model MediaDerivative {
 }
 
 model JobRun {
-  id              String           @id @default(cuid())
-  workspaceId     String
-  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  queue           String           @default("default")
-  handler         String           @default("generic")
-  name            String
-  status          JobStatus        @default(QUEUED)
-  stage           IngestStepName?
-  requestId       String?
-  request         IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
-  importBatchId   String?
-  importBatch     ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  dedupeKey       String?
-  createdBy       String           @default("system")
-  attemptCount    Int              @default(0)
-  maxAttempts     Int              @default(5)
-  availableAt     DateTime         @default(now())
-  leaseExpiresAt  DateTime?
-  claimToken      String?
-  payload         Json?
-  startedAt       DateTime?
-  finishedAt      DateTime?
-  error           String?
-  lastError       String?
-  deadLetteredAt  DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  snapshots       SourceSnapshot[]
-  evidence        Evidence[]
-  videos          Video[]
-  trendSnapshots  TrendSnapshot[]
-  trendEvidence   TrendEvidence[]
-  auditEvents     AuditEvent[]
+  id             String           @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  queue          String           @default("default")
+  handler        String           @default("generic")
+  name           String
+  status         JobStatus        @default(QUEUED)
+  stage          IngestStepName?
+  requestId      String?
+  request        IngestRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  importBatchId  String?
+  importBatch    ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  dedupeKey      String?
+  createdBy      String           @default("system")
+  attemptCount   Int              @default(0)
+  maxAttempts    Int              @default(5)
+  availableAt    DateTime         @default(now())
+  leaseExpiresAt DateTime?
+  claimToken     String?
+  payload        Json?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  error          String?
+  lastError      String?
+  deadLetteredAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  snapshots      SourceSnapshot[]
+  evidence       Evidence[]
+  videos         Video[]
+  trendSnapshots TrendSnapshot[]
+  trendEvidence  TrendEvidence[]
+  auditEvents    AuditEvent[]
 
   @@unique([workspaceId, dedupeKey])
   @@index([name, status, createdAt])
@@ -1105,4 +1143,47 @@ model SearchQueryLog {
 
   @@index([workspaceId, createdAt])
   @@index([workspaceId, query])
+}
+
+model TrendSource {
+  id            String              @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  platform      TrendSourcePlatform @default(INSTAGRAM)
+  title         String
+  sourceType    TrendSourceType
+  sourceUrl     String
+  region        String              @default("global")
+  category      String              @default("reels")
+  status        TrendSourceStatus   @default(ACTIVE)
+  lastCheckedAt DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@unique([workspaceId, platform, sourceType, sourceUrl])
+  @@index([workspaceId, platform, status])
+  @@index([workspaceId, category, status])
+}
+
+model ExternalOAuthConnection {
+  id                    String                        @id @default(cuid())
+  workspaceId           String
+  workspace             Workspace                     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  provider              ExternalOAuthProvider
+  status                ExternalOAuthConnectionStatus @default(DISCONNECTED)
+  externalAccountId     String?
+  scopes                String?
+  tokenType             String?
+  accessTokenEncrypted  String?
+  refreshTokenEncrypted String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  error                 String?
+  connectedAt           DateTime?
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+
+  @@unique([workspaceId, provider])
+  @@index([provider, status])
+  @@index([workspaceId, status])
 }

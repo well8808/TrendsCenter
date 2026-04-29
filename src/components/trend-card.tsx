@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useMotionValue, type Variants } from "motion/react";
+import { AnimatePresence, animate, motion, useMotionValue, type Variants } from "motion/react";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -8,10 +8,8 @@ import {
   Bookmark,
   BookmarkPlus,
   CheckCircle2,
-  Clock3,
   Layers3,
   ShieldAlert,
-  Sparkles,
   Zap,
 } from "lucide-react";
 
@@ -73,7 +71,7 @@ function scoreTier(score: number): { label: string; tone: "acid" | "gold" | "aqu
 
 function priorityTone(priority: keyof typeof priorityLabel) {
   if (priority === "now") {
-    return "border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.12)] text-[color:var(--acid)]";
+    return "border-[rgba(237, 73, 86,0.38)] bg-[rgba(237, 73, 86,0.12)] text-[color:var(--acid)]";
   }
   if (priority === "next") {
     return "border-[rgba(243,201,105,0.32)] bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]";
@@ -153,68 +151,34 @@ function ScoreRing({
 }) {
   const tier = scoreTier(score);
 
+  // Score visual reduzido: número + /100 como ancoragem única.
+  // O tier label só aparece quando é HOT/NOW para reservar o impacto vermelho.
+  // Removidos: label "score" eyebrow, barra de progresso (redundante com número),
+  // glow blur (somava poluição em listas).
   return (
-    <motion.div variants={itemVariants} className="flex flex-col items-center gap-3">
-      <p className="card-eyebrow" style={{ color }}>
-        score
-      </p>
-      <div className="relative flex items-baseline justify-center gap-1">
-        <motion.span
-          aria-hidden="true"
-          className="absolute inset-[-24px] -z-10 rounded-full blur-2xl"
-          style={{ background: `radial-gradient(circle, ${color}, transparent 65%)` }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isNow ? 0.45 : 0.22 }}
-          transition={{ duration: 0.7, delay: delay + 0.15, ease }}
-        />
-        <p className="score-value text-[color:var(--foreground)]">
+    <motion.div variants={itemVariants} className="flex flex-col items-end gap-2">
+      <div className="relative flex items-baseline justify-end gap-1.5">
+        <p className="score-value" style={{ color: isNow ? color : "var(--foreground)" }}>
           <AnimatedNumber value={score} delay={delay} />
         </p>
-        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.22em] text-[color:var(--muted)]">
+        <span className="font-mono text-[11px] font-medium text-[color:var(--muted)]">
           /100
         </span>
       </div>
-      <div className="relative h-1.5 w-28 overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${score}%` }}
-          transition={{ duration: 0.9, delay, ease }}
-          className="relative h-full rounded-full"
-          style={{
-            background: `linear-gradient(90deg, ${color}, color-mix(in srgb, ${color} 40%, transparent))`,
-          }}
-        >
-          <motion.span
-            aria-hidden="true"
-            className="absolute inset-y-0 right-0 w-5 rounded-full bg-white/45 blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.9, 0] }}
-            transition={{ duration: 0.9, delay: delay + 0.1, ease }}
-          />
-        </motion.div>
-      </div>
       {isNow ? (
-        <div className="relative inline-flex items-center gap-1.5">
-          <span className="relative inline-flex h-2 w-2" aria-hidden="true">
-            <span className="signal-now-pulse absolute inset-0 rounded-full bg-[color:var(--acid)]" />
-            <span className="relative h-2 w-2 rounded-full bg-[color:var(--acid)]" />
+        <div className="inline-flex items-center gap-1.5">
+          <span className="relative inline-flex h-1.5 w-1.5" aria-hidden="true">
+            <span className="signal-now-pulse absolute inset-0 rounded-full bg-[color:var(--hot)]" />
+            <span className="relative h-1.5 w-1.5 rounded-full bg-[color:var(--hot)]" />
           </span>
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-[color:var(--acid)]">
-            {tier.label} · NOW
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--hot)]">
+            hot · agora
           </span>
         </div>
       ) : (
-        <motion.span
-          variants={itemVariants}
-          className={cn(
-            "rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.24em]",
-            tier.tone === "acid" && "border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.1)] text-[color:var(--acid)]",
-            tier.tone === "gold" && "border-[rgba(243,201,105,0.38)] bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]",
-            tier.tone === "aqua" && "border-[rgba(64,224,208,0.38)] bg-[rgba(64,224,208,0.1)] text-[color:var(--aqua)]",
-          )}
-        >
-          {tier.label}
-        </motion.span>
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          {tier.label.toLowerCase()}
+        </span>
       )}
     </motion.div>
   );
@@ -251,8 +215,10 @@ export function TrendCard({
     signal.type === "AUDIO" ? "aqua" : signal.market === "US" ? "gold" : "acid";
   const scoreColor = scoreTone(signal.score.value);
   const isNow = signal.priority === "now";
-  const baseDelay = index * 0.06;
-  const scoreDelay = baseDelay + 0.28;
+  const baseDelay = index * 0.05;
+  const scoreDelay = baseDelay + 0.2;
+  const [showDetails, setShowDetails] = useState(false);
+  const scoreTierInfo = scoreTier(signal.score.value);
 
   return (
     <motion.article
@@ -261,74 +227,52 @@ export function TrendCard({
       initial="hidden"
       animate="show"
       transition={{ delay: baseDelay }}
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -2 }}
       className={cn(
-        "app-card-interactive group relative overflow-hidden rounded-[var(--radius-lg)] p-0",
+        "group relative overflow-hidden rounded-[var(--radius-2xl)] border bg-[rgba(255,255,255,0.018)] backdrop-blur-xl transition-colors",
         selected
-          ? "border-[rgba(199,255,93,0.48)] shadow-[0_24px_90px_rgba(199,255,93,0.09)]"
-          : "border-[color:var(--line)]",
+          ? "border-[rgba(225,48,108,0.32)]"
+          : "border-[color:var(--line)] hover:border-[rgba(255,255,255,0.14)]",
       )}
     >
       {isNow ? (
-        <>
-          <div
-            aria-hidden="true"
-            className="trend-card-now-border pointer-events-none absolute -inset-px rounded-[calc(var(--radius-lg)+1px)] opacity-50 blur-[1px]"
-            style={{
-              WebkitMask:
-                "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-              WebkitMaskComposite: "xor",
-              maskComposite: "exclude",
-              padding: "1px",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-[rgba(199,255,93,0.12)] blur-3xl"
-          />
-        </>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-20 -top-20 h-44 w-44 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(225,48,108,0.22), transparent 65%)" }}
+        />
       ) : null}
 
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{
-          background: `radial-gradient(600px circle at 20% 0%, ${scoreColor}0f, transparent 50%)`,
-        }}
-      />
-      <div
-        className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-[rgba(199,255,93,0.62)] to-transparent opacity-0 transition group-hover:opacity-100"
-        aria-hidden="true"
-      />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(239,233,220,0.32)] to-transparent" />
-
-      <div className="relative grid gap-5 p-5 xl:grid-cols-[minmax(0,1fr)_200px]">
+      <div className="relative grid gap-5 p-5 md:p-6 xl:grid-cols-[minmax(0,1fr)_180px]">
         <button
           className="w-full min-w-0 whitespace-normal text-left"
           type="button"
           onClick={onSelect}
         >
-          <motion.p
+          <motion.div
             variants={itemVariants}
-            className="card-eyebrow flex items-center gap-2"
+            className="flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)]"
           >
-            <span className="font-mono tabular-nums">#{String(index + 1).padStart(2, "0")}</span>
-            <span aria-hidden="true" className="h-px w-4 bg-[color:var(--line-strong)]" />
-            <span style={{ color: signal.market === "BR" ? "var(--acid)" : "var(--aqua)" }}>
-              {signal.market}
-            </span>
+            <span className="font-medium text-[color:var(--muted-strong)]">{signal.market}</span>
             <span aria-hidden="true" className="opacity-40">·</span>
             <span>{typeLabel[signal.type]}</span>
             <span aria-hidden="true" className="opacity-40">·</span>
-            <span style={{ color: "var(--aqua)" }}>{statusLabel[signal.status]}</span>
-          </motion.p>
+            <span>{statusLabel[signal.status]}</span>
+          </motion.div>
 
           <motion.h3
             variants={itemVariants}
-            className="mt-2 break-words text-xl font-semibold leading-[1.08] tracking-tight text-[color:var(--foreground)] md:text-2xl"
+            className="mt-2 break-words text-xl font-semibold leading-[1.15] tracking-tight text-[color:var(--foreground)] md:text-[22px]"
           >
             {signal.title}
           </motion.h3>
+
+          <motion.p
+            variants={itemVariants}
+            className="mt-2 max-w-3xl break-words text-[14px] leading-6 text-[color:var(--muted-strong)]"
+          >
+            {signal.summary}
+          </motion.p>
 
           <motion.div
             className="mt-3 flex flex-wrap items-center gap-2"
@@ -337,9 +281,8 @@ export function TrendCard({
             <motion.span
               variants={pillVariants}
               className={cn(
-                "relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
                 priorityTone(signal.priority),
-                isNow && "priority-shine",
               )}
             >
               {isNow ? (
@@ -350,36 +293,21 @@ export function TrendCard({
               ) : null}
               {priorityLabel[signal.priority]}
             </motion.span>
-          </motion.div>
-          <motion.p
-            variants={itemVariants}
-            className="mt-2 max-w-3xl break-words text-sm leading-6 text-[color:var(--muted-strong)]"
-          >
-            {signal.summary}
-          </motion.p>
-
-          <motion.div
-            variants={itemVariants}
-            className="mt-5 grid gap-4 border-t border-[color:var(--line)] pt-4 lg:grid-cols-[1.15fr_1fr_0.82fr]"
-          >
-            <div className="min-w-0">
-              <p className="eyebrow">decisão</p>
-              <p className="mt-2 break-words text-sm font-medium leading-5 text-[color:var(--foreground)]">
-                {signal.decision}
-              </p>
-            </div>
-            <div className="min-w-0">
-              <p className="eyebrow">próxima ação</p>
-              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">
-                {signal.nextAction}
-              </p>
-            </div>
-            <div className="min-w-0">
-              <p className="eyebrow">janela</p>
-              <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">
-                {signal.trendWindow}
-              </p>
-            </div>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px]",
+                signal.score.riskAdjusted
+                  ? "bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]"
+                  : "bg-[rgba(34,197,94,0.1)] text-[color:var(--success)]",
+              )}
+            >
+              {signal.score.riskAdjusted ? (
+                <ShieldAlert className="h-3 w-3" aria-hidden="true" />
+              ) : (
+                <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+              )}
+              {riskLabel[signal.riskLevel]}
+            </span>
           </motion.div>
         </button>
 
@@ -391,26 +319,6 @@ export function TrendCard({
               delay={scoreDelay}
               isNow={isNow}
             />
-            <motion.div variants={itemVariants} className="min-w-0 xl:mt-3">
-              <p
-                className={cn(
-                  "inline-flex items-center gap-1 text-xs font-medium",
-                  signal.score.riskAdjusted
-                    ? "text-[color:var(--gold)]"
-                    : "text-[color:var(--success)]",
-                )}
-              >
-                {signal.score.riskAdjusted ? (
-                  <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
-                ) : (
-                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                )}
-                {signal.score.label}
-              </p>
-              <p className="mt-1 text-xs text-[color:var(--muted)]">
-                {riskLabel[signal.riskLevel]}
-              </p>
-            </motion.div>
           </div>
           <motion.button
             variants={itemVariants}
@@ -418,10 +326,10 @@ export function TrendCard({
             type="button"
             onClick={onToggleSave}
             className={cn(
-              "inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition xl:w-[132px]",
+              "inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-full border px-4 text-[13px] font-medium transition xl:w-[140px]",
               isSaved
-                ? "border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.1)] text-[color:var(--acid)]"
-                : "border-[color:var(--line)] text-[color:var(--muted-strong)] hover:border-[rgba(64,224,208,0.42)] hover:text-[color:var(--aqua)]",
+                ? "border-[rgba(225,48,108,0.32)] bg-[rgba(225,48,108,0.08)] text-[color:var(--foreground)]"
+                : "border-[color:var(--line)] text-[color:var(--muted-strong)] hover:border-[rgba(225,48,108,0.32)] hover:text-[color:var(--foreground)]",
             )}
           >
             {isSaved ? (
@@ -429,153 +337,159 @@ export function TrendCard({
             ) : (
               <BookmarkPlus className="h-3.5 w-3.5" />
             )}
-            {isSaved ? "salvo" : "salvar"}
+            {isSaved ? "Salvo" : "Salvar"}
           </motion.button>
         </div>
       </div>
 
-      <motion.div
-        variants={itemVariants}
-        className="relative grid gap-4 border-t border-[color:var(--line)] px-5 pb-5 pt-4 xl:grid-cols-[minmax(0,1fr)_190px]"
-      >
-        <div className="grid gap-3">
-          <motion.div
-            className="grid gap-2 sm:grid-cols-4"
-            variants={{
-              hidden: {},
-              show: {
-                transition: { staggerChildren: 0.06, delayChildren: 0.15 },
-              },
-            }}
-          >
-            {factorConfig.map((factor) => {
-              const value = signal.scoreInput[factor.key];
-              return (
-                <motion.div key={factor.key} variants={itemVariants}>
-                  <div className="flex items-center justify-between text-[11px] text-[color:var(--muted)]">
-                    <span>{factor.label}</span>
-                    <span className="metric-number text-[color:var(--muted-strong)]">
-                      <AnimatedNumber value={value} delay={baseDelay + 0.4} duration={0.7} />
-                    </span>
-                  </div>
-                  <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${value}%` }}
-                      transition={{
-                        duration: 0.75,
-                        delay: baseDelay + 0.32,
-                        ease,
-                      }}
-                      className="relative h-full rounded-full bg-gradient-to-r from-[color:var(--acid)] via-[color:var(--acid)] to-[color:var(--aqua)]"
-                    >
-                      <motion.span
-                        aria-hidden="true"
-                        className="absolute inset-y-0 right-0 w-6 rounded-full bg-white/40 blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: [0, 1, 0] }}
-                        transition={{
-                          duration: 0.8,
-                          delay: baseDelay + 0.35,
-                          ease,
-                        }}
-                      />
-                    </motion.div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-
-          <div className="flex flex-wrap gap-2">
-            {signal.scoreDrivers.map((driver, i) => (
-              <motion.span
-                key={driver}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.3,
-                  delay: baseDelay + 0.5 + i * 0.04,
-                  ease,
-                }}
-                className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.025)] px-2.5 py-1 text-xs text-[color:var(--muted-strong)]"
-              >
-                <CheckCircle2
-                  className="h-3 w-3 text-[color:var(--acid)]"
-                  aria-hidden="true"
-                />
-                {driver}
-              </motion.span>
-            ))}
-          </div>
-        </div>
-        <MiniTrendLine tone={tone} />
-      </motion.div>
-
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-3 border-t border-[color:var(--line)] bg-[rgba(0,0,0,0.12)] px-5 py-4 lg:grid-cols-[1fr_1.2fr]"
-      >
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="border-t border-[color:var(--line)] px-5 py-3 md:px-6">
+        <button
+          type="button"
+          onClick={() => setShowDetails((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 text-[12px] text-[color:var(--muted)] transition hover:text-[color:var(--foreground)]"
+        >
+          <span className="flex items-center gap-2">
             <SourcePill source={signal.source} compact />
-            <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs text-[color:var(--muted)]">
-              <Clock3 className="h-3 w-3" aria-hidden="true" />
-              {stageLabel[signal.stage]}
+            <span className="hidden text-[color:var(--muted)] sm:inline">
+              {stageLabel[signal.stage]} · força {signal.strength}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs text-[color:var(--muted)]">
-              <Sparkles className="h-3 w-3" aria-hidden="true" />
-              força {signal.strength}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {signal.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs text-[color:var(--muted-strong)]"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
+          </span>
+          <span className="flex items-center gap-1">
+            {showDetails ? "Ocultar detalhes" : "Ver detalhes"}
+            <ArrowUpRight
+              className={cn(
+                "h-3 w-3 transition-transform",
+                showDetails ? "rotate-90" : "rotate-0",
+              )}
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      </div>
 
-        <div className="grid gap-2">
-          {signal.evidence.slice(0, 2).map((item, i) => (
-            <motion.button
-              key={item.id}
-              type="button"
-              onClick={onSelect}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                duration: 0.32,
-                delay: baseDelay + 0.55 + i * 0.06,
-                ease,
-              }}
-              whileHover={{ x: 2 }}
-              className="group/evidence flex items-start justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-left transition hover:border-[rgba(64,224,208,0.38)]"
-            >
-              <span className="min-w-0">
-                <span className="flex items-center gap-2 text-xs font-medium text-[color:var(--foreground)]">
-                  <Layers3
-                    className="h-3.5 w-3.5 text-[color:var(--aqua)]"
-                    aria-hidden="true"
-                  />
-                  {item.title}
-                </span>
-                <span className="mt-1 block text-xs text-[color:var(--muted)]">
-                  {item.sourceLabel}
-                </span>
-              </span>
-              <ArrowUpRight
-                className="h-3.5 w-3.5 shrink-0 text-[color:var(--muted)] transition group-hover/evidence:-translate-y-0.5 group-hover/evidence:translate-x-0.5 group-hover/evidence:text-[color:var(--aqua)]"
-                aria-hidden="true"
-              />
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
+      <AnimatePresence initial={false}>
+        {showDetails ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.28, ease }}
+            className="overflow-hidden border-t border-[color:var(--line)] bg-[rgba(0,0,0,0.12)]"
+          >
+            <div className="grid gap-5 p-5 md:p-6 lg:grid-cols-[1.2fr_1fr_0.9fr]">
+              <div className="min-w-0">
+                <p className="text-[11px] text-[color:var(--muted)]">Decisão</p>
+                <p className="mt-1.5 break-words text-[13px] font-medium leading-5 text-[color:var(--foreground)]">
+                  {signal.decision}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] text-[color:var(--muted)]">Próxima ação</p>
+                <p className="mt-1.5 break-words text-[13px] leading-5 text-[color:var(--muted-strong)]">
+                  {signal.nextAction}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] text-[color:var(--muted)]">Janela</p>
+                <p className="mt-1.5 break-words text-[13px] leading-5 text-[color:var(--muted-strong)]">
+                  {signal.trendWindow}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 border-t border-[color:var(--line)] p-5 md:p-6 xl:grid-cols-[minmax(0,1fr)_180px]">
+              <div className="grid gap-3">
+                <div className="grid gap-2 sm:grid-cols-4">
+                  {factorConfig.map((factor) => {
+                    const value = signal.scoreInput[factor.key];
+                    return (
+                      <div key={factor.key}>
+                        <div className="flex items-center justify-between text-[11px] text-[color:var(--muted)]">
+                          <span>{factor.label}</span>
+                          <span className="metric-number text-[color:var(--muted-strong)]">
+                            {value}
+                          </span>
+                        </div>
+                        <div className="relative mt-1 h-1 overflow-hidden rounded-full bg-[rgba(255,255,255,0.05)]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${value}%` }}
+                            transition={{ duration: 0.5, ease }}
+                            className="h-full rounded-full"
+                            style={{ background: scoreColor }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {signal.scoreDrivers.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {signal.scoreDrivers.slice(0, 4).map((driver) => (
+                      <span
+                        key={driver}
+                        className="inline-flex items-center gap-1 rounded-full bg-[rgba(255,255,255,0.025)] px-2.5 py-1 text-[11px] text-[color:var(--muted-strong)]"
+                      >
+                        <CheckCircle2
+                          className="h-3 w-3 text-[color:var(--success)]"
+                          aria-hidden="true"
+                        />
+                        {driver}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              <MiniTrendLine tone={tone} />
+            </div>
+
+            {(signal.evidence.length > 0 || signal.tags.length > 0) && (
+              <div className="grid gap-3 border-t border-[color:var(--line)] p-5 md:p-6">
+                {signal.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {signal.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-[rgba(255,255,255,0.025)] px-2.5 py-1 text-[11px] text-[color:var(--muted-strong)]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {signal.evidence.slice(0, 2).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={onSelect}
+                    className="flex items-start justify-between gap-3 rounded-[var(--radius-md)] bg-[rgba(0,0,0,0.2)] px-3 py-2.5 text-left transition hover:bg-[rgba(225,48,108,0.06)]"
+                  >
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2 text-[12px] font-medium text-[color:var(--foreground)]">
+                        <Layers3
+                          className="h-3.5 w-3.5 text-[color:var(--muted)]"
+                          aria-hidden="true"
+                        />
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-[color:var(--muted)]">
+                        {item.sourceLabel}
+                      </span>
+                    </span>
+                    <ArrowUpRight
+                      className="h-3.5 w-3.5 shrink-0 text-[color:var(--muted)]"
+                      aria-hidden="true"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      {/* tier marker for screen readers / future analytics */}
+      <span className="sr-only">{scoreTierInfo.label}</span>
     </motion.article>
   );
 }

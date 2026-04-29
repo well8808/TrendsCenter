@@ -100,14 +100,14 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
       </div>
       <h2 className="mt-3 text-lg font-semibold">Indexar lote rastreável</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-        Indexa um lote de vídeos rastreáveis. Cada envio cria um job na{" "}
+        Indexa um lote de Reels rastreaveis. Cada envio cria um job na{" "}
         <code className="font-mono text-[color:var(--aqua)]">fila ao lado</code>.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
         <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
           nome da fonte
-          <input className={controlClass} name="sourceTitle" placeholder="Ex: Creative Center — BR — Jan 2025" required />
+          <input className={controlClass} name="sourceTitle" placeholder="Ex: Instagram Reels BR - abril 2026" required />
         </label>
         <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
           url da fonte
@@ -134,10 +134,10 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           tipo de fonte
           <select className={controlClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
             <option value="MANUAL_RESEARCH">Manual research</option>
-            <option value="CREATIVE_CENTER_TRENDS">Creative Center</option>
-            <option value="TOP_ADS">Top Ads</option>
-            <option value="KEYWORD_INSIGHTS">Keyword Insights</option>
-            <option value="COMMERCIAL_MUSIC_LIBRARY">Commercial Music Library</option>
+            <option value="INSTAGRAM_REELS_TRENDS">Instagram Reels</option>
+            <option value="INSTAGRAM_PROFESSIONAL_DASHBOARD">Instagram Insights</option>
+            <option value="INSTAGRAM_GRAPH_API">Instagram Graph API</option>
+            <option value="META_AD_LIBRARY">Meta Ad Library</option>
             <option value="OWNED_UPLOAD">Owned upload</option>
           </select>
         </label>
@@ -155,7 +155,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           disabled={submitting}
           className={cn(
             "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-[var(--radius-sm)] border px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] transition",
-            "border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.14)] text-[color:var(--acid)] hover:bg-[rgba(199,255,93,0.2)] disabled:opacity-70",
+            "border-[rgba(237, 73, 86,0.42)] bg-[rgba(237, 73, 86,0.14)] text-[color:var(--acid)] hover:bg-[rgba(237, 73, 86,0.2)] disabled:opacity-70",
           )}
         >
           {submitting ? (
@@ -198,7 +198,7 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.32, ease }}
-      className="mt-4 rounded-[var(--radius-md)] border border-[rgba(199,255,93,0.32)] bg-[rgba(199,255,93,0.07)] p-4"
+      className="mt-4 rounded-[var(--radius-md)] border border-[rgba(237, 73, 86,0.32)] bg-[rgba(237, 73, 86,0.07)] p-4"
     >
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />

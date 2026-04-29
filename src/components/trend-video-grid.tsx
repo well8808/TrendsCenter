@@ -119,7 +119,7 @@ function ScoreDisc({ score, delay }: { score: number; delay: number }) {
       <span
         className={cn(
           "rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.24em]",
-          tier.tone === "acid" && "border-[rgba(199,255,93,0.38)] bg-[rgba(199,255,93,0.1)] text-[color:var(--acid)]",
+          tier.tone === "acid" && "border-[rgba(237, 73, 86,0.38)] bg-[rgba(237, 73, 86,0.1)] text-[color:var(--acid)]",
           tier.tone === "gold" && "border-[rgba(243,201,105,0.38)] bg-[rgba(243,201,105,0.1)] text-[color:var(--gold)]",
           tier.tone === "aqua" && "border-[rgba(64,224,208,0.38)] bg-[rgba(64,224,208,0.1)] text-[color:var(--aqua)]",
         )}
@@ -205,7 +205,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
               className={cn(
                 "app-card-interactive group relative block overflow-hidden rounded-[var(--radius-lg)] p-0",
                 isHot
-                  ? "border-[rgba(199,255,93,0.3)] shadow-[0_0_60px_rgba(199,255,93,0.06)]"
+                  ? "border-[rgba(237, 73, 86,0.3)] shadow-[0_0_60px_rgba(237, 73, 86,0.06)]"
                   : "border-[color:var(--line)]",
               )}
             >
@@ -213,11 +213,11 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                 <>
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -left-20 -top-20 h-52 w-52 rounded-full bg-[rgba(199,255,93,0.1)] blur-3xl"
+                    className="pointer-events-none absolute -left-20 -top-20 h-52 w-52 rounded-full bg-[rgba(237, 73, 86,0.1)] blur-3xl"
                   />
                   <div
                     aria-hidden="true"
-                    className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(199,255,93,0.5)] to-transparent"
+                    className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(237, 73, 86,0.5)] to-transparent"
                   />
                 </>
               )}
@@ -233,7 +233,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                 <div className="min-w-0 p-5 md:p-6">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {isHot && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(199,255,93,0.42)] bg-[rgba(199,255,93,0.12)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--acid)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(237, 73, 86,0.42)] bg-[rgba(237, 73, 86,0.12)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                         <Flame className="h-2.5 w-2.5" aria-hidden="true" />
                         hot
                       </span>

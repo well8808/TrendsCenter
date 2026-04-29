@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, TrendSource } from "@prisma/client";
 
 import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
@@ -8,6 +8,7 @@ import type {
   SignalHistoryItem,
   SourceRecord,
   TrendSignal,
+  TrendSourceRecord,
 } from "@/lib/types";
 
 const sourceInclude = {
@@ -147,6 +148,7 @@ export interface IngestionLabData {
 export interface CommandCenterData {
   signals: TrendSignal[];
   sources: SourceRecord[];
+  trendSources: TrendSourceRecord[];
   persistence: PersistenceState;
   ingestionLab: IngestionLabData;
   tenant: {
@@ -199,13 +201,31 @@ function scoreLabel(band: ConfidenceBand) {
   return "fraco";
 }
 
+const operationalSourceKinds = new Set<SourceRecord["kind"]>([
+  "INSTAGRAM_REELS_TRENDS",
+  "INSTAGRAM_GRAPH_API",
+  "INSTAGRAM_PROFESSIONAL_DASHBOARD",
+  "META_AD_LIBRARY",
+  "META_BUSINESS_SUITE",
+  "META_CREATOR_MARKETPLACE",
+  "OWNED_UPLOAD",
+  "MANUAL_RESEARCH",
+  "DEMO",
+]);
+
+function mapOperationalSourceKind(kind: string): SourceRecord["kind"] {
+  return operationalSourceKinds.has(kind as SourceRecord["kind"])
+    ? (kind as SourceRecord["kind"])
+    : "MANUAL_RESEARCH";
+}
+
 function mapSource(source: SourceRecordPayload): SourceRecord {
   const latestSnapshot = source.snapshots[0];
 
   return {
     id: source.id,
     title: source.title,
-    kind: source.kind,
+    kind: mapOperationalSourceKind(source.kind),
     origin: source.origin,
     url: source.url ?? undefined,
     collectedAt: (latestSnapshot?.collectedAt ?? source.updatedAt).toISOString(),
@@ -215,6 +235,22 @@ function mapSource(source: SourceRecordPayload): SourceRecord {
     coverage: source.coverage ?? undefined,
     freshness: source.freshness ?? undefined,
     gap: source.gap ?? undefined,
+  };
+}
+
+function mapTrendSource(source: TrendSource): TrendSourceRecord {
+  return {
+    id: source.id,
+    platform: source.platform.toLowerCase() as TrendSourceRecord["platform"],
+    title: source.title,
+    sourceType: source.sourceType.toLowerCase() as TrendSourceRecord["sourceType"],
+    sourceUrl: source.sourceUrl,
+    region: source.region,
+    category: source.category,
+    status: source.status.toLowerCase() as TrendSourceRecord["status"],
+    lastCheckedAt: source.lastCheckedAt?.toISOString(),
+    createdAt: source.createdAt.toISOString(),
+    updatedAt: source.updatedAt.toISOString(),
   };
 }
 
@@ -338,7 +374,7 @@ function mapTenant(context: TenantContext): CommandCenterData["tenant"] {
 export async function getCommandCenterData(context: TenantContext): Promise<CommandCenterData> {
   try {
     const prisma = getPrisma();
-    const [signals, sources, connectors, requests, batches, jobs] = await Promise.all([
+    const [signals, sources, trendSources, connectors, requests, batches, jobs] = await Promise.all([
       prisma.signal.findMany({
         where: { workspaceId: context.workspaceId },
         include: signalInclude,
@@ -348,6 +384,10 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
         where: { workspaceId: context.workspaceId },
         include: sourceInclude,
         orderBy: [{ market: "asc" }, { updatedAt: "desc" }],
+      }),
+      prisma.trendSource.findMany({
+        where: { workspaceId: context.workspaceId },
+        orderBy: [{ platform: "asc" }, { sourceType: "asc" }, { updatedAt: "desc" }],
       }),
       prisma.connector.findMany({
         where: { workspaceId: context.workspaceId },
@@ -414,6 +454,7 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
       return {
         signals: [],
         sources: sources.map(mapSource),
+        trendSources: trendSources.map(mapTrendSource),
         persistence: {
           mode: "database",
           label: "Postgres vazio",
@@ -427,10 +468,11 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
     return {
       signals: signals.map(mapSignal),
       sources: sources.map(mapSource),
+      trendSources: trendSources.map(mapTrendSource),
       persistence: {
         mode: "database",
         label: "Postgres real",
-          detail: `Sinais, evidências, fila de decisão, jobs e auditoria carregados do workspace ${context.workspaceName}.`,
+        detail: `Sinais, evidências, fila de decisão, jobs e auditoria carregados do workspace ${context.workspaceName}.`,
       },
       ingestionLab,
       tenant: mapTenant(context),
@@ -440,6 +482,7 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
     return {
       signals: [],
       sources: [],
+      trendSources: [],
       persistence: {
         mode: "error-fallback",
         label: "banco indisponível",

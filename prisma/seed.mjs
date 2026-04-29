@@ -35,23 +35,23 @@ const connectors = [
   },
   {
     slug: "official-creative-center-br",
-    title: "TikTok Creative Center BR",
-    kind: "CREATIVE_CENTER_TRENDS",
+    title: "Instagram Reels official surfaces BR",
+    kind: "INSTAGRAM_REELS_TRENDS",
     origin: "OFFICIAL",
     status: "NEEDS_REVIEW",
     market: "BR",
-    officialSurface: "TikTok Creative Center",
+    officialSurface: "Instagram Reels / Professional Dashboard",
     policyNotes: "Superficie oficial registrada; pendente de credenciais/ingestao aprovada.",
   },
   {
-    slug: "official-commercial-music-library",
-    title: "TikTok Commercial Music Library",
-    kind: "COMMERCIAL_MUSIC_LIBRARY",
+    slug: "official-meta-ad-library",
+    title: "Meta Ad Library - Instagram placements",
+    kind: "META_AD_LIBRARY",
     origin: "OFFICIAL",
     status: "NEEDS_REVIEW",
     market: "BR",
-    officialSurface: "Commercial Music Library",
-    policyNotes: "Usar apenas para audios comerciais licenciaveis ou licenca comprovada.",
+    officialSurface: "Meta Ad Library",
+    policyNotes: "Usar apenas como transparencia/analise de criativos; sem copiar midia ou remover watermark.",
   },
   {
     slug: "owned-upload-lab",
@@ -61,7 +61,42 @@ const connectors = [
     status: "APPROVED",
     market: "BR",
     officialSurface: "Owned media",
-    policyNotes: "Somente arquivos proprios ou licenciados; metadados removidos apenas com relatorio.",
+    policyNotes: "Somente arquivos proprios/licenciados e conteudo adulto com idade 18+ inequivoca; metadados removidos apenas com relatorio.",
+  },
+];
+
+const instagramTrendSources = [
+  {
+    title: "Instagram Reels official surface",
+    sourceType: "REEL",
+    sourceUrl: "https://www.instagram.com/reels/",
+    region: "global",
+    category: "reels",
+    status: "ACTIVE",
+  },
+  {
+    title: "Instagram Professional Dashboard / Insights",
+    sourceType: "ACCOUNT_INSIGHTS",
+    sourceUrl: "https://business.instagram.com/",
+    region: "global",
+    category: "account_insights",
+    status: "ACTIVE",
+  },
+  {
+    title: "Instagram Graph API",
+    sourceType: "ACCOUNT_INSIGHTS",
+    sourceUrl: "https://developers.facebook.com/docs/instagram-platform/",
+    region: "global",
+    category: "official_api",
+    status: "ACTIVE",
+  },
+  {
+    title: "Meta Ad Library - Instagram placements",
+    sourceType: "META_AD_LIBRARY",
+    sourceUrl: "https://www.facebook.com/ads/library",
+    region: "global",
+    category: "ads_transparency",
+    status: "ACTIVE",
   },
 ];
 
@@ -88,6 +123,25 @@ function stableHash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+function assertAllowedInstagramUrl(value) {
+  const allowedHosts = new Set([
+    "instagram.com",
+    "www.instagram.com",
+    "business.instagram.com",
+    "business.facebook.com",
+    "facebook.com",
+    "www.facebook.com",
+    "developers.facebook.com",
+  ]);
+  const url = new URL(value);
+
+  if (url.protocol !== "https:" || url.username || url.password || !allowedHosts.has(url.hostname.toLowerCase())) {
+    throw new Error(`URL Instagram invalida no seed: ${value}`);
+  }
+
+  return value;
+}
+
 function sourceKey(source) {
   return [
     "source",
@@ -96,6 +150,34 @@ function sourceKey(source) {
     source.market.toLowerCase(),
     slug(source.title),
   ].join(":");
+}
+
+async function upsertInstagramTrendSources(workspaceIdForSources) {
+  for (const trendSource of instagramTrendSources) {
+    await prisma.trendSource.upsert({
+      where: {
+        workspaceId_platform_sourceType_sourceUrl: {
+          workspaceId: workspaceIdForSources,
+          platform: "INSTAGRAM",
+          sourceType: trendSource.sourceType,
+          sourceUrl: assertAllowedInstagramUrl(trendSource.sourceUrl),
+        },
+      },
+      update: {
+        title: trendSource.title,
+        region: trendSource.region,
+        category: trendSource.category,
+        status: trendSource.status,
+        updatedAt: now,
+      },
+      create: {
+        workspaceId: workspaceIdForSources,
+        platform: "INSTAGRAM",
+        ...trendSource,
+        sourceUrl: assertAllowedInstagramUrl(trendSource.sourceUrl),
+      },
+    });
+  }
 }
 
 async function main() {
@@ -164,12 +246,24 @@ async function main() {
     },
   });
 
+  await upsertInstagramTrendSources(workspace.id);
+
   const request = await prisma.ingestRequest.upsert({
     where: { workspaceId_requestKey: { workspaceId: workspace.id, requestKey: "baseline:connector-registry" } },
     update: {
       status: "SUCCEEDED",
       completedAt: now,
       processedAt: now,
+      payload: {
+        connectorSlugs: connectors.map((connector) => connector.slug),
+        trendSources: instagramTrendSources.map((trendSource) => trendSource.sourceUrl),
+        itemCount: connectors.length + instagramTrendSources.length,
+        payloadHash: stableHash({
+          connectors: connectors.map((connector) => connector.slug),
+          trendSources: instagramTrendSources.map((trendSource) => trendSource.sourceUrl),
+        }),
+        externalIntegrations: false,
+      },
     },
     create: {
       workspaceId: workspace.id,
@@ -210,10 +304,14 @@ async function main() {
       requestId: request.id,
       sourceId: source.id,
       title: "Baseline connector registry",
-      itemCount: connectors.length,
-      payloadHash: stableHash({ connectors: connectors.map((connector) => connector.slug) }),
+      itemCount: connectors.length + instagramTrendSources.length,
+      payloadHash: stableHash({
+        connectors: connectors.map((connector) => connector.slug),
+        trendSources: instagramTrendSources.map((trendSource) => trendSource.sourceUrl),
+      }),
       payload: {
         connectorSlugs: connectors.map((connector) => connector.slug),
+        trendSources: instagramTrendSources.map((trendSource) => trendSource.sourceUrl),
         externalIntegrations: false,
       },
       collectedAt: now,
@@ -282,16 +380,37 @@ async function main() {
       actor: "seed",
       metadata: {
         connectorCount: connectors.length,
+        trendSourceCount: instagramTrendSources.length,
         externalIntegrations: false,
       },
     },
   });
 
-  const [workspaceCount, connectorCount, sourceCount, signalCount, evidenceCount, queueCount, auditCount, jobCount] =
+  const existingWorkspaces = await prisma.workspace.findMany({
+    where: { id: { not: workspace.id } },
+    select: { id: true },
+  });
+
+  for (const existingWorkspace of existingWorkspaces) {
+    await upsertInstagramTrendSources(existingWorkspace.id);
+  }
+
+  const [
+    workspaceCount,
+    connectorCount,
+    sourceCount,
+    trendSourceCount,
+    signalCount,
+    evidenceCount,
+    queueCount,
+    auditCount,
+    jobCount,
+  ] =
     await Promise.all([
       prisma.workspace.count(),
       prisma.connector.count({ where: { workspaceId: workspace.id } }),
       prisma.source.count({ where: { workspaceId: workspace.id } }),
+      prisma.trendSource.count({ where: { workspaceId: workspace.id } }),
       prisma.signal.count({ where: { workspaceId: workspace.id } }),
       prisma.evidence.count({ where: { workspaceId: workspace.id } }),
       prisma.decisionQueueItem.count({ where: { workspaceId: workspace.id } }),
@@ -304,8 +423,10 @@ async function main() {
       {
         workspaceCount,
         workspaceId: workspace.id,
+        instagramSeededWorkspaceCount: existingWorkspaces.length + 1,
         connectorCount,
         sourceCount,
+        trendSourceCount,
         signalCount,
         evidenceCount,
         queueCount,

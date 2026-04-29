@@ -85,15 +85,12 @@ function parseOrigin(value: unknown): Exclude<DataOrigin, "DEMO"> {
 function parseSourceKind(value: unknown): SourceKind {
   const kind = typeof value === "string" ? value.toUpperCase() : "";
   const allowed: SourceKind[] = [
-    "CREATIVE_CENTER_TRENDS",
-    "TOP_ADS",
-    "KEYWORD_INSIGHTS",
-    "CREATIVE_INSIGHTS",
-    "AUDIENCE_INSIGHTS",
-    "TIKTOK_ONE",
-    "MARKET_SCOPE",
-    "DISPLAY_API",
-    "COMMERCIAL_MUSIC_LIBRARY",
+    "INSTAGRAM_REELS_TRENDS",
+    "INSTAGRAM_GRAPH_API",
+    "INSTAGRAM_PROFESSIONAL_DASHBOARD",
+    "META_AD_LIBRARY",
+    "META_BUSINESS_SUITE",
+    "META_CREATOR_MARKETPLACE",
     "OWNED_UPLOAD",
     "MANUAL_RESEARCH",
   ];

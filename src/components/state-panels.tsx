@@ -87,7 +87,7 @@ export function LoadingSkeleton() {
           <div className="relative grid xl:grid-cols-[minmax(0,1fr)_160px_220px]">
             <div className="min-w-0 p-5 md:p-6">
               <div className="flex flex-wrap items-center gap-1.5" aria-hidden="true">
-                <div className="h-5 w-12 rounded-full" style={{ background: "rgba(199,255,93,0.07)" }} />
+                <div className="h-5 w-12 rounded-full" style={{ background: "rgba(237, 73, 86,0.07)" }} />
                 <div className="h-5 w-10 rounded-full" style={{ background: "rgba(239,233,220,0.06)" }} />
                 <div className="h-5 w-16 rounded-full" style={{ background: "rgba(239,233,220,0.04)" }} />
               </div>

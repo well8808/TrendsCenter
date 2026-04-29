@@ -20,8 +20,8 @@ export default async function SignupPage({
 
   return (
     <AuthShell
-      title="Criar acesso inicial"
-      subtitle="Cada cadastro cria um workspace isolado, com connectors seguros e sem dados fictícios de mercado."
+      title="Criar workspace Reels"
+      subtitle="Cada cadastro cria um workspace isolado para fontes Instagram/Meta, sem dados ficticios de mercado."
       error={error}
       footerHref="/login"
       footerLabel="Entrar"
