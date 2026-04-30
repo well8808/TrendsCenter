@@ -279,13 +279,11 @@ function buildTriggerRequest(input: BrightDataReelsInput) {
   }
 
   const maxPerProfile = Math.min(Math.max(input.maxPerProfile ?? 10, 1), 30);
-  const body = {
-    input: urls.map((url) => (
-      input.mode === "profile_reels"
-        ? { url, num_of_posts: maxPerProfile, start_date: "", end_date: "" }
-        : { url }
-    )),
-  };
+  const body = urls.map((url) => (
+    input.mode === "profile_reels"
+      ? { url, num_of_posts: maxPerProfile, start_date: "", end_date: "" }
+      : { url }
+  ));
 
   return {
     url: `${brightDataTriggerEndpoint}?${searchParams.toString()}`,
