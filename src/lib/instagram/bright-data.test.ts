@@ -51,12 +51,33 @@ describe("Bright Data Reels integration", () => {
     });
   });
 
-  it("treats 202 snapshot responses as pending", async () => {
+  it("treats running progress responses as pending", async () => {
     process.env.BRIGHT_DATA_API_KEY = "bright-token";
-    const fetchMock = vi.fn(async () => new Response("", { status: 202 }));
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ status: "running" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchBrightDataSnapshotOnce("snap_pending")).resolves.toEqual({ status: "pending" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const firstCall = fetchMock.mock.calls[0] as unknown[] | undefined;
+    expect(String(firstCall?.[0])).toContain("/datasets/v3/progress/snap_pending");
+  });
+
+  it("downloads ready snapshots using explicit JSON format", async () => {
+    process.env.BRIGHT_DATA_API_KEY = "bright-token";
+    const body = JSON.stringify([{ url: "https://www.instagram.com/reel/ABC123/" }]);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: "ready" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(body, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchBrightDataSnapshotOnce("snap_ready")).resolves.toEqual({
+      status: "ready",
+      textBody: body,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const secondCall = fetchMock.mock.calls[1] as unknown[] | undefined;
+    expect(String(secondCall?.[0])).toContain("/datasets/v3/snapshot/snap_ready?format=json");
   });
 
   it("normalizes ready Bright Data JSONL into provider videos", () => {

@@ -68,6 +68,7 @@ export interface NormalizedProviderVideo {
 
 const brightDataTriggerEndpoint = "https://api.brightdata.com/datasets/v3/trigger";
 const brightDataSnapshotEndpoint = "https://api.brightdata.com/datasets/v3/snapshot";
+const brightDataProgressEndpoint = "https://api.brightdata.com/datasets/v3/progress";
 const brightDataReelsDatasetId = "gd_lyclm20il4r5helnj";
 
 function brightDataApiKey() {
@@ -349,16 +350,47 @@ export async function startBrightDataReels(input: BrightDataReelsInput): Promise
 
 export async function fetchBrightDataSnapshotOnce(snapshotId: string) {
   const token = requireBrightDataApiKey();
-  const res = await fetch(`${brightDataSnapshotEndpoint}/${snapshotId}`, {
+
+  const progressRes = await fetch(`${brightDataProgressEndpoint}/${snapshotId}`, {
     headers: { authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(10_000),
   });
 
-  if (res.status === 202) {
+  const progressText = await progressRes.text();
+
+  if (!progressRes.ok) {
+    let errBody: unknown = progressText.slice(0, 600);
+    try { errBody = JSON.parse(progressText); } catch { /* keep raw */ }
+    throw serviceUnavailable(
+      `Bright Data retornou erro ${progressRes.status} ao checar progresso.`,
+      { brightDataStatus: progressRes.status, snapshotId, body: errBody },
+    );
+  }
+
+  let progress: Record<string, unknown> = {};
+  try { progress = record(JSON.parse(progressText)); } catch { /* keep empty */ }
+  const status = text(progress.status).toLowerCase();
+
+  if (status === "failed") {
+    throw serviceUnavailable("Bright Data marcou a coleta como falha.", { snapshotId, progress });
+  }
+
+  if (status !== "ready") {
     return { status: "pending" as const };
   }
 
+  const downloadUrl = new URL(`${brightDataSnapshotEndpoint}/${snapshotId}`);
+  downloadUrl.searchParams.set("format", "json");
+  const res = await fetch(downloadUrl, {
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+
   const responseText = await res.text();
+
+  if (res.status === 202) {
+    return { status: "pending" as const };
+  }
 
   if (!res.ok) {
     let errBody: unknown = responseText.slice(0, 600);
