@@ -21,20 +21,14 @@ import {
   DatabaseZap,
   FileWarning,
   Filter,
-  Flame,
   Globe2,
-  History,
   Inbox,
   LayoutDashboard,
-  LockKeyhole,
   Radar,
   RotateCcw,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   Tags,
-  TrendingUp,
-  UserRoundCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
@@ -122,21 +116,16 @@ const navItems = [
   { label: "Radar BR", icon: Radar, key: "radar-br" },
   { label: "US Early Signals", icon: Globe2, key: "us" },
   { label: "Fontes", icon: Database, key: "instagram-sources" },
-  { label: "Evidence", icon: Inbox, key: "evidence" },
 ];
 
 const navCategoryItems = [
   { label: "Áudios", icon: AudioLines, key: "audios" },
   { label: "Formatos", icon: Activity, key: "formatos" },
   { label: "Hashtags", icon: Tags, key: "hashtags" },
-  { label: "Creators", icon: UserRoundCheck, key: "creators" },
-  { label: "Revival", icon: History, key: "revival" },
 ];
 
 const navOpsItems = [
   { label: "Ingestion Lab", icon: DatabaseZap, key: "ingestion" },
-  { label: "Upload Lab", icon: LockKeyhole, key: "upload" },
-  { label: "Compliance", icon: ShieldCheck, key: "compliance" },
 ];
 
 const marketOptions: { value: MarketFilter; label: string }[] = [
@@ -1276,17 +1265,6 @@ export function CommandCenter({
                 <MarketBridge signals={rankSignals(signals, "priority")} />
               ) : null}
 
-              <motion.section
-                id="ingestion-lab"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="show"
-                transition={{ delay: 0.45 }}
-              >
-                <IngestionLab lab={ingestionLab} signals={signals} sources={sources} />
-              </motion.section>
-
-
               {/* SIGNAL DESK — t=0.30, cards stagger 0.08 */}
               <motion.section
                 id="signal-desk"
@@ -1469,6 +1447,16 @@ export function CommandCenter({
                   </AnimatePresence>
                 </motion.div>
               </motion.section>
+
+              <motion.section
+                id="ingestion-lab"
+                variants={sectionVariants}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.45 }}
+              >
+                <IngestionLab lab={ingestionLab} signals={signals} sources={sources} />
+              </motion.section>
             </div>
           </div>
         </section>
@@ -1500,65 +1488,6 @@ export function CommandCenter({
               <motion.div variants={sectionVariants}>
                 <InstagramSourcesPanel sources={trendSources} />
               </motion.div>
-
-              {sources.length > 0 ? (
-                <motion.section
-                  variants={sectionVariants}
-                  className="min-w-0 rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4"
-                >
-                  <h2 className="text-sm font-semibold">Proveniência</h2>
-                  <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                    {sources.length} fonte{sources.length === 1 ? "" : "s"} de coleta
-                  </p>
-                  <div className="mt-3 grid gap-2">
-                    {sources.slice(0, 4).map((source, idx) => (
-                      <motion.div
-                        key={source.id}
-                        initial={{ opacity: 0, x: 8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.32, delay: 0.05 * idx, ease }}
-                        className="rounded-[var(--radius-md)] bg-[rgba(0,0,0,0.16)] p-2.5"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 break-words text-[13px] leading-5 text-[color:var(--foreground)]">
-                            {source.title}
-                          </p>
-                          <SourcePill source={source} compact />
-                        </div>
-                        <p className="mt-1 text-[11px] text-[color:var(--muted)]">
-                          {source.market} · {formatSourceDate(source.collectedAt)}
-                        </p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.section>
-              ) : null}
-
-              <motion.div variants={sectionVariants}>
-                <JobRunsFeed
-                  initialData={initialJobRuns}
-                  initialUpdatedAt={initialJobRunsFetchedAt}
-                  limit={10}
-                />
-              </motion.div>
-
-              <motion.section
-                id="safe-mode"
-                variants={sectionVariants}
-                className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4"
-              >
-                <div className="flex items-center gap-2 text-[12px] font-medium text-[color:var(--foreground)]">
-                  <Flame className="h-3.5 w-3.5 text-[color:var(--success)]" aria-hidden="true" />
-                  Safe mode
-                  <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-[rgba(34,197,94,0.1)] px-2 py-0.5 text-[10px] text-[color:var(--success)]">
-                    <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
-                    ativo
-                  </span>
-                </div>
-                <p className="mt-2 text-[12px] leading-5 text-[color:var(--muted)]">
-                  Ingestão manual e oficial rastreável. Entradas sem fonte não viram insight.
-                </p>
-              </motion.section>
             </div>
           </div>
         </motion.aside>
@@ -1600,16 +1529,12 @@ function EmptyState({
         borderStyle,
       )}
     >
-      {/* breathing orb — spec: scale 1→1.02→1, 3s loop */}
       <motion.div
         aria-hidden="true"
-        animate={{ scale: [1, 1.02, 1], opacity: [0.35, 0.65, 0.35] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border"
-        style={{
-          borderColor: `color-mix(in srgb, var(--${tone}) 32%, transparent)`,
-          background: `radial-gradient(circle, color-mix(in srgb, var(--${tone}) 18%, transparent), transparent 70%)`,
-        }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.36, ease }}
+        className="mx-auto mb-4 grid h-12 w-12 place-items-center"
       >
         <Icon className="h-6 w-6" style={{ color: `var(--${tone})` }} aria-hidden="true" />
       </motion.div>
