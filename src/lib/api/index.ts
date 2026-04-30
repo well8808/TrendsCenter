@@ -32,6 +32,7 @@ export {
   listJobRunsApi,
   submitIngestionRequestApi,
   submitProviderReelsImportApi,
+  getProviderReelsImportStatusApi,
   getHealthApi,
   type WorkspaceDto,
   type TrendsSearchParams,

@@ -12,6 +12,26 @@ export interface BrightDataReelsInput {
   sourceTitle?: string;
 }
 
+export interface BrightDataStartedReelsCollection {
+  provider: "bright_data";
+  mode: BrightDataReelsMode;
+  market: Market;
+  snapshotId: string;
+  sourceUrl: string;
+  sourceTitle: string;
+  urls: string[];
+  maxPerProfile?: number;
+}
+
+export interface BrightDataCollectedReels {
+  provider: "bright_data";
+  mode: BrightDataReelsMode;
+  market: Market;
+  sourceUrl: string;
+  sourceTitle: string;
+  videos: NormalizedProviderVideo[];
+}
+
 export interface NormalizedProviderVideo {
   platformVideoId?: string;
   url?: string;
@@ -52,6 +72,16 @@ const brightDataReelsDatasetId = "gd_lyclm20il4r5helnj";
 
 function brightDataApiKey() {
   return process.env.BRIGHT_DATA_API_KEY?.trim();
+}
+
+function requireBrightDataApiKey() {
+  const token = brightDataApiKey();
+
+  if (!token) {
+    throw serviceUnavailable("BRIGHT_DATA_API_KEY nao configurada.");
+  }
+
+  return token;
 }
 
 function brightDataDatasetId() {
@@ -263,6 +293,12 @@ function buildTriggerRequest(input: BrightDataReelsInput) {
   };
 }
 
+function defaultSourceTitle(mode: BrightDataReelsMode) {
+  return mode === "profile_reels"
+    ? "Bright Data Reels - perfis monitorados"
+    : "Bright Data Reels - links monitorados";
+}
+
 async function triggerSnapshot(triggerUrl: string, body: unknown, token: string) {
   const res = await fetch(triggerUrl, {
     method: "POST",
@@ -292,6 +328,48 @@ async function triggerSnapshot(triggerUrl: string, body: unknown, token: string)
   }
 
   return snapshotId;
+}
+
+export async function startBrightDataReels(input: BrightDataReelsInput): Promise<BrightDataStartedReelsCollection> {
+  const token = requireBrightDataApiKey();
+  const request = buildTriggerRequest(input);
+  const snapshotId = await triggerSnapshot(request.url, request.body, token);
+
+  return {
+    provider: "bright_data",
+    mode: input.mode,
+    market: input.market,
+    snapshotId,
+    sourceUrl: request.urls[0],
+    sourceTitle: input.sourceTitle || defaultSourceTitle(input.mode),
+    urls: request.urls,
+    maxPerProfile: input.maxPerProfile,
+  };
+}
+
+export async function fetchBrightDataSnapshotOnce(snapshotId: string) {
+  const token = requireBrightDataApiKey();
+  const res = await fetch(`${brightDataSnapshotEndpoint}/${snapshotId}`, {
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (res.status === 202) {
+    return { status: "pending" as const };
+  }
+
+  const responseText = await res.text();
+
+  if (!res.ok) {
+    let errBody: unknown = responseText.slice(0, 600);
+    try { errBody = JSON.parse(responseText); } catch { /* keep raw */ }
+    throw serviceUnavailable(
+      `Bright Data retornou erro ${res.status} ao buscar resultados.`,
+      { brightDataStatus: res.status, snapshotId, body: errBody },
+    );
+  }
+
+  return { status: "ready" as const, textBody: responseText };
 }
 
 // Graduated delays within Vercel's 120s maxDuration budget.
@@ -332,17 +410,10 @@ async function pollSnapshot(snapshotId: string, token: string) {
   );
 }
 
-export async function collectBrightDataReels(input: BrightDataReelsInput) {
-  const token = brightDataApiKey();
-
-  if (!token) {
-    throw serviceUnavailable("BRIGHT_DATA_API_KEY nao configurada.");
-  }
-
-  const request = buildTriggerRequest(input);
-  const snapshotId = await triggerSnapshot(request.url, request.body, token);
-  const textBody = await pollSnapshot(snapshotId, token);
-
+export function normalizeBrightDataReelsSnapshot(
+  collection: Pick<BrightDataStartedReelsCollection, "mode" | "market" | "sourceUrl" | "sourceTitle">,
+  textBody: string,
+): BrightDataCollectedReels {
   const rawItems = parseJsonlBody(textBody);
   const errorItems = rawItems.filter((item) => record(item).error_code);
   const validItems = rawItems.filter((item) => !record(item).error_code);
@@ -367,17 +438,20 @@ export async function collectBrightDataReels(input: BrightDataReelsInput) {
     throw badRequest("A fonte respondeu, mas nenhum Reel valido foi encontrado.");
   }
 
-  const defaultSourceTitle =
-    input.mode === "profile_reels"
-      ? "Bright Data Reels - perfis monitorados"
-      : "Bright Data Reels - links monitorados";
-
   return {
     provider: "bright_data" as const,
-    mode: input.mode,
-    market: input.market,
-    sourceUrl: request.urls[0],
-    sourceTitle: input.sourceTitle || defaultSourceTitle,
+    mode: collection.mode,
+    market: collection.market,
+    sourceUrl: collection.sourceUrl,
+    sourceTitle: collection.sourceTitle,
     videos,
   };
+}
+
+export async function collectBrightDataReels(input: BrightDataReelsInput) {
+  const token = requireBrightDataApiKey();
+  const started = await startBrightDataReels(input);
+  const textBody = await pollSnapshot(started.snapshotId, token);
+
+  return normalizeBrightDataReelsSnapshot(started, textBody);
 }

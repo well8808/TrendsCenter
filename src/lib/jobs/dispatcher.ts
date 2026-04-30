@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { calculateExponentialBackoff } from "@/lib/jobs/backoff";
+import { jobHandlers } from "@/lib/jobs/contracts";
 import { runJobHandler } from "@/lib/jobs/handlers";
 import { createLogger } from "@/lib/http/logger";
 import { incrementMetric } from "@/lib/observability/metrics";
@@ -20,7 +21,9 @@ export async function dispatchDueJobs(options: { limit?: number; requestId: stri
     scope: "jobs.dispatcher",
     requestId: options.requestId,
   });
-  const claimed = await claimDueJobs(limit, claimToken, leaseExpiresAt);
+  const claimed = await claimDueJobs(limit, claimToken, leaseExpiresAt, {
+    handler: jobHandlers.ingestionRequestProcess,
+  });
   incrementMetric("jobs.claimed_total", claimed.length, {
     queue: "all",
   });

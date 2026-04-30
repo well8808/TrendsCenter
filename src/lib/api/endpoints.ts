@@ -187,9 +187,18 @@ export interface ProviderReelsImportDto {
   mode: ProviderReelsImportMode;
   sourceTitle: string;
   market: string;
+  jobId: string;
+  jobStatus: JobStatus;
+  collectionStatus: "started" | "pending" | "imported" | "failed";
   importedCount: number;
   importedVideoIds: string[];
   batchId?: string;
+  message: string;
+  nextPollMs?: number;
+  lastError?: string;
+  checkedAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function submitProviderReelsImportApi(
@@ -197,6 +206,13 @@ export function submitProviderReelsImportApi(
   options: Pick<ApiRequestOptions, "signal"> = {},
 ) {
   return apiPost<ProviderReelsImportDto>("/api/v1/reels/provider-import", body, options);
+}
+
+export function getProviderReelsImportStatusApi(
+  jobId: string,
+  options: Pick<ApiRequestOptions, "signal"> = {},
+) {
+  return apiGet<ProviderReelsImportDto>(`/api/v1/reels/provider-import/${encodeURIComponent(jobId)}`, options);
 }
 
 /* ---------- Health ---------- */

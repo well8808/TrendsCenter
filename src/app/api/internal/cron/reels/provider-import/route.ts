@@ -5,9 +5,9 @@ import { badRequest } from "@/lib/http/errors";
 import { withRouteHandler } from "@/lib/http/route-handler";
 import { ok } from "@/lib/http/responses";
 import { assertInternalRequest, buildSystemTenantContext } from "@/lib/services/auth-context-service";
-import { importProviderReels } from "@/lib/services/reels-provider-import-service";
+import { startProviderReelsImport } from "@/lib/services/reels-provider-import-service";
 
-export const maxDuration = 60;
+export const maxDuration = 20;
 
 export async function GET(request: NextRequest) {
   return withRouteHandler(request, async (routeContext) => {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const context = await buildSystemTenantContext(workspace.id, "reels-automation@internal");
-    const data = await importProviderReels(context, {
+    const data = await startProviderReelsImport(context, {
       provider: "bright_data",
       mode: "profile_reels",
       market: process.env.REELS_AUTOMATION_MARKET === "US" ? "US" : "BR",

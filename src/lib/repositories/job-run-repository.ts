@@ -19,6 +19,7 @@ export interface EnqueueJobInput {
 export interface ClaimDueJobsOptions {
   workspaceId?: string;
   queue?: string;
+  handler?: string;
 }
 
 export async function enqueueJob(input: EnqueueJobInput) {
@@ -83,6 +84,7 @@ export async function claimDueJobs(
   const claimableWhere = {
     workspaceId: options.workspaceId,
     queue: options.queue,
+    handler: options.handler,
     OR: [
       {
         status: { in: ["QUEUED", "FAILED"] as JobStatus[] },

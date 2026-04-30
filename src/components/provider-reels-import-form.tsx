@@ -10,12 +10,13 @@ import {
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { jobRunsRefreshEvent } from "@/components/job-runs-feed";
 import {
   handleClientApiError,
+  getProviderReelsImportStatusApi,
   submitProviderReelsImportApi,
   type ProviderReelsImportDto,
   type ProviderReelsImportMode,
@@ -30,6 +31,7 @@ const controlClass =
 type FormState =
   | { kind: "idle" }
   | { kind: "submitting" }
+  | { kind: "pending"; data: ProviderReelsImportDto; requestId: string }
   | { kind: "success"; data: ProviderReelsImportDto; requestId: string }
   | { kind: "error"; message: string; code: string; status: number; requestId: string; isTransport: boolean };
 
@@ -50,6 +52,63 @@ export function ProviderReelsImportForm() {
   const [, startTransition] = useTransition();
   const [mode, setMode] = useState<ProviderReelsImportMode>("profile_reels");
   const [state, setState] = useState<FormState>({ kind: "idle" });
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.kind !== "pending") return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const { data, meta } = await getProviderReelsImportStatusApi(state.data.jobId, {
+          signal: controller.signal,
+        });
+
+        window.dispatchEvent(
+          new CustomEvent(jobRunsRefreshEvent, {
+            detail: { jobId: data.jobId, provider: data.provider, status: data.collectionStatus },
+          }),
+        );
+
+        if (data.collectionStatus === "imported") {
+          setState({ kind: "success", data, requestId: meta.requestId });
+          router.refresh();
+          formRef.current?.reset();
+          return;
+        }
+
+        if (data.collectionStatus === "failed") {
+          setState({
+            kind: "error",
+            message: data.lastError ?? data.message,
+            code: "BRIGHT_DATA_IMPORT_FAILED",
+            status: 503,
+            requestId: meta.requestId,
+            isTransport: false,
+          });
+          return;
+        }
+
+        setState({ kind: "pending", data, requestId: meta.requestId });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        const info = handleClientApiError(error, { context: "form:provider-reels-import:poll" });
+        setState({
+          kind: "error",
+          message: info.message,
+          code: info.code,
+          status: info.status,
+          requestId: info.requestId,
+          isTransport: info.isTransport,
+        });
+      }
+    }, state.data.nextPollMs ?? 6_000);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [router, state]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -84,14 +143,13 @@ export function ProviderReelsImportForm() {
           sourceTitle: sourceTitle || undefined,
         });
 
-        setState({ kind: "success", data, requestId: meta.requestId });
+        setState({ kind: "pending", data, requestId: meta.requestId });
         window.dispatchEvent(
           new CustomEvent(jobRunsRefreshEvent, {
-            detail: { batchId: data.batchId, provider: data.provider },
+            detail: { jobId: data.jobId, provider: data.provider, status: data.collectionStatus },
           }),
         );
         router.refresh();
-        form.reset();
       } catch (error) {
         const info = handleClientApiError(error, { context: "form:provider-reels-import" });
         setState({
@@ -106,7 +164,7 @@ export function ProviderReelsImportForm() {
     });
   }
 
-  const submitting = state.kind === "submitting";
+  const busy = state.kind === "submitting" || state.kind === "pending";
 
   return (
     <section className="app-rail-card rounded-[var(--radius-lg)] p-5 backdrop-blur-2xl">
@@ -124,7 +182,7 @@ export function ProviderReelsImportForm() {
         Use Bright Data configurado no servidor. O radar salva metadados, metricas e evidencia; nao baixa midia nem cria insight sem origem.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
+      <form ref={formRef} onSubmit={handleSubmit} className="mt-4 grid gap-3">
         <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
           modo
           <select
@@ -197,16 +255,21 @@ export function ProviderReelsImportForm() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={busy}
           className={cn(
             "inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-[var(--radius-sm)] border px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] transition",
             "border-[rgba(64,224,208,0.42)] bg-[rgba(64,224,208,0.12)] text-[color:var(--aqua)] hover:bg-[rgba(64,224,208,0.18)] disabled:opacity-70",
           )}
         >
-          {submitting ? (
+          {state.kind === "submitting" ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               coletando...
+            </>
+          ) : state.kind === "pending" ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              aguardando...
             </>
           ) : (
             <>
@@ -218,10 +281,45 @@ export function ProviderReelsImportForm() {
       </form>
 
       <AnimatePresence mode="wait" initial={false}>
+        {state.kind === "pending" ? <PendingCard key="pending" state={state} /> : null}
         {state.kind === "success" ? <SuccessCard key="ok" state={state} /> : null}
         {state.kind === "error" ? <ErrorCard key="err" state={state} onRetry={() => setState({ kind: "idle" })} /> : null}
       </AnimatePresence>
     </section>
+  );
+}
+
+function PendingCard({ state }: { state: Extract<FormState, { kind: "pending" }> }) {
+  const jobLabel = state.data.jobId.slice(0, 8);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.32, ease }}
+      className="mt-4 rounded-[var(--radius-md)] border border-[rgba(64,224,208,0.32)] bg-[rgba(64,224,208,0.06)] p-4"
+    >
+      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        coleta em andamento
+      </p>
+      <p className="mt-2 text-sm leading-5 text-[color:var(--muted-strong)]">{state.data.message}</p>
+      <dl className="mt-3 grid gap-1.5 text-xs leading-5">
+        <div className="flex justify-between gap-3">
+          <dt className="text-[color:var(--muted)]">fonte</dt>
+          <dd className="min-w-0 truncate text-[color:var(--foreground)]">{state.data.sourceTitle}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-[color:var(--muted)]">modo</dt>
+          <dd className="min-w-0 truncate text-[color:var(--muted-strong)]">{modeLabel(state.data.mode)}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-[color:var(--muted)]">job</dt>
+          <dd className="font-mono text-[color:var(--aqua)]">{jobLabel}</dd>
+        </div>
+      </dl>
+    </motion.div>
   );
 }
 
