@@ -421,7 +421,7 @@ export async function getProviderReelsImportStatus(context: ApiTenantContext, jo
     };
 
     await markJobRunSucceeded(job.id, claimToken, {
-      ...(importResult.batchId ? { importBatch: { connect: { id: importResult.batchId } } } : {}),
+      ...(importResult.batchId ? { importBatchId: importResult.batchId } : {}),
       payload: jsonPayload(completedPayload),
     });
 
