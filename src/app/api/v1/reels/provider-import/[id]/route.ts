@@ -5,7 +5,7 @@ import { ok } from "@/lib/http/responses";
 import { requireApiTenantContext } from "@/lib/services/auth-context-service";
 import { getProviderReelsImportStatus } from "@/lib/services/reels-provider-import-service";
 
-export const maxDuration = 20;
+export const maxDuration = 60;
 
 export async function GET(
   request: NextRequest,

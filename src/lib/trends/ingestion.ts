@@ -19,6 +19,7 @@ const allowedSourceKinds: SourceKind[] = [
   "MANUAL_RESEARCH",
 ];
 const trendStepNames = ["RECEIVE", "VALIDATE", "NORMALIZE", "DEDUPE", "PERSIST", "SCORE", "AUDIT"] as const;
+const trendImportTransactionOptions = { maxWait: 10_000, timeout: 45_000 } as const;
 
 type Tx = Prisma.TransactionClient;
 
@@ -739,7 +740,7 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
       importedVideoIds,
       batchId: batch.id,
     };
-  });
+  }, trendImportTransactionOptions);
 }
 
 export async function ingestTrendVideos(input: TrendImportSourceInput, context: TenantContext) {
