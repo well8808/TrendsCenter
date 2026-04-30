@@ -275,15 +275,17 @@ function buildTriggerRequest(input: BrightDataReelsInput) {
 
   if (input.mode === "profile_reels") {
     searchParams.set("type", "discover_new");
-    searchParams.set("discover_by", "url_all_reels");
+    searchParams.set("discover_by", "url");
   }
 
   const maxPerProfile = Math.min(Math.max(input.maxPerProfile ?? 10, 1), 30);
-  const body = urls.map((url) => (
-    input.mode === "profile_reels"
-      ? { url, num_of_posts: maxPerProfile, start_date: "", end_date: "" }
-      : { url }
-  ));
+  const body = {
+    input: urls.map((url) => (
+      input.mode === "profile_reels"
+        ? { url, num_of_posts: maxPerProfile, start_date: "", end_date: "" }
+        : { url }
+    )),
+  };
 
   return {
     url: `${brightDataTriggerEndpoint}?${searchParams.toString()}`,

@@ -52,14 +52,17 @@ describe("Bright Data Reels integration", () => {
 
     const firstCall = fetchMock.mock.calls[0] as unknown[] | undefined;
     const options = firstCall?.[1] as { body?: string } | undefined;
-    expect(JSON.parse(options?.body ?? "")).toEqual([
-      {
-        url: "https://www.instagram.com/example/",
-        num_of_posts: 7,
-        start_date: "",
-        end_date: "",
-      },
-    ]);
+    expect(String(firstCall?.[0])).toContain("discover_by=url");
+    expect(JSON.parse(options?.body ?? "")).toEqual({
+      input: [
+        {
+          url: "https://www.instagram.com/example/",
+          num_of_posts: 7,
+          start_date: "",
+          end_date: "",
+        },
+      ],
+    });
   });
 
   it("treats running progress responses as pending", async () => {
