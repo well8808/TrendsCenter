@@ -9,6 +9,7 @@ export interface BrightDataReelsInput {
   urls: string[];
   market: Market;
   maxPerProfile?: number;
+  sourceTitle?: string;
 }
 
 export interface NormalizedProviderVideo {
@@ -45,7 +46,8 @@ export interface NormalizedProviderVideo {
   };
 }
 
-const brightDataEndpoint = "https://api.brightdata.com/datasets/v3/scrape";
+const brightDataTriggerEndpoint = "https://api.brightdata.com/datasets/v3/trigger";
+const brightDataSnapshotEndpoint = "https://api.brightdata.com/datasets/v3/snapshot";
 const brightDataReelsDatasetId = "gd_lyclm20il4r5helnj";
 
 function brightDataApiKey() {
@@ -92,7 +94,7 @@ function cleanUrls(urls: string[], mode: BrightDataReelsMode) {
 
 function numberValue(value: unknown) {
   if (typeof value === "number" && Number.isFinite(value)) return Math.max(0, Math.round(value));
-  if (typeof value === "string" && /^\d+$/.test(value.trim())) return Number(value.trim());
+  if (typeof value === "string" && /^\d+(\.\d+)?$/.test(value.trim())) return Math.round(Number(value.trim()));
   return 0;
 }
 
@@ -122,41 +124,85 @@ function firstSentence(value: string) {
 
 function normalizeItem(raw: unknown, collectedAt: string): NormalizedProviderVideo | null {
   const item = record(raw);
+
+  // Caption: Datasets API uses "description", newer responses use "caption"
   const caption = text(item.description) || text(item.caption);
+
+  // URL: consistent across all response formats
   const reelUrl = text(item.url);
-  const handle = text(item.user_posted).replace(/^@/, "");
+
+  // Handle: Datasets API uses "user_posted", some responses use "owner_username" or "username"
+  const handle = (
+    text(item.user_posted) ||
+    text(item.owner_username) ||
+    text(item.username)
+  ).replace(/^@/, "");
+
+  // Shortcode / ID: try all known field names across API versions
   const shortcode = text(item.shortcode);
+  const platformVideoId =
+    text(item.post_id) ||
+    text(item.content_id) ||
+    text(item.id) ||
+    shortcode ||
+    undefined;
+
   const title = firstSentence(caption) || (handle ? `Reel de @${handle}` : "Reel Instagram");
-  const views = numberValue(item.video_play_count) || numberValue(item.views);
+
+  // Views: Datasets API uses "video_play_count", fallback to generic view fields
+  const views =
+    numberValue(item.video_play_count) ||
+    numberValue(item.views) ||
+    numberValue(item.play_count) ||
+    numberValue(item.video_views);
+
+  // Comments: Datasets API uses "num_comments", newer responses use "comments"
+  const comments = numberValue(item.num_comments) || numberValue(item.comments);
+
+  // Date: Datasets API uses "date_posted", newer responses use "datetime" or "timestamp"
+  const postedAt =
+    text(item.date_posted) ||
+    text(item.datetime) ||
+    text(item.timestamp) ||
+    undefined;
+
+  // Profile URL: Datasets API uses "user_profile_url", newer uses "profile_url"
+  const profileUrl =
+    text(item.user_profile_url) ||
+    text(item.profile_url) ||
+    (handle ? `https://www.instagram.com/${handle}/` : undefined);
+
+  // Follower count: consistent name but guard against string values
+  const followerCount = numberValue(item.followers) || numberValue(item.follower_count) || undefined;
 
   if (!title || !reelUrl) {
     return null;
   }
 
   return {
-    platformVideoId: text(item.post_id) || text(item.content_id) || shortcode || undefined,
+    platformVideoId,
     url: reelUrl,
     title,
     caption: caption || undefined,
-    postedAt: text(item.date_posted) || undefined,
+    postedAt,
     collectedAt,
     metrics: {
       views,
       likes: numberValue(item.likes),
-      comments: numberValue(item.num_comments),
+      comments,
       shares: 0,
       saves: 0,
     },
     creator: handle
       ? {
           handle,
-          profileUrl: text(item.user_profile_url) || `https://www.instagram.com/${handle}/`,
-          followerCount: numberValue(item.followers) || undefined,
+          profileUrl,
+          followerCount: followerCount || undefined,
         }
       : undefined,
     sound: text(item.audio_url)
       ? {
-          title: "Audio do Reel",
+          title: text(item.audio_title) || "Audio do Reel",
           soundUrl: text(item.audio_url),
           commercialRightsStatus: "nao verificado",
         }
@@ -171,7 +217,25 @@ function normalizeItem(raw: unknown, collectedAt: string): NormalizedProviderVid
   };
 }
 
-function buildRequest(input: BrightDataReelsInput) {
+function parseJsonlBody(textBody: string): unknown[] {
+  if (!textBody.trim()) return [];
+  try {
+    const parsed = JSON.parse(textBody);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed !== null && typeof parsed === "object") return [parsed];
+  } catch {
+    // not a JSON array/object — try JSONL (newline-delimited)
+  }
+  return textBody
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .flatMap((line) => {
+      try { return [JSON.parse(line) as unknown]; } catch { return []; }
+    });
+}
+
+function buildTriggerRequest(input: BrightDataReelsInput) {
   const urls = cleanUrls(input.urls, input.mode);
   const searchParams = new URLSearchParams({
     dataset_id: brightDataDatasetId(),
@@ -193,10 +257,79 @@ function buildRequest(input: BrightDataReelsInput) {
   };
 
   return {
-    url: `${brightDataEndpoint}?${searchParams.toString()}`,
+    url: `${brightDataTriggerEndpoint}?${searchParams.toString()}`,
     body,
     urls,
   };
+}
+
+async function triggerSnapshot(triggerUrl: string, body: unknown, token: string) {
+  const res = await fetch(triggerUrl, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const responseText = await res.text();
+
+  if (!res.ok) {
+    let errBody: unknown = responseText.slice(0, 600);
+    try { errBody = JSON.parse(responseText); } catch { /* keep raw */ }
+    throw serviceUnavailable(
+      `Bright Data retornou erro ${res.status} ao iniciar coleta.`,
+      { brightDataStatus: res.status, body: errBody },
+    );
+  }
+
+  let parsed: unknown;
+  try { parsed = JSON.parse(responseText); } catch {
+    throw serviceUnavailable("Bright Data retornou resposta invalida ao iniciar coleta.");
+  }
+
+  const snapshotId = (parsed as Record<string, unknown>).snapshot_id;
+  if (typeof snapshotId !== "string") {
+    throw serviceUnavailable("Bright Data nao retornou snapshot_id.", { body: parsed });
+  }
+
+  return snapshotId;
+}
+
+// Graduated delays to maximize chances of data arriving within Vercel's 60s limit.
+// Total wait budget: ~33s delays + 15s trigger + network overhead ≈ 55s.
+const POLL_DELAYS_MS = [0, 3_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000];
+
+async function pollSnapshot(snapshotId: string, token: string) {
+  for (let attempt = 0; attempt < POLL_DELAYS_MS.length; attempt++) {
+    const delay = POLL_DELAYS_MS[attempt];
+    if (delay > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, delay));
+    }
+
+    const res = await fetch(`${brightDataSnapshotEndpoint}/${snapshotId}`, {
+      headers: { authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (res.status === 202) continue;
+
+    const responseText = await res.text();
+
+    if (!res.ok) {
+      let errBody: unknown = responseText.slice(0, 600);
+      try { errBody = JSON.parse(responseText); } catch { /* keep raw */ }
+      throw serviceUnavailable(
+        `Bright Data retornou erro ${res.status} ao buscar resultados.`,
+        { brightDataStatus: res.status, snapshotId, body: errBody },
+      );
+    }
+
+    return responseText;
+  }
+
+  throw serviceUnavailable(
+    "Bright Data nao concluiu a coleta no tempo disponivel. Tente novamente em instantes.",
+    { snapshotId },
+  );
 }
 
 export async function collectBrightDataReels(input: BrightDataReelsInput) {
@@ -206,48 +339,45 @@ export async function collectBrightDataReels(input: BrightDataReelsInput) {
     throw serviceUnavailable("BRIGHT_DATA_API_KEY nao configurada.");
   }
 
-  const request = buildRequest(input);
-  const response = await fetch(request.url, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(request.body),
-    signal: AbortSignal.timeout(75_000),
-  });
-  const textBody = await response.text();
-  let parsed: unknown = null;
+  const request = buildTriggerRequest(input);
+  const snapshotId = await triggerSnapshot(request.url, request.body, token);
+  const textBody = await pollSnapshot(snapshotId, token);
 
-  try {
-    parsed = textBody ? JSON.parse(textBody) : null;
-  } catch {
-    parsed = null;
-  }
-
-  if (!response.ok) {
-    throw serviceUnavailable("Bright Data nao retornou uma coleta valida.", {
-      status: response.status,
-      body: typeof parsed === "object" ? parsed : textBody.slice(0, 500),
-    });
-  }
-
-  const rawItems = Array.isArray(parsed) ? parsed : [];
+  const rawItems = parseJsonlBody(textBody);
+  const errorItems = rawItems.filter((item) => record(item).error_code);
+  const validItems = rawItems.filter((item) => !record(item).error_code);
   const collectedAt = new Date().toISOString();
-  const videos = rawItems
+  const videos = validItems
     .map((item) => normalizeItem(item, collectedAt))
     .filter((item): item is NormalizedProviderVideo => Boolean(item));
 
   if (videos.length === 0) {
+    const deadPages = errorItems.filter((item) => record(item).error_code === "dead_page");
+    if (deadPages.length > 0 && deadPages.length === errorItems.length) {
+      throw badRequest(
+        "Perfil sem Reels disponiveis no Bright Data. Tente um perfil maior ou com mais atividade recente.",
+      );
+    }
+    if (errorItems.length > 0) {
+      const firstCode = String(record(errorItems[0]).error_code ?? "unknown");
+      throw badRequest(
+        `Bright Data nao encontrou Reels validos (${firstCode}). Verifique os links e tente novamente.`,
+      );
+    }
     throw badRequest("A fonte respondeu, mas nenhum Reel valido foi encontrado.");
   }
+
+  const defaultSourceTitle =
+    input.mode === "profile_reels"
+      ? "Bright Data Reels - perfis monitorados"
+      : "Bright Data Reels - links monitorados";
 
   return {
     provider: "bright_data" as const,
     mode: input.mode,
     market: input.market,
     sourceUrl: request.urls[0],
-    sourceTitle: input.mode === "profile_reels" ? "Bright Data Reels - perfis monitorados" : "Bright Data Reels - links monitorados",
+    sourceTitle: input.sourceTitle || defaultSourceTitle,
     videos,
   };
 }
