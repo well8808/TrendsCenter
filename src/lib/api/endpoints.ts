@@ -169,6 +169,36 @@ export function submitIngestionRequestApi(body: IngestionRequestBody, options: P
   return apiPost<IngestionRequestAckDto>("/api/v1/ingestion/requests", body, options);
 }
 
+/* ---------- Licensed Reels Providers ---------- */
+
+export type ProviderReelsImportMode = "reel_urls" | "profile_reels";
+
+export interface ProviderReelsImportBody {
+  provider?: "bright_data";
+  mode: ProviderReelsImportMode;
+  market: "BR" | "US";
+  urls: string[];
+  maxPerProfile?: number;
+  sourceTitle?: string;
+}
+
+export interface ProviderReelsImportDto {
+  provider: "bright_data";
+  mode: ProviderReelsImportMode;
+  sourceTitle: string;
+  market: string;
+  importedCount: number;
+  importedVideoIds: string[];
+  batchId?: string;
+}
+
+export function submitProviderReelsImportApi(
+  body: ProviderReelsImportBody,
+  options: Pick<ApiRequestOptions, "signal"> = {},
+) {
+  return apiPost<ProviderReelsImportDto>("/api/v1/reels/provider-import", body, options);
+}
+
 /* ---------- Health ---------- */
 
 export interface HealthDto {

@@ -31,6 +31,7 @@ export {
   getTrendByIdApi,
   listJobRunsApi,
   submitIngestionRequestApi,
+  submitProviderReelsImportApi,
   getHealthApi,
   type WorkspaceDto,
   type TrendsSearchParams,
@@ -40,5 +41,8 @@ export {
   type JobStatus,
   type IngestionRequestBody,
   type IngestionRequestAckDto,
+  type ProviderReelsImportBody,
+  type ProviderReelsImportDto,
+  type ProviderReelsImportMode,
   type HealthDto,
 } from "@/lib/api/endpoints";

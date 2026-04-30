@@ -59,6 +59,61 @@ vercel env add OAUTH_TOKEN_ENCRYPTION_KEY production
 
 Depois rode novo deploy e abra `/sources`. Quando todas as variaveis estiverem corretas, o card de Instagram deve sair de pendente para preparado e mostrar o botao de conexao.
 
+## Coleta automatica por provedor licenciado
+
+Para receber Reels publicos em escala sem depender de entrada manual, o app agora tem uma integracao com Bright Data no painel `/trends`. Ela usa a API de Instagram Reels do provedor para buscar metadados e metricas e depois grava no mesmo pipeline de proveniencia do radar.
+
+O que a integracao faz:
+
+- aceita perfis do Instagram e coleta Reels recentes por perfil;
+- aceita links diretos de Reels quando voce quer controlar exatamente o que entra;
+- salva URL, caption, criador, hashtags, metricas, lote, evidencia e horario de coleta;
+- nao baixa midia, nao remove marca d'agua e nao reprocessa arquivos de terceiros;
+- bloqueia termos de menores/idade ambigua no safe mode da ingestao.
+
+Configure no Vercel:
+
+```bash
+vercel env add BRIGHT_DATA_API_KEY production
+vercel env add BRIGHT_DATA_REELS_DATASET_ID production
+```
+
+`BRIGHT_DATA_REELS_DATASET_ID` e opcional. O default do app e o dataset de Instagram Reels usado pela API da Bright Data.
+
+Depois do deploy:
+
+1. Abra `/trends`.
+2. No card `Coletar de fonte licenciada`, escolha `Perfis` ou `Links`.
+3. Informe mercado `BR` ou `US`.
+4. Cole URLs de perfis ou Reels.
+5. Clique em `coletar Reels`.
+6. Confirme os novos itens no grid e em `Atualizacoes do radar`.
+
+### Automacao recorrente
+
+O deploy tambem inclui uma rota cron opt-in em:
+
+```txt
+/api/internal/cron/reels/provider-import
+```
+
+Ela so executa coleta externa quando `REELS_AUTOMATION_ENABLED=true`. Sem essa variavel, a rota responde como ignorada e nao chama o provedor.
+
+Variaveis:
+
+```txt
+BRIGHT_DATA_API_KEY=...
+BRIGHT_DATA_REELS_DATASET_ID=gd_lyclm20il4r5helnj
+REELS_AUTOMATION_ENABLED=true
+REELS_AUTOMATION_WORKSPACE_SLUG=default-command-center
+REELS_AUTOMATION_PROFILE_URLS=https://www.instagram.com/perfil1/,https://www.instagram.com/perfil2/
+REELS_AUTOMATION_MARKET=BR
+REELS_AUTOMATION_MAX_PER_PROFILE=10
+REELS_AUTOMATION_SOURCE_TITLE=Bright Data Reels - automacao
+```
+
+No Vercel, adicione essas variaveis em Production e faca novo deploy. O cron de Vercel chama a rota em producao com o segredo interno; se voce rodar manualmente, envie `Authorization: Bearer <CRON_SECRET>` ou `Authorization: Bearer <INTERNAL_API_TOKEN>`.
+
 ## Como conectar
 
 1. Rode migrations e seed:
@@ -102,3 +157,5 @@ Se a fonte for manual, anote a URL oficial consultada, horario da coleta e quem 
 - Instagram Insights: https://developers.facebook.com/docs/instagram-platform/insights/
 - Meta Ad Library: https://www.facebook.com/ads/library/
 - Ad Library API reference: https://developers.facebook.com/docs/marketing-api/reference/ads_archive/
+- Bright Data Instagram Reels by URL: https://docs.brightdata.com/api-reference/scrapers/social-media-apis/instagram/reels/collect-by-url
+- Bright Data Collect All Reels: https://docs.brightdata.com/api-reference/scrapers/social-media-apis/instagram/reels/collect-all-reels
