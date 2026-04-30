@@ -30,10 +30,10 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
 const sourceTypeLabel: Record<TrendSourceRecord["sourceType"], string> = {
   reel: "Reels",
   audio: "Audio",
-  creator: "Creators",
+  creator: "Perfis",
   hashtag: "Hashtags",
-  account_insights: "Insights",
-  meta_ad_library: "Meta Ads",
+  account_insights: "Conta profissional",
+  meta_ad_library: "Anuncios Meta",
   manual: "Manual",
 };
 
@@ -60,6 +60,20 @@ function formatDate(value?: string) {
   return value ? dateFormatter.format(new Date(value)) : "Ainda não verificado";
 }
 
+function scopeLabel(scope: string) {
+  if (scope === "instagram_business_basic") return "perfil profissional";
+  if (scope === "instagram_business_manage_insights") return "metricas e insights";
+
+  return "permissao aprovada";
+}
+
+function connectionStatusLabel(status: string) {
+  if (status === "connected") return "dados liberados";
+  if (status === "error") return "precisa de revisao";
+
+  return "aguardando autorizacao";
+}
+
 function MetaItem({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="min-w-0">
@@ -83,7 +97,7 @@ function ConnectorStatusCard({ connector }: { connector: ExternalConnectorView }
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
             <Cable className="h-4 w-4" aria-hidden="true" />
-            Instagram connector
+            Conta de dados
           </div>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight">{connector.title}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)]">
@@ -114,35 +128,35 @@ function ConnectorStatusCard({ connector }: { connector: ExternalConnectorView }
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="app-card rounded-[var(--radius-md)] p-4">
-          <p className="eyebrow">plataforma</p>
+          <p className="eyebrow">rede</p>
           <p className="mt-2 font-mono text-sm uppercase tracking-[0.14em] text-[color:var(--foreground)]">
             {connector.platform}
           </p>
         </div>
         <div className="app-card rounded-[var(--radius-md)] p-4">
-          <p className="eyebrow">superfície oficial</p>
+          <p className="eyebrow">origem</p>
           <p className="mt-2 text-sm text-[color:var(--muted-strong)]">{connector.surface}</p>
         </div>
         <div className="app-card rounded-[var(--radius-md)] p-4">
-          <p className="eyebrow">escopos previstos</p>
-          <p className="mt-2 break-words font-mono text-xs leading-5 text-[color:var(--muted-strong)]">
-            {connector.scopes.join(", ")}
+          <p className="eyebrow">permissoes</p>
+          <p className="mt-2 break-words text-sm leading-5 text-[color:var(--muted-strong)]">
+            {connector.scopes.map(scopeLabel).join(", ")}
           </p>
         </div>
         <div className="app-card rounded-[var(--radius-md)] p-4">
-          <p className="eyebrow">OAuth real</p>
+          <p className="eyebrow">conexao</p>
           <p className="mt-2 text-sm text-[color:var(--muted-strong)]">
-            {connector.oauthImplemented ? "Implementado" : "Ainda não implementado"}
+            {connector.oauthImplemented ? "Disponivel" : "Indisponivel"}
           </p>
         </div>
       </div>
 
       {connector.state === "connected" ? (
         <dl className="mt-4 grid gap-3 rounded-[var(--radius-md)] border border-[rgba(121,232,132,0.24)] bg-[rgba(121,232,132,0.055)] p-4 md:grid-cols-3">
-          <MetaItem label="provider" value={connector.connection.provider} mono />
-          <MetaItem label="status" value={connector.connection.status} mono />
-          <MetaItem label="conectado em" value={formatDate(connector.connection.connectedAt)} mono />
-          <MetaItem label="última atualização" value={formatDate(connector.connection.updatedAt)} mono />
+          <MetaItem label="rede" value="Instagram" />
+          <MetaItem label="situacao" value={connectionStatusLabel(connector.connection.status)} />
+          <MetaItem label="conectado em" value={formatDate(connector.connection.connectedAt)} />
+          <MetaItem label="ultima atualizacao" value={formatDate(connector.connection.updatedAt)} />
         </dl>
       ) : connector.missingRequirements.length > 0 ? (
         <div
@@ -153,12 +167,12 @@ function ConnectorStatusCard({ connector }: { connector: ExternalConnectorView }
               : "border-[rgba(64,224,208,0.24)] bg-[rgba(64,224,208,0.055)] text-[color:var(--aqua)]",
           )}
         >
-          Configuração pendente:{" "}
+          Para ativar:{" "}
           <span className="font-mono text-xs">{connector.missingRequirements.join(", ")}</span>
         </div>
       ) : (
         <div className="mt-4 flex flex-col gap-3 rounded-[var(--radius-md)] border border-[rgba(237, 73, 86,0.24)] bg-[rgba(237, 73, 86,0.055)] px-4 py-3 text-sm leading-6 text-[color:var(--acid)] md:flex-row md:items-center md:justify-between">
-          <span>Credenciais detectadas apenas no servidor. Nenhum segredo é renderizado nesta página.</span>
+          <span>Tudo pronto para autorizacao. A chave da Meta continua protegida.</span>
           {connector.canStartConnection && connector.startUrl ? (
             <a
               className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[rgba(237, 73, 86,0.34)] bg-[rgba(237, 73, 86,0.1)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.16)]"
@@ -206,7 +220,7 @@ function SourceRow({ source }: { source: TrendSourceRecord }) {
       </div>
 
       <div className="mt-4 rounded-[var(--radius-sm)] border border-[rgba(239,233,220,0.1)] bg-[rgba(0,0,0,0.22)] p-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">URL real</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Link da fonte</p>
         <p className="mt-1 break-all font-mono text-xs leading-5 text-[color:var(--muted-strong)]">
           {source.sourceUrl}
         </p>
@@ -243,17 +257,17 @@ export default async function SourcesPage() {
           <div className="mt-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(237, 73, 86,0.28)] bg-[rgba(237, 73, 86,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
               <Database className="h-3.5 w-3.5" aria-hidden="true" />
-              Sources / Connectors
+              Fontes e contas
             </div>
-            <h1 className="mt-5 text-3xl font-semibold leading-tight">Fontes reais e conexões oficiais</h1>
+            <h1 className="mt-5 text-3xl font-semibold leading-tight">Fontes reais conectadas</h1>
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-              Registro operacional por workspace. Reels, Instagram Insights, Graph API e Meta Ad Library entram como superficies oficiais; OAuth conecta somente quando as credenciais Meta reais existem.
+              Controle as contas e fontes que alimentam o radar. Nenhum dado aparece como real sem autorizacao ou origem validada.
             </p>
           </div>
 
           <div className="mt-8 grid gap-3">
             <div className="app-rail-card rounded-[var(--radius-md)] p-4">
-              <p className="eyebrow">workspace</p>
+              <p className="eyebrow">ambiente</p>
               <p className="mt-2 break-words font-semibold">{data.tenant.workspaceName}</p>
               <p className="mt-1 font-mono text-xs text-[color:var(--muted)]">{data.tenant.workspaceSlug}</p>
             </div>
@@ -267,17 +281,17 @@ export default async function SourcesPage() {
                 <p className="metric-value-xl mt-2 text-[color:var(--success)]">{data.stats.activeSources}</p>
               </div>
               <div className="app-rail-card rounded-[var(--radius-md)] p-3">
-                <p className="metric-cell-label">sem check</p>
+                <p className="metric-cell-label">sem leitura</p>
                 <p className="metric-value-xl mt-2 text-[color:var(--gold)]">{data.stats.uncheckedSources}</p>
               </div>
             </div>
             <div className="app-rail-card rounded-[var(--radius-md)] p-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                safe mode
+                uso seguro
               </div>
               <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-                Sem scraping, sem token falso, sem trend fictícia. Falhas de configuração devem aparecer como estado operacional.
+                Sem coleta nao autorizada, sem acesso falso e sem trend ficticia. Se uma fonte falha, o produto mostra a falha.
               </p>
             </div>
           </div>
@@ -291,11 +305,11 @@ export default async function SourcesPage() {
               <div>
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                   <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                  Fontes Instagram
+                  Radar de fontes
                 </div>
-                <h2 className="mt-3 text-2xl font-semibold">Reels e fontes Meta por workspace</h2>
+                <h2 className="mt-3 text-2xl font-semibold">Fontes que alimentam o radar</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                  Esta lista vem do banco e aponta apenas para URLs reais permitidas de Instagram e Meta.
+                  Lista de origens reais usadas para formar sinais, alertas e evidencias.
                 </p>
               </div>
               <span className="rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
@@ -311,9 +325,9 @@ export default async function SourcesPage() {
                   <div className="mx-auto grid h-11 w-11 place-items-center rounded-full border border-[rgba(64,224,208,0.24)] bg-[rgba(64,224,208,0.06)]">
                     <Database className="h-5 w-5 text-[color:var(--aqua)]" aria-hidden="true" />
                   </div>
-                  <h3 className="mt-4 text-base font-semibold">Nenhuma fonte Instagram registrada</h3>
+                  <h3 className="mt-4 text-base font-semibold">Nenhuma fonte ativa ainda</h3>
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[color:var(--muted)]">
-                    O workspace ainda não recebeu o provisioning das fontes reais de Instagram/Meta.
+                    Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar o radar.
                   </p>
                 </div>
               )}

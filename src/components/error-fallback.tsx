@@ -35,7 +35,7 @@ function normalize(error: unknown): NormalizedError {
   if (ApiError.is(error)) {
     const unauthorized = error.isUnauthorized;
     return {
-      headline: unauthorized ? "Sessão expirada" : "Falha ao falar com o backend",
+      headline: unauthorized ? "Sessao expirada" : "Falha ao carregar dados",
       code: error.code,
       status: error.status,
       requestId: error.requestId,
@@ -49,11 +49,11 @@ function normalize(error: unknown): NormalizedError {
     // Em prod, Next sanitiza .message para "An error occurred in the Server Components render".
     // Mostramos algo útil sem vazar stack.
     return {
-      headline: "Tivemos um problema ao renderizar esta seção",
+      headline: "Tivemos um problema nesta area",
       digest,
       message:
         process.env.NODE_ENV === "production"
-          ? "A operação foi interrompida. Copie os detalhes para reportar ou tente novamente."
+          ? "A operacao foi interrompida. Copie o alerta para reportar ou tente novamente."
           : error.message,
       kind: digest ? "unknown" : "unknown",
     };
@@ -61,7 +61,7 @@ function normalize(error: unknown): NormalizedError {
 
   return {
     headline: "Erro desconhecido",
-    message: "Nenhum detalhe disponível.",
+    message: "Nenhum detalhe disponivel.",
     kind: "unknown",
   };
 }
@@ -141,10 +141,10 @@ export function ErrorFallback({
 
           {correlation ? (
             <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
-              {info.requestId && info.requestId !== "n/a" ? "req " : "ref "}
+              {info.requestId && info.requestId !== "n/a" ? "codigo " : "ref "}
               <span className="text-[color:var(--muted-strong)]">{correlation}</span>
               {surface ? (
-                <span className="ml-3 text-[color:var(--muted)]">surface {surface}</span>
+                <span className="ml-3 text-[color:var(--muted)]">area {surface}</span>
               ) : null}
             </p>
           ) : null}
@@ -166,7 +166,7 @@ export function ErrorFallback({
               className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--line-strong)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.38)] hover:text-[color:var(--aqua)]"
             >
               <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-              {copied ? "copiado" : "copiar detalhes"}
+              {copied ? "copiado" : "copiar alerta"}
             </button>
           </div>
         </div>

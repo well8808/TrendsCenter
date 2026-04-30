@@ -121,13 +121,13 @@ describe("sources connectors data", () => {
     expect(buildInstagramConnectorView()).toMatchObject({
       provider: "instagram",
       state: "not_configured",
-      stateLabel: "OAuth não configurado",
-      readinessLabel: "Pronto para configurar",
+      stateLabel: "Nao conectada",
+      readinessLabel: "Configure para ativar",
       missingRequirements: [
-        "app/client id",
-        "credencial server-side",
-        "redirect URI",
-        "criptografia de tokens server-side",
+        "ID do app Meta",
+        "segredo do app Meta",
+        "URL de retorno",
+        "cofre de acesso",
       ],
       oauthImplemented: true,
       canStartConnection: false,
@@ -142,8 +142,8 @@ describe("sources connectors data", () => {
 
     expect(buildInstagramConnectorView()).toMatchObject({
       state: "configuration_error",
-      stateLabel: "Erro de configuração",
-      missingRequirements: ["credencial server-side", "redirect URI", "criptografia de tokens server-side"],
+      stateLabel: "Falta configuracao",
+      missingRequirements: ["segredo do app Meta", "URL de retorno", "cofre de acesso"],
       oauthImplemented: true,
       canStartConnection: false,
     });
@@ -160,7 +160,7 @@ describe("sources connectors data", () => {
 
     expect(connector).toMatchObject({
       state: "ready",
-      stateLabel: "Preparado para conexão",
+      stateLabel: "Pronto para conectar",
       scopes: ["instagram_business_basic", "instagram_business_manage_insights"],
       oauthImplemented: true,
       canStartConnection: true,

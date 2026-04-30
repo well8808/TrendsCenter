@@ -22,10 +22,10 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Entrar no Reels Center"
-      subtitle="Acesso obrigatorio para ler ou escrever sinais, evidencias, jobs e fontes Instagram/Meta."
+      subtitle="Acesse seu radar de Reels, sinais, fontes e alertas de mercado."
       error={error}
       footerHref="/signup"
-      footerLabel="Criar workspace"
+      footerLabel="Criar conta"
       footerText="Ainda não tem acesso?"
     >
       <form action={loginAction} className="grid gap-4">

@@ -10,7 +10,6 @@ import {
   Loader2,
   Play,
   RefreshCw,
-  Skull,
   XCircle,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -39,11 +38,11 @@ const statusMeta: Record<
   JobStatus,
   { label: string; tone: "acid" | "aqua" | "gold" | "coral" | "muted" | "violet"; Icon: typeof Loader2; animate?: boolean }
 > = {
-  QUEUED: { label: "em fila", tone: "muted", Icon: CircleDashed },
-  RUNNING: { label: "rodando", tone: "aqua", Icon: Loader2, animate: true },
-  SUCCEEDED: { label: "ok", tone: "acid", Icon: CheckCircle2 },
+  QUEUED: { label: "aguardando", tone: "muted", Icon: CircleDashed },
+  RUNNING: { label: "atualizando", tone: "aqua", Icon: Loader2, animate: true },
+  SUCCEEDED: { label: "concluido", tone: "acid", Icon: CheckCircle2 },
   FAILED: { label: "falhou", tone: "coral", Icon: XCircle },
-  DEAD_LETTERED: { label: "dead letter", tone: "coral", Icon: Skull },
+  DEAD_LETTERED: { label: "falha final", tone: "coral", Icon: AlertOctagon },
   CANCELED: { label: "cancelado", tone: "violet", Icon: AlertOctagon },
 };
 
@@ -88,6 +87,23 @@ function relativeFrom(iso?: string, nowMs?: number | null) {
 
 function hasActiveJobs(items: JobRunDto[]) {
   return items.some((job) => job.status === "QUEUED" || job.status === "RUNNING");
+}
+
+function jobTitle(job: JobRunDto) {
+  if (job.queue === "ingestion") {
+    return "Atualizacao de dados";
+  }
+
+  return "Atualizacao do radar";
+}
+
+function jobContext(job: JobRunDto) {
+  if (job.status === "QUEUED") return "aguardando vez";
+  if (job.status === "RUNNING") return "em analise";
+  if (job.status === "SUCCEEDED") return "analise concluida";
+  if (job.status === "FAILED") return "precisa de revisao";
+  if (job.status === "DEAD_LETTERED") return "revisao manual";
+  return "sem atividade";
 }
 
 export interface JobRunsFeedProps {
@@ -175,19 +191,19 @@ export function JobRunsFeed({
                 )}
               />
             </span>
-            jobs {queue ? `· ${queue}` : ""}
+            monitoramento {queue ? "" : ""}
           </p>
-          <h2 className="mt-1.5 text-base font-semibold leading-tight">Fila operacional</h2>
+          <h2 className="mt-1.5 text-base font-semibold leading-tight">Atualizacoes do radar</h2>
         </div>
         <button
           type="button"
           onClick={() => resource.refetch()}
           disabled={resource.isFetching}
           className="app-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)] disabled:opacity-60"
-          aria-label="Atualizar jobs"
+          aria-label="Atualizar radar"
         >
           <RefreshCw className={cn("h-3 w-3", resource.isFetching && "animate-spin")} aria-hidden="true" />
-          {resource.isFetching ? "sync" : "atualizar"}
+          {resource.isFetching ? "checando" : "atualizar"}
         </button>
       </header>
 
@@ -220,12 +236,12 @@ export function JobRunsFeed({
                 style={{ background: "radial-gradient(circle, rgba(64,224,208,0.4), transparent 70%)" }}
               />
               <CircleDashed className="mx-auto mb-2 h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-              <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Fila operacional vazia</p>
+              <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhuma atualizacao em andamento</p>
               <p className="mt-1 text-[11px] leading-5 text-[color:var(--muted)]">
-                Dispare uma ingestão para popular a fila de jobs.
+                Adicione uma fonte ou lote de dados para acompanhar o processamento aqui.
               </p>
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                pronto · aguardando job
+                pronto para receber dados
               </div>
             </motion.div>
           ) : null}
@@ -238,8 +254,7 @@ export function JobRunsFeed({
 
       {resource.updatedAt ? (
         <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
-          sync {syncTimeFormatter.format(new Date(resource.updatedAt))}
-          {resource.requestId ? ` · req ${resource.requestId.slice(0, 8)}` : null}
+          atualizado {syncTimeFormatter.format(new Date(resource.updatedAt))}
         </p>
       ) : null}
     </section>
@@ -267,11 +282,11 @@ function JobRow({ job, nowMs }: { job: JobRunDto; nowMs: number | null }) {
               className={cn("h-3.5 w-3.5 shrink-0", toneClass[meta.tone], meta.animate && "animate-spin")}
               aria-hidden="true"
             />
-            <span className="min-w-0 truncate">{job.name}</span>
+            <span className="min-w-0 truncate">{jobTitle(job)}</span>
           </p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-            {job.queue} · {job.handler}
-            {job.stage ? ` · ${job.stage}` : null}
+            {job.queue === "ingestion" ? "entrada de dados" : "radar"}
+            {` · ${jobContext(job)}`}
           </p>
         </div>
         <span
@@ -292,7 +307,7 @@ function JobRow({ job, nowMs }: { job: JobRunDto; nowMs: number | null }) {
         {job.startedAt ? (
           <span className="inline-flex items-center gap-1">
             <Play className="h-3 w-3" aria-hidden="true" />
-            iniciou {relativeFrom(job.startedAt, nowMs)}
+            comecou {relativeFrom(job.startedAt, nowMs)}
           </span>
         ) : null}
         {job.finishedAt ? (
@@ -348,7 +363,7 @@ function ErrorBanner({
       <p className="mt-1.5 text-xs leading-5 text-[color:var(--muted-strong)]">{error.message}</p>
       {!error.isTransport && error.requestId !== "n/a" ? (
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          req {error.requestId}
+          codigo {error.requestId.slice(0, 8)}
         </p>
       ) : null}
       <button

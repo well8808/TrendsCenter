@@ -20,7 +20,7 @@ export default async function ResetPasswordPage({
         footerText="Precisa recuperar?"
       >
         <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
-          Tokens de reset são temporários, de uso único e invalidam sessões antigas.
+          Links de redefinicao sao temporarios, de uso unico e protegem sessoes antigas.
         </div>
       </AuthShell>
     );

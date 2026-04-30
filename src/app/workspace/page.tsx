@@ -8,24 +8,30 @@ import { cn } from "@/lib/utils";
 
 const statusCopy: Record<string, string> = {
   invite_sent: "Convite criado e enfileirado para entrega.",
-  role_updated: "Papel atualizado com autorização owner.",
+  role_updated: "Acesso atualizado com seguranca.",
 };
 
 const errorCopy: Record<string, string> = {
   rate_limited: "Muitas tentativas. Aguarde antes de tentar novamente.",
-  invite_invalid: "Convite inválido para seu papel atual.",
-  already_member: "Este e-mail já faz parte do workspace.",
-  role_invalid: "Papel inválido.",
-  role_blocked: "Esta mudanca de papel esta bloqueada.",
+  invite_invalid: "Convite invalido para seu acesso atual.",
+  already_member: "Este e-mail ja faz parte da equipe.",
+  role_invalid: "Nivel de acesso invalido.",
+  role_blocked: "Esta mudanca de acesso esta bloqueada.",
 };
 
 const roleOptions = [
-  { value: "ADMIN", label: "admin" },
-  { value: "MEMBER", label: "member" },
+  { value: "ADMIN", label: "gestor" },
+  { value: "MEMBER", label: "operador" },
 ] as const;
 
 const controlClass =
   "app-control rounded-[var(--radius-sm)] px-3 py-3 text-sm outline-none placeholder:text-[color:var(--muted)]";
+
+function roleLabel(role: string) {
+  if (role === "OWNER") return "dono";
+  if (role === "ADMIN") return "gestor";
+  return "operador";
+}
 
 export default async function WorkspacePage({
   searchParams,
@@ -47,23 +53,23 @@ export default async function WorkspacePage({
           </Link>
           <div className="mt-8">
             <div className="inline-flex rounded-full border border-[rgba(237, 73, 86,0.28)] bg-[rgba(237, 73, 86,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--acid)]">
-              workspace settings
+              configuracoes
             </div>
             <h1 className="mt-5 text-3xl font-semibold leading-tight">{data.workspace.name}</h1>
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-              Membros, convites e autorização real por tenant. Nada aqui depende apenas da UI.
+              Equipe, convites e permissoes do radar. Toda mudanca fica registrada.
             </p>
           </div>
           <div className="mt-8 grid gap-3 text-sm">
             <div className="app-rail-card rounded-[var(--radius-md)] p-4">
-              <p className="eyebrow">sua sessão</p>
+              <p className="eyebrow">seu acesso</p>
               <p className="mt-2 font-semibold">{data.actor.email}</p>
-              <p className="mt-1 text-[color:var(--muted)]">{data.actor.role.toLowerCase()}</p>
+              <p className="mt-1 text-[color:var(--muted)]">{roleLabel(data.actor.role)}</p>
             </div>
             <div className="app-rail-card rounded-[var(--radius-md)] p-4">
               <p className="eyebrow">permissões</p>
               <p className="mt-2 text-[color:var(--muted-strong)]">
-                {data.actor.canManageRoles ? "owner controls" : data.actor.canInvite ? "admin ops" : "member ops"}
+                {data.actor.canManageRoles ? "controle total" : data.actor.canInvite ? "pode convidar" : "pode operar"}
               </p>
             </div>
           </div>
@@ -88,11 +94,11 @@ export default async function WorkspacePage({
               <div>
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
                   <UsersRound className="h-4 w-4" aria-hidden="true" />
-                  members
+                  equipe
                 </div>
-                <h2 className="mt-3 text-2xl font-semibold">Acesso por papel</h2>
+                <h2 className="mt-3 text-2xl font-semibold">Acesso da equipe</h2>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-[color:var(--muted)]">
-                  Owner controla roles. Admin convida membros. Member opera sinais dentro do tenant.
+                  Dono controla a equipe. Gestor convida pessoas. Operador trabalha nos sinais do radar.
                 </p>
               </div>
               <div className="rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
@@ -139,7 +145,7 @@ export default async function WorkspacePage({
                   ) : (
                     <div className="flex items-center justify-start md:justify-end">
                       <span className="rounded-full border border-[color:var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted-strong)]">
-                        {member.role.toLowerCase()}
+                        {roleLabel(member.role)}
                       </span>
                     </div>
                   )}
@@ -152,9 +158,9 @@ export default async function WorkspacePage({
             <div className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
                 <MailPlus className="h-4 w-4" aria-hidden="true" />
-                invite member
+                convidar pessoa
               </div>
-              <h2 className="mt-3 text-xl font-semibold">Convite rastreável</h2>
+              <h2 className="mt-3 text-xl font-semibold">Novo acesso</h2>
               {data.actor.canInvite ? (
                 <form action={inviteMemberAction} className="mt-5 grid gap-4">
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
@@ -162,10 +168,10 @@ export default async function WorkspacePage({
                     <input className={controlClass} name="email" type="email" required />
                   </label>
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                    papel
+                    acesso
                     <select className={controlClass} name="role" defaultValue="MEMBER">
-                      {data.actor.role === "OWNER" && <option value="ADMIN">admin</option>}
-                      <option value="MEMBER">member</option>
+                      {data.actor.role === "OWNER" && <option value="ADMIN">gestor</option>}
+                      <option value="MEMBER">operador</option>
                     </select>
                   </label>
                   <button className="min-h-[var(--control-height)] rounded-[var(--radius-sm)] border border-[rgba(237, 73, 86,0.4)] bg-[rgba(237, 73, 86,0.12)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.18)]" type="submit">
@@ -174,7 +180,7 @@ export default async function WorkspacePage({
                 </form>
               ) : (
                 <p className="app-card mt-5 rounded-[var(--radius-md)] p-4 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  Seu papel atual permite operar sinais, mas não convidar membros.
+                  Seu acesso atual permite operar sinais, mas nao convidar novas pessoas.
                 </p>
               )}
             </div>
@@ -182,9 +188,9 @@ export default async function WorkspacePage({
             <div className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                invites pendentes
+                convites pendentes
               </div>
-              <h2 className="mt-3 text-xl font-semibold">Lineage de acesso</h2>
+              <h2 className="mt-3 text-xl font-semibold">Historico de acesso</h2>
               <div className="mt-5 grid gap-3">
                 {data.invites.length ? (
                   data.invites.map((invite) => (
@@ -192,7 +198,7 @@ export default async function WorkspacePage({
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="font-semibold">{invite.email}</p>
                         <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs uppercase tracking-[0.14em] text-[color:var(--muted)]">
-                          {invite.role.toLowerCase()}
+                          {roleLabel(invite.role)}
                         </span>
                       </div>
                       <p className="mt-2 text-sm text-[color:var(--muted)]">
@@ -205,12 +211,12 @@ export default async function WorkspacePage({
                     <div className="mx-auto grid h-10 w-10 place-items-center rounded-full border border-[rgba(243,201,105,0.22)] bg-[rgba(243,201,105,0.06)]">
                       <ShieldCheck className="h-4 w-4 text-[color:var(--gold)]" aria-hidden="true" />
                     </div>
-                    <p className="mt-3 text-sm font-semibold">Workspace fechado</p>
+                    <p className="mt-3 text-sm font-semibold">Radar fechado</p>
                     <p className="mt-1.5 text-xs leading-5 text-[color:var(--muted)]">
-                      Nenhum convite pendente. O acesso é controlado por origem — cada entrada fica registrada com papel e data.
+                      Nenhum convite pendente. Cada acesso fica registrado com nivel e data.
                     </p>
                     <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                      lineage protegido
+                      acesso protegido
                     </div>
                   </div>
                 )}

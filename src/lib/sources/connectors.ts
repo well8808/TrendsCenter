@@ -66,10 +66,10 @@ export function buildInstagramConnectorView(
 ): ExternalConnectorView {
   const safeConnection = mapSafeInstagramOAuthConnection(connection);
   const requiredVariables = [
-    { label: "app/client id", configured: Boolean(config.clientId) },
-    { label: "credencial server-side", configured: Boolean(config.clientSecret) },
-    { label: "redirect URI", configured: Boolean(config.redirectUri) },
-    { label: "criptografia de tokens server-side", configured: options.tokenEncryptionReady ?? isOAuthTokenEncryptionConfigured() },
+    { label: "ID do app Meta", configured: Boolean(config.clientId) },
+    { label: "segredo do app Meta", configured: Boolean(config.clientSecret) },
+    { label: "URL de retorno", configured: Boolean(config.redirectUri) },
+    { label: "cofre de acesso", configured: options.tokenEncryptionReady ?? isOAuthTokenEncryptionConfigured() },
   ];
   const missingRequirements = requiredVariables.filter((item) => !item.configured).map((item) => item.label);
   const configuredCount = requiredVariables.length - missingRequirements.length;
@@ -86,13 +86,13 @@ export function buildInstagramConnectorView(
     return {
       provider: "instagram",
       platform: "instagram",
-      title: "Instagram OAuth oficial",
-      surface: "Instagram Graph API / Meta OAuth",
+      title: "Conta Instagram",
+      surface: "Instagram e Meta",
       state,
       stateLabel: "Conectado",
-      readinessLabel: "Conexão ativa",
+      readinessLabel: "Dados liberados",
       description:
-        "Conta Instagram registrada como conexao oficial. Tokens permanecem criptografados e restritos ao backend.",
+        "Conta profissional autorizada. O radar pode receber dados reais permitidos por essa conta.",
       scopes: config.scopes,
       missingRequirements,
       oauthImplemented: true,
@@ -105,13 +105,13 @@ export function buildInstagramConnectorView(
     return {
       provider: "instagram",
       platform: "instagram",
-      title: "Instagram OAuth oficial",
-      surface: "Instagram Graph API / Meta OAuth",
+      title: "Conta Instagram",
+      surface: "Instagram e Meta",
       state,
-      stateLabel: "Preparado para conexão",
-      readinessLabel: "Pronto para configurar",
+      stateLabel: "Pronto para conectar",
+      readinessLabel: "Aguardando autorizacao",
       description:
-        "Credenciais oficiais detectadas no servidor. A conexao real pode ser iniciada via OAuth Instagram/Meta.",
+        "A configuracao esta pronta. Conecte uma conta profissional para liberar dados reais no radar.",
       scopes: config.scopes,
       missingRequirements,
       oauthImplemented: true,
@@ -125,13 +125,13 @@ export function buildInstagramConnectorView(
     return {
       provider: "instagram",
       platform: "instagram",
-      title: "Instagram OAuth oficial",
-      surface: "Instagram Graph API / Meta OAuth",
+      title: "Conta Instagram",
+      surface: "Instagram e Meta",
       state,
-      stateLabel: "Erro de configuração",
-      readinessLabel: "Configuração incompleta",
+      stateLabel: "Falta configuracao",
+      readinessLabel: "Acao necessaria",
       description:
-        "Parte das variáveis opcionais foi configurada, mas ainda falta completar o conjunto antes de iniciar OAuth real.",
+        "Alguns dados de acesso da Meta foram preenchidos, mas ainda falta completar a conexao.",
       scopes: config.scopes,
       missingRequirements,
       oauthImplemented: true,
@@ -143,13 +143,13 @@ export function buildInstagramConnectorView(
   return {
     provider: "instagram",
     platform: "instagram",
-    title: "Instagram OAuth oficial",
-    surface: "Instagram Graph API / Meta OAuth",
+    title: "Conta Instagram",
+    surface: "Instagram e Meta",
     state,
-    stateLabel: "OAuth não configurado",
-    readinessLabel: "Pronto para configurar",
+    stateLabel: "Nao conectada",
+    readinessLabel: "Configure para ativar",
     description:
-      "Estrutura pronta para conexao oficial. Nenhuma conta Instagram esta conectada e nenhum token e simulado.",
+      "Nenhuma conta profissional foi conectada ainda. O radar nao simula dados nem acessos.",
     scopes: config.scopes,
     missingRequirements,
     oauthImplemented: true,

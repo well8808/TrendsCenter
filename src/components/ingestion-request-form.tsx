@@ -49,7 +49,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
     if (!body.sourceTitle || !body.payloadJson) {
       setState({
         kind: "error",
-        message: "sourceTitle e payloadJson são obrigatórios.",
+        message: "Nome da fonte e dados do lote sao obrigatorios.",
         code: "BAD_REQUEST",
         status: 400,
         requestId: "n/a",
@@ -96,12 +96,11 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           style={{ animation: "live-pulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite" }}
         />
         <DatabaseZap className="h-4 w-4" aria-hidden="true" />
-        ingestão
+        entrada de dados
       </div>
-      <h2 className="mt-3 text-lg font-semibold">Indexar lote rastreável</h2>
+      <h2 className="mt-3 text-lg font-semibold">Adicionar dados ao radar</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-        Indexa um lote de Reels rastreaveis. Cada envio cria um job na{" "}
-        <code className="font-mono text-[color:var(--aqua)]">fila ao lado</code>.
+        Cole dados de uma fonte oficial, propria ou licenciada para transformar em sinais acompanhaveis.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
@@ -110,7 +109,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           <input className={controlClass} name="sourceTitle" placeholder="Ex: Instagram Reels BR - abril 2026" required />
         </label>
         <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          url da fonte
+          link da fonte
           <input className={controlClass} name="sourceUrl" placeholder="https://..." type="url" />
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -131,22 +130,22 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           </label>
         </div>
         <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          tipo de fonte
+          origem dos dados
           <select className={controlClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
-            <option value="MANUAL_RESEARCH">Manual research</option>
+            <option value="MANUAL_RESEARCH">Pesquisa manual</option>
             <option value="INSTAGRAM_REELS_TRENDS">Instagram Reels</option>
-            <option value="INSTAGRAM_PROFESSIONAL_DASHBOARD">Instagram Insights</option>
-            <option value="INSTAGRAM_GRAPH_API">Instagram Graph API</option>
-            <option value="META_AD_LIBRARY">Meta Ad Library</option>
-            <option value="OWNED_UPLOAD">Owned upload</option>
+            <option value="INSTAGRAM_PROFESSIONAL_DASHBOARD">Painel profissional</option>
+            <option value="INSTAGRAM_GRAPH_API">Conta Instagram conectada</option>
+            <option value="META_AD_LIBRARY">Biblioteca de anuncios</option>
+            <option value="OWNED_UPLOAD">Arquivo proprio/licenciado</option>
           </select>
         </label>
         <label className="grid gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          json do lote
+          dados do lote
           <textarea
             className="min-h-48 resize-y rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[var(--control-bg)] px-3 py-3 font-mono text-xs leading-5 text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[rgba(64,224,208,0.58)]"
             name="payloadJson"
-            placeholder="Cole o JSON do lote aqui (array de vídeos com título, métricas e evidência)"
+            placeholder="Cole aqui o lote exportado pela fonte parceira ou oficial"
             required
           />
         </label>
@@ -161,12 +160,12 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           {submitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              enfileirando...
+              salvando...
             </>
           ) : (
             <>
               <FileInput className="h-4 w-4" aria-hidden="true" />
-              indexar
+              adicionar ao radar
             </>
           )}
         </button>
@@ -202,30 +201,30 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
     >
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-        {ack.idempotent ? "request já registrada (sem duplicata)" : "request aceita"}
+        {ack.idempotent ? "entrada ja registrada" : "dados recebidos"}
       </p>
       <dl className="mt-3 grid gap-1.5 text-xs leading-5">
         <div className="flex justify-between gap-3">
-          <dt className="text-[color:var(--muted)]">request</dt>
-          <dd className="min-w-0 truncate font-mono text-[color:var(--muted-strong)]">{ack.request.id}</dd>
+          <dt className="text-[color:var(--muted)]">entrada</dt>
+          <dd className="min-w-0 truncate text-[color:var(--muted-strong)]">recebida</dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="text-[color:var(--muted)]">título</dt>
           <dd className="min-w-0 truncate text-[color:var(--foreground)]">{ack.request.title}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[color:var(--muted)]">job</dt>
+          <dt className="text-[color:var(--muted)]">processamento</dt>
           <dd className={cn("min-w-0 truncate font-mono", jobTone === "acid" ? "text-[color:var(--acid)]" : "text-[color:var(--aqua)]")}>
-            {ack.job.id.slice(0, 12)} · {jobLabel}
+            {jobLabel}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[color:var(--muted)]">requestId</dt>
+          <dt className="text-[color:var(--muted)]">codigo</dt>
           <dd className="min-w-0 truncate font-mono text-[color:var(--muted)]">{requestId}</dd>
         </div>
       </dl>
       <p className="mt-3 text-xs leading-5 text-[color:var(--muted-strong)]">
-        Acompanhe o processamento na <strong>fila operacional</strong> à direita. Polling ativo.
+        Acompanhe o processamento em <strong>Atualizacoes do radar</strong>.
       </p>
     </motion.div>
   );
@@ -253,7 +252,7 @@ function ErrorCard({
       <p className="mt-2 text-sm leading-5 text-[color:var(--muted-strong)]">{state.message}</p>
       {!state.isTransport && state.requestId !== "n/a" ? (
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          req {state.requestId}
+          codigo {state.requestId.slice(0, 8)}
         </p>
       ) : null}
       <button

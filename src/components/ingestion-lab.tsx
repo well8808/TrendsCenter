@@ -72,12 +72,12 @@ const signalTypes = [
 ] as const;
 
 const sourceKinds = [
-  ["MANUAL_RESEARCH", "Manual research"],
+  ["MANUAL_RESEARCH", "Pesquisa manual"],
   ["INSTAGRAM_REELS_TRENDS", "Instagram Reels"],
-  ["INSTAGRAM_PROFESSIONAL_DASHBOARD", "Instagram Insights"],
-  ["INSTAGRAM_GRAPH_API", "Instagram Graph API"],
-  ["META_AD_LIBRARY", "Meta Ad Library"],
-  ["OWNED_UPLOAD", "Owned upload"],
+  ["INSTAGRAM_PROFESSIONAL_DASHBOARD", "Painel profissional"],
+  ["INSTAGRAM_GRAPH_API", "Conta Instagram conectada"],
+  ["META_AD_LIBRARY", "Biblioteca de anuncios"],
+  ["OWNED_UPLOAD", "Arquivo proprio/licenciado"],
 ] as const;
 
 const operationDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -190,15 +190,15 @@ async function queueIngestionRequest(payload: ManualIngestionPayload): Promise<A
   if (!response.ok || !body?.ok || !body.data) {
     return {
       ok: false,
-      message: body?.error?.message ?? "Falha ao registrar ingestão manual.",
+      message: body?.error?.message ?? "Nao foi possivel salvar os dados.",
     };
   }
 
   return {
     ok: true,
     message: body.data.idempotent
-      ? `Ingestão já registrada; job ${body.data.job.status.toLowerCase()} reaproveitado.`
-      : `Ingestão enfileirada; job ${body.data.job.status.toLowerCase()} criado.`,
+      ? "Esses dados ja estavam no radar."
+      : "Dados recebidos e enviados para analise.",
     requestId: body.data.request.id,
     jobId: body.data.job.id,
   };
@@ -280,7 +280,7 @@ export function IngestionLab({
     } catch (error) {
       setSignalResult({
         ok: false,
-        message: error instanceof Error ? error.message : "Falha ao registrar ingestão manual.",
+        message: error instanceof Error ? error.message : "Nao foi possivel salvar os dados.",
       });
     } finally {
       setIsCreating(false);
@@ -346,17 +346,17 @@ export function IngestionLab({
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--aqua)]">
             <DatabaseZap className="h-4 w-4" aria-hidden="true" />
-            Ingestion Lab
+            Entrada de dados
           </div>
-          <h2 className="mt-2 text-2xl font-semibold leading-tight">Operação rastreável</h2>
+          <h2 className="mt-2 text-2xl font-semibold leading-tight">Adicionar sinais reais</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)]">
-            Entrada segura para sinais, evidências e fontes aprovadas. Sem scraping, sem conector externo frágil e sem transformar falha em insight.
+            Registre sinais, evidencias e fontes aprovadas. Use apenas dados proprios, oficiais ou de parceiros licenciados.
           </p>
         </div>
         <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[460px]">
-          <MetricChip label="connectors ok" value={String(lab.stats.approvedConnectors)} tone="acid" />
-          <MetricChip label="requests abertos" value={String(lab.stats.openRequests)} tone="aqua" />
-          <MetricChip label="batches ok" value={String(lab.stats.succeededBatches)} tone="gold" />
+          <MetricChip label="fontes ativas" value={String(lab.stats.approvedConnectors)} tone="acid" />
+          <MetricChip label="entradas abertas" value={String(lab.stats.openRequests)} tone="aqua" />
+          <MetricChip label="lotes salvos" value={String(lab.stats.succeededBatches)} tone="gold" />
           <MetricChip label="falhas" value={String(lab.stats.failedBatches)} tone="coral" />
         </div>
       </div>
@@ -405,7 +405,7 @@ export function IngestionLab({
             <Field label="fonte">
               <input className={fieldClass} name="sourceTitle" placeholder="Review manual BR" required />
             </Field>
-            <Field label="superfície">
+            <Field label="canal">
               <select className={fieldClass} name="sourceKind" defaultValue="MANUAL_RESEARCH">
                 {sourceKinds.map(([value, label]) => (
                   <option key={value} value={value}>
@@ -414,7 +414,7 @@ export function IngestionLab({
                 ))}
               </select>
             </Field>
-            <Field label="origem">
+            <Field label="direito de uso">
               <select className={fieldClass} name="sourceOrigin" defaultValue="MANUAL">
                 <option value="MANUAL">manual</option>
                 <option value="OFFICIAL">oficial registrado</option>
@@ -448,7 +448,7 @@ export function IngestionLab({
               className="inline-flex min-h-[var(--control-height)] items-center justify-center gap-2 rounded-full border border-[rgba(237, 73, 86,0.38)] bg-[rgba(237, 73, 86,0.11)] px-4 py-2 text-sm font-semibold text-[color:var(--acid)] transition hover:bg-[rgba(237, 73, 86,0.16)] disabled:opacity-60"
             >
               {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              registrar ingestão
+              salvar sinal
             </button>
           </div>
         </motion.form>
@@ -515,24 +515,24 @@ export function IngestionLab({
           <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
               <RadioTower className="h-4 w-4" aria-hidden="true" />
-              connectors aprovados
+              fontes prontas
             </div>
             <div className="mt-3 grid gap-2">
               {lab.connectors.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 rounded-[var(--radius-sm)] border border-dashed border-[rgba(64,224,208,0.2)] bg-[rgba(64,224,208,0.03)] px-3 py-4 text-center">
                   <RadioTower className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-                  <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum connector registrado</p>
-                  <p className="text-[11px] leading-4 text-[color:var(--muted)]">Adicione uma fonte aprovada para habilitar ingestão automática.</p>
+                  <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhuma fonte pronta</p>
+                  <p className="text-[11px] leading-4 text-[color:var(--muted)]">Conecte uma conta ou adicione uma fonte licenciada para automatizar o radar.</p>
                 </div>
               ) : (
                 lab.connectors.slice(0, 4).map((connector) => (
                   <div key={connector.id} className="flex min-w-0 items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{connector.title}</p>
-                      <p className="mt-1 text-xs text-[color:var(--muted)]">{connector.kind} - {connector.origin}</p>
+                      <p className="mt-1 text-xs text-[color:var(--muted)]">Fonte aprovada - {connector.origin}</p>
                     </div>
                     <span className={cn("shrink-0 rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(connector.status))}>
-                      {connector.status}
+                      ativa
                     </span>
                   </div>
                 ))
@@ -546,14 +546,14 @@ export function IngestionLab({
         <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
             <GitBranch className="h-4 w-4" aria-hidden="true" />
-            lineage recente
+            historico recente
           </div>
           <div className="mt-4 grid gap-3">
             {lab.batches.length === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[rgba(237, 73, 86,0.16)] bg-[rgba(237, 73, 86,0.03)] p-4 text-center">
                 <GitBranch className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-                <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum batch processado</p>
-                <p className="text-[11px] leading-4 text-[color:var(--muted)]">O lineage aparece aqui assim que o primeiro job for concluído.</p>
+                <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum lote processado</p>
+                <p className="text-[11px] leading-4 text-[color:var(--muted)]">O historico aparece aqui assim que a primeira entrada for concluida.</p>
               </div>
             ) : (
               lab.batches.slice(0, 4).map((batch) => (
@@ -562,28 +562,28 @@ export function IngestionLab({
                     <div>
                       <p className="text-sm font-semibold">{batch.title}</p>
                       <p className="mt-1 text-xs text-[color:var(--muted)]">
-                        {batch.kind} - {batch.market} - {formatOperationDateTime(batch.createdAt)}
+                        {batch.market} - {formatOperationDateTime(batch.createdAt)}
                       </p>
                     </div>
                     <span className={cn("rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(batch.status))}>
-                      {batch.status}
+                      {batch.status === "SUCCEEDED" ? "concluido" : batch.status.toLowerCase()}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[color:var(--muted-strong)]">
-                    <span>{batch.requestTitle ?? "request"}</span>
+                    <span>{batch.requestTitle ?? "entrada"}</span>
                     <ArrowRight className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
-                    <span>{batch.sourceTitle ?? "source"}</span>
+                    <span>{batch.sourceTitle ?? "fonte"}</span>
                     <ArrowRight className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
-                    <span>{batch.snapshotCount} snapshot</span>
+                    <span>{batch.snapshotCount} leitura</span>
                     <ArrowRight className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
-                    <span>{batch.signalTitles[0] ?? "signal"}</span>
+                    <span>{batch.signalTitles[0] ?? "sinal"}</span>
                     <ArrowRight className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
                     <span>{batch.evidenceTitles.length} evid.</span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {batch.steps.map((step) => (
                       <div key={`${batch.id}-${step.name}`} className={cn("rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.1em]", statusTone(step.status))}>
-                        {step.name}
+                        {step.status === "SUCCEEDED" ? "feito" : step.status.toLowerCase()}
                       </div>
                     ))}
                   </div>
@@ -602,26 +602,26 @@ export function IngestionLab({
           <div className="app-rail-card rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
               <ClipboardList className="h-4 w-4" aria-hidden="true" />
-              últimos jobs
+              ultimas atualizacoes
             </div>
             <div className="mt-3 grid gap-2">
               {lab.jobs.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 rounded-[var(--radius-sm)] border border-dashed border-[rgba(243,201,105,0.18)] bg-[rgba(243,201,105,0.03)] px-3 py-4 text-center">
                   <ClipboardList className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-                  <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhum job registrado</p>
-                  <p className="text-[11px] leading-4 text-[color:var(--muted)]">Jobs aparecem após a primeira ingestão enfileirada.</p>
+                  <p className="text-xs font-semibold text-[color:var(--muted-strong)]">Nenhuma atualizacao registrada</p>
+                  <p className="text-[11px] leading-4 text-[color:var(--muted)]">As atualizacoes aparecem apos a primeira entrada de dados.</p>
                 </div>
               ) : (
                 lab.jobs.slice(0, 5).map((job) => (
                   <div key={job.id} className="rounded-[var(--radius-sm)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.16)] px-3 py-2">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="truncate text-sm font-medium">{job.name}</p>
+                      <p className="truncate text-sm font-medium">Atualizacao do radar</p>
                       <span className={cn("rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em]", statusTone(job.status))}>
-                        {job.status}
+                        {job.status === "SUCCEEDED" ? "concluido" : job.status.toLowerCase()}
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-[color:var(--muted)]">
-                      {job.stage ?? "stage"} - {formatOperationDateTime(job.finishedAt)}
+                      {formatOperationDateTime(job.finishedAt)}
                     </p>
                     {job.error && (
                       <p className="mt-2 rounded-[var(--radius-sm)] border border-[rgba(255,111,97,0.28)] bg-[rgba(255,111,97,0.06)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--coral)]">
@@ -637,10 +637,10 @@ export function IngestionLab({
           <div className="rounded-[var(--radius-lg)] border border-[rgba(237, 73, 86,0.2)] bg-[rgba(237, 73, 86,0.065)] p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              boundary
+              regra de uso
             </div>
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-              Ingestão aceita somente entrada manual, própria/licenciada ou superfície oficial registrada. Qualquer falha permanece visível como falha.
+              O radar aceita somente dado manual, proprio, oficial ou licenciado. Qualquer falha permanece visivel como falha.
             </p>
           </div>
         </div>

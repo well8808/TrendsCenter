@@ -148,7 +148,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                   className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full blur-2xl"
                   style={{ background: tone.glow, opacity: 0.4 }}
                 />
-                <p className={cn("eyebrow relative", tone.text)}>trend score</p>
+                <p className={cn("eyebrow relative", tone.text)}>potencial</p>
                 <p className={cn("score-hero relative mt-3", tone.text)}>
                   {trend.trendScore}
                 </p>
@@ -165,9 +165,9 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
           {/* ── Quick metrics ── */}
           <section className="grid gap-3 sm:grid-cols-3" aria-label="Métricas rápidas">
             {[
-              { label: "views", value: formatNumber(trend.metrics.views), key: "views", tone: "text-[color:var(--foreground)]" },
-              { label: "growth views", value: formatNumber(trend.growthViews), key: "growth", tone: "text-[color:var(--acid)]" },
-              { label: "snapshots", value: trend.snapshotCount, key: "snap", tone: "text-[color:var(--aqua)]" },
+              { label: "visualizacoes", value: formatNumber(trend.metrics.views), key: "views", tone: "text-[color:var(--foreground)]" },
+              { label: "crescimento", value: formatNumber(trend.growthViews), key: "growth", tone: "text-[color:var(--acid)]" },
+              { label: "leituras", value: trend.snapshotCount, key: "snap", tone: "text-[color:var(--aqua)]" },
             ].map(({ label, value, key, tone: t }) => (
               <div key={key} className="app-card-interactive relative overflow-hidden rounded-[var(--radius-lg)] p-5">
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(239,233,220,0.2)] to-transparent" />
@@ -181,11 +181,11 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
           <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="section-head text-[color:var(--aqua)]">
               <LineChart className="h-4 w-4 shrink-0" aria-hidden="true" />
-              timeline de snapshots
+              historico de leituras
             </div>
 
             {trend.timeline.length === 0 ? (
-              <p className="mt-5 text-sm text-[color:var(--muted-strong)]">Nenhum snapshot registrado.</p>
+              <p className="mt-5 text-sm text-[color:var(--muted-strong)]">Nenhuma leitura registrada.</p>
             ) : (
               <div className="timeline-track relative mt-5 grid gap-0 pl-7">
                 {trend.timeline.map((point, i) => {
@@ -219,7 +219,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                           <p className="metric-cell-value mt-1">{formatNumber(point.views)}</p>
                         </div>
                         <div>
-                          <p className="metric-cell-label">growth</p>
+                          <p className="metric-cell-label">crescimento</p>
                           <p className="metric-cell-value mt-1 text-[color:var(--acid)]">{formatNumber(point.growthViews)}</p>
                         </div>
                         <div>
@@ -307,17 +307,17 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               />
               <div className={cn("section-head relative", tone.text)}>
                 <Gauge className="h-4 w-4 shrink-0" aria-hidden="true" />
-                breakdown do score
+                por que importa
               </div>
               <p className="relative mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
                 {trend.scoreExplanation}
               </p>
               <div className="relative mt-4 grid grid-cols-2 gap-2">
                 {[
-                  ["velocidade", trend.velocityScore, tone.text],
-                  ["aceleração", trend.accelerationScore, "text-[color:var(--gold)]"],
-                  ["recência", trend.recencyScore, "text-[color:var(--aqua)]"],
-                  ["consist.", trend.consistencyScore, "text-[color:var(--foreground)]"],
+                  ["ritmo", trend.velocityScore, tone.text],
+                  ["aceleracao", trend.accelerationScore, "text-[color:var(--gold)]"],
+                  ["recencia", trend.recencyScore, "text-[color:var(--aqua)]"],
+                  ["consistencia", trend.consistencyScore, "text-[color:var(--foreground)]"],
                 ].map(([label, value, textClass]) => (
                   <div
                     key={String(label)}
@@ -336,7 +336,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5">
               <div className="section-head text-[color:var(--aqua)]">
                 <UserRoundCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                creator
+                criador
               </div>
               {trend.creator ? (
                 <>
@@ -354,7 +354,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                   )}
                 </>
               ) : (
-                <p className="mt-3 text-sm text-[color:var(--muted-strong)]">Sem creator vinculado.</p>
+                <p className="mt-3 text-sm text-[color:var(--muted-strong)]">Sem criador vinculado.</p>
               )}
             </section>
 
@@ -362,7 +362,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5">
               <div className="section-head text-[color:var(--gold)]">
                 <AudioLines className="h-4 w-4 shrink-0" aria-hidden="true" />
-                sound
+                som
               </div>
               {trend.sound ? (
                 <>

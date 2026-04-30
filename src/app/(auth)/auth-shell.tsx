@@ -6,18 +6,18 @@ const errorCopy: Record<string, string> = {
   invalid: "Credenciais inválidas ou senha curta. Use pelo menos 10 caracteres no cadastro.",
   exists: "Já existe uma conta com este e-mail.",
   failed: "Não foi possível concluir a autenticação agora.",
-  workspace: "Esta conta não possui workspace ativo.",
-  unverified: "Verifique seu e-mail antes de entrar no app operacional.",
+  workspace: "Esta conta ainda nao possui um radar ativo.",
+  unverified: "Verifique seu e-mail antes de entrar no radar.",
   rate_limited: "Muitas tentativas. Aguarde um pouco e tente novamente.",
   invalid_token: "Este link não é válido ou já foi usado.",
 };
 
 const statusCopy: Record<string, string> = {
-  sent: "Verificação pronta neste navegador.",
-  resent: "Novo link de verificação criado para este navegador.",
+  sent: "Verificacao pronta neste navegador.",
+  resent: "Novo link de verificacao criado para este navegador.",
   cooldown: "Reenvio controlado. Aguarde antes de solicitar outro link.",
-  unverified: "Conta pendente de verificação. Confirme abaixo para liberar o acesso.",
-  success: "Operação concluída com segurança.",
+  unverified: "Conta pendente de verificacao. Confirme abaixo para liberar o acesso.",
+  success: "Operacao concluida com seguranca.",
 };
 
 export function AuthShell({
@@ -48,21 +48,21 @@ export function AuthShell({
             <div>
               <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted)]">
                 <span className="inline-block h-1 w-1 rounded-full bg-[color:var(--hot)]" aria-hidden="true" />
-                tenant safe
+                radar privado
               </div>
               <h1 className="mt-12 max-w-lg text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.02em]">
                 Instagram Reels<br />
                 <span className="text-[color:var(--muted-strong)]">Command Center</span>
               </h1>
               <p className="mt-6 max-w-sm text-[13px] leading-6 text-[color:var(--muted)]">
-                Autenticação, sessão e workspace isolado antes de qualquer dado operacional.
+                Sinais de Reels, fontes verificadas e oportunidades em um painel seguro.
               </p>
             </div>
             <ol className="grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--line)] text-[11px]">
               {[
-                { num: "01", label: "sessão HTTP-only" },
-                { num: "02", label: "tenant scope" },
-                { num: "03", label: "safe mode" },
+                { num: "01", label: "conta segura" },
+                { num: "02", label: "fontes reais" },
+                { num: "03", label: "18+ seguro" },
               ].map(({ num, label }) => (
                 <li
                   key={num}

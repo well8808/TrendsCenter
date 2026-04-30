@@ -104,7 +104,7 @@ export default async function TrendsPage({
                 <div className="mt-5 flex flex-wrap items-center gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-[color:var(--muted)]">
                   <span className="inline-flex items-center gap-2 text-[color:var(--hot)]">
                     <span className="live-dot" aria-hidden="true" />
-                    trend search core
+                    radar de oportunidades
                   </span>
                   <span aria-hidden="true" className="text-[color:var(--line-strong)]">/</span>
                   <span className="font-mono text-[color:var(--muted-strong)]">
@@ -113,11 +113,11 @@ export default async function TrendsPage({
                 </div>
 
                 <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">
-                  Buscar trends indexadas
+                  Encontrar Reels em alta
                 </h1>
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-[color:var(--muted)] md:text-[15px]">
-                  Reels, creators, sons e hashtags persistidos com snapshot temporal e fonte rastreavel.
-                  Analise 18+ fica limitada a padroes de marketing, formato e funil; sem scraping e sem dado sem origem.
+                  Pesquise Reels, creators, sons e hashtags salvos com origem clara e sinais de crescimento.
+                  Analise 18+ fica limitada a padroes de marketing, formato e funil; sem conteudo explicito e sem origem duvidosa.
                 </p>
               </div>
 
@@ -169,7 +169,7 @@ export default async function TrendsPage({
                   name="sort"
                   defaultValue={data.params.sort}
                 >
-                  <option value="score">Trend score</option>
+                  <option value="score">Potencial</option>
                   <option value="growth">Crescimento</option>
                   <option value="recency">Recência</option>
                 </select>
@@ -200,15 +200,15 @@ export default async function TrendsPage({
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5 backdrop-blur-2xl">
               <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
                 <Gauge className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                como o score é calculado
+                como o potencial e calculado
               </div>
               <ol className="mt-5 grid gap-4">
                 {[
-                  { label: "crescimento", body: "views atuais contra snapshot anterior" },
-                  { label: "velocidade", body: "crescimento por janela temporal" },
-                  { label: "aceleração", body: "mudança de velocidade entre janelas" },
+                  { label: "crescimento", body: "visualizacoes atuais contra leitura anterior" },
+                  { label: "velocidade", body: "ritmo de crescimento observado" },
+                  { label: "aceleracao", body: "mudanca de ritmo entre leituras" },
                   { label: "recência", body: "idade do Reel no momento observado" },
-                  { label: "consistência", body: "snapshots + evidências encadeadas" },
+                  { label: "consistencia", body: "leituras e evidencias conectadas" },
                 ].map(({ label, body }, idx) => (
                   <li key={label} className="flex items-start gap-3">
                     <span className="mt-0.5 font-mono text-[10px] tabular-nums text-[color:var(--muted)]">
@@ -228,21 +228,21 @@ export default async function TrendsPage({
             <section className="relative rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-5">
               <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--hot)]">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                safe mode
+                uso seguro
               </div>
               <p className="mt-3 text-[13px] leading-6 text-[color:var(--muted-strong)]">
-                Sem scraping e sem insights sem fonte. Conteudo adulto só entra como análise segura 18+; entradas bloqueadas continuam registradas como falha operacional.
+                Sem coleta nao autorizada e sem insight sem fonte. Conteudo adulto so entra como analise segura 18+; entradas bloqueadas aparecem como falha.
               </p>
               <dl className="mt-5 grid gap-2.5 text-[11px] text-[color:var(--muted)]">
                 <div className="flex items-center gap-2">
                   <History className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
-                  <dt className="sr-only">último índice</dt>
-                  <dd className="font-mono">último índice: {formatDate(data.stats.latestIndexedAt)}</dd>
+                  <dt className="sr-only">ultima leitura</dt>
+                  <dd className="font-mono">ultima leitura: {formatDate(data.stats.latestIndexedAt)}</dd>
                 </div>
                 <div className="flex items-center gap-2">
                   <ArrowDownUp className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />
-                  <dt className="sr-only">ordenação</dt>
-                  <dd className="font-mono">ordenação: {data.params.sort}</dd>
+                  <dt className="sr-only">ordem</dt>
+                  <dd className="font-mono">ordem: {data.params.sort}</dd>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-3.5 w-3.5 text-[color:var(--muted)]" aria-hidden="true" />

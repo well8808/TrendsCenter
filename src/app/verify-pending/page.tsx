@@ -22,7 +22,7 @@ export default async function VerifyPendingPage({
   return (
     <AuthShell
       title="Liberar acesso"
-      subtitle="O app ainda não tem envio transacional de e-mail configurado. Use a verificação segura deste navegador para entrar."
+      subtitle="Use a verificacao segura deste navegador para liberar seu radar."
       status={status}
       error={error}
       footerHref="/login"
@@ -47,15 +47,15 @@ export default async function VerifyPendingPage({
         </button>
       </form>
       <p className="mt-4 text-xs leading-5 text-[color:var(--muted)]">
-        O link continua temporário, de uso único e vinculado ao navegador onde você acabou de entrar ou criar a conta.
+        O link continua temporario, de uso unico e vinculado ao navegador onde voce acabou de entrar ou criar a conta.
       </p>
       {!verification && (
         <p className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] px-4 py-3 text-xs leading-5 text-[color:var(--muted-strong)]">
-          Se o botão não aparecer, informe seu e-mail acima e gere um novo link. Isso não envia e-mail externo; apenas cria a verificação local segura.
+          Se o botao nao aparecer, informe seu e-mail acima e gere um novo link seguro neste navegador.
         </p>
       )}
       <Link className="mt-5 inline-flex text-sm font-semibold text-[color:var(--aqua)]" href="/signup">
-        Criar outro workspace
+        Criar outro radar
       </Link>
     </AuthShell>
   );

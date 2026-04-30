@@ -20,7 +20,7 @@ export default async function ForgotPasswordPage({
   return (
     <AuthShell
       title="Recuperar senha"
-      subtitle="Informe o e-mail do workspace Reels. Se ele existir e estiver verificado, um link temporario sera enfileirado."
+      subtitle="Informe seu e-mail. Se ele estiver ativo, enviaremos um link seguro para voltar ao radar."
       error={error}
       footerHref="/login"
       footerLabel="Voltar ao login"

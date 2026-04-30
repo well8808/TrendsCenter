@@ -9,27 +9,27 @@ import { cn } from "@/lib/utils";
 const stateCopy = {
   ready: {
     icon: Sparkles,
-    title: "Workspace ao vivo",
-    body: "Sinais, evidências e fila de decisão em leitura direta. Cada movimento na fila reflete em segundos.",
-    action: "Fluxo real",
+    title: "Radar ao vivo",
+    body: "Sinais, evidencias e proximas acoes atualizados a partir das fontes conectadas.",
+    action: "Dados reais",
   },
   loading: {
     icon: Loader2,
-    title: "Sincronizando",
-    body: "Lendo o último snapshot e recalculando score. A fila volta em segundos — sem inventar dado no caminho.",
-    action: "Sync em andamento",
+    title: "Atualizando",
+    body: "Lendo as ultimas entradas e recalculando o potencial sem inventar dado no caminho.",
+    action: "Atualizacao em andamento",
   },
   empty: {
     icon: Database,
     title: "Sem sinal nesta janela",
-    body: "Importe um lote oficial ou abra o Ingestion Lab para começar. Cada sinal entra com origem, data e evidência rastreável.",
-    action: "Próxima ação · ingestar",
+    body: "Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para comecar.",
+    action: "Adicionar dados",
   },
   error: {
     icon: AlertTriangle,
-    title: "Ingestão bloqueada",
-    body: "A fonte respondeu com erro. Falha permanece falha — corrija a origem antes de re-rodar o import para não virar insight falso.",
-    action: "Revisar último job",
+    title: "Entrada bloqueada",
+    body: "A fonte respondeu com erro. Corrija a origem antes de transformar isso em insight.",
+    action: "Revisar atualizacao",
   },
 };
 

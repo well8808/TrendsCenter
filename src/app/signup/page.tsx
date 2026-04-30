@@ -20,8 +20,8 @@ export default async function SignupPage({
 
   return (
     <AuthShell
-      title="Criar workspace Reels"
-      subtitle="Cada cadastro cria um workspace isolado para fontes Instagram/Meta, sem dados ficticios de mercado."
+      title="Criar radar Reels"
+      subtitle="Comece com um ambiente privado para acompanhar fontes, sinais e oportunidades de Instagram/Meta."
       error={error}
       footerHref="/login"
       footerLabel="Entrar"
@@ -37,12 +37,12 @@ export default async function SignupPage({
           <input className={authInputClass} name="email" type="email" autoComplete="email" required />
         </label>
         <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-          workspace
+          nome do radar
           <input className={authInputClass} name="workspaceName" type="text" defaultValue="Radar BR" required />
         </label>
         <PasswordInput label="senha" autoComplete="new-password" minLength={10} />
         <button className={authButtonClass} type="submit">
-          criar workspace
+          criar radar
         </button>
       </form>
     </AuthShell>

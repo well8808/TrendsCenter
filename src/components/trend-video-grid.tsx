@@ -174,13 +174,13 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
           style={{ background: "radial-gradient(circle, rgba(64,224,208,0.45), transparent 70%)" }}
         />
         <Sparkles className="mx-auto mb-3 h-6 w-6 text-[color:var(--muted)]" aria-hidden="true" />
-        <h2 className="text-xl font-semibold">Nenhuma trend indexada nesse recorte</h2>
+        <h2 className="text-xl font-semibold">Nenhuma oportunidade neste recorte</h2>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[color:var(--muted-strong)]">
-          A busca permanece vazia até existir ingestão com fonte e evidência rastreável.
+          Conecte uma fonte ou adicione dados licenciados para o radar encontrar os primeiros sinais.
         </p>
         <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--muted)]">
           <Radar className="h-3 w-3" aria-hidden="true" />
-          safe-mode · sem scraping
+          uso seguro · fonte obrigatoria
         </div>
       </motion.section>
     );
@@ -301,7 +301,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                       delay={baseDelay + 0.06}
                     />
                     <MetricPairRow
-                      label="growth"
+                      label="crescimento"
                       value={fmt(video.growthViews)}
                       tone="--acid"
                       delay={baseDelay + 0.1}
@@ -321,7 +321,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                       delay={baseDelay + 0.18}
                     />
                     <MetricPairRow
-                      label="snapshots"
+                      label="leituras"
                       value={video.snapshotCount}
                       animated
                       delay={baseDelay + 0.22}

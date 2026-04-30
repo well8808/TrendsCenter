@@ -20,19 +20,19 @@ export default async function InvitePage({
         footerText="Já tem acesso?"
       >
         <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.045)] p-4 text-sm leading-6 text-[color:var(--muted)]">
-          Solicite um novo convite ao owner ou admin do workspace.
+          Solicite um novo convite para quem administra o radar.
         </div>
       </AuthShell>
     );
   }
-  const workspaceName = invite.workspaceName ?? "workspace";
-  const role = invite.role ?? "MEMBER";
+  const workspaceName = invite.workspaceName ?? "radar";
+  const role = invite.role === "ADMIN" ? "gestor" : "operador";
   const email = invite.email ?? "convidado";
 
   return (
     <AuthShell
       title={`Entrar em ${workspaceName}`}
-      subtitle={`Convite para ${email} com papel ${role.toLowerCase()}.`}
+      subtitle={`Convite para ${email} com acesso de ${role}.`}
       error={error}
       footerHref="/login"
       footerLabel="Entrar"

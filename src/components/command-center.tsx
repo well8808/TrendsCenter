@@ -35,10 +35,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
 import { IngestionLab } from "@/components/ingestion-lab";
-import { JobRunsFeed } from "@/components/job-runs-feed";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
-import type { JobRunsListDto } from "@/lib/api";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
 import {
   filterSignals,
@@ -114,7 +112,7 @@ const itemVariants: Variants = {
 const navItems = [
   { label: "Reels Center", icon: LayoutDashboard, key: "cc" },
   { label: "Radar BR", icon: Radar, key: "radar-br" },
-  { label: "US Early Signals", icon: Globe2, key: "us" },
+  { label: "Sinais EUA", icon: Globe2, key: "us" },
   { label: "Fontes", icon: Database, key: "instagram-sources" },
 ];
 
@@ -125,7 +123,7 @@ const navCategoryItems = [
 ];
 
 const navOpsItems = [
-  { label: "Ingestion Lab", icon: DatabaseZap, key: "ingestion" },
+  { label: "Adicionar dados", icon: DatabaseZap, key: "ingestion" },
 ];
 
 const marketOptions: { value: MarketFilter; label: string }[] = [
@@ -139,7 +137,7 @@ const typeOptions: { value: TypeFilter; label: string }[] = [
   { value: "FORMAT", label: "Formatos" },
   { value: "AUDIO", label: "Áudios" },
   { value: "HASHTAG", label: "Hashtags" },
-  { value: "CREATOR", label: "Creators" },
+  { value: "CREATOR", label: "Perfis" },
   { value: "REVIVAL", label: "Revival" },
   { value: "US_TO_BR", label: "US > BR" },
 ];
@@ -148,30 +146,23 @@ const priorityOptions: { value: PriorityFilter; label: string }[] = [
   { value: "ALL", label: "Tudo" },
   { value: "now", label: "Agora" },
   { value: "next", label: "Próximo" },
-  { value: "watch", label: "Watch" },
-  { value: "hold", label: "Hold" },
+  { value: "watch", label: "Observar" },
+  { value: "hold", label: "Aguardar" },
 ];
 
 const sortOptions: { value: SortMode; label: string }[] = [
   { value: "priority", label: "Prioridade" },
-  { value: "score", label: "Score" },
+  { value: "score", label: "Potencial" },
   { value: "risk", label: "Risco" },
-  { value: "freshness", label: "Frescura" },
+  { value: "freshness", label: "Recencia" },
 ];
 
 const priorityLabel: Record<SignalPriority, string> = {
   now: "agora",
   next: "próximo",
-  watch: "watch",
-  hold: "hold",
+  watch: "observar",
+  hold: "aguardar",
 };
-
-const sourceDateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: "America/Sao_Paulo",
-});
 
 const trendSourceDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -185,10 +176,10 @@ const trendSourceDateFormatter = new Intl.DateTimeFormat("pt-BR", {
 const trendSourceTypeLabel: Record<TrendSourceRecord["sourceType"], string> = {
   reel: "Reels",
   audio: "Audio",
-  creator: "Creators",
+  creator: "Perfis",
   hashtag: "Hashtags",
-  account_insights: "Insights",
-  meta_ad_library: "Meta Ads",
+  account_insights: "Conta profissional",
+  meta_ad_library: "Anuncios Meta",
   manual: "Manual",
 };
 
@@ -198,18 +189,20 @@ const trendSourceStatusLabel: Record<TrendSourceRecord["status"], string> = {
   error: "erro",
 };
 
-function formatSourceDate(dateIso: string) {
-  return sourceDateFormatter.format(new Date(dateIso));
-}
-
 function formatTrendSourceDate(dateIso?: string) {
   return dateIso ? trendSourceDateFormatter.format(new Date(dateIso)) : "Ainda não verificado";
 }
 
+function roleLabel(role: string) {
+  if (role === "OWNER") return "dono";
+  if (role === "ADMIN") return "gestor";
+  return "operador";
+}
+
 const fallbackPersistence: CommandCenterData["persistence"] = {
   mode: "error-fallback",
-  label: "banco indisponível",
-  detail: "Postgres não respondeu; nenhum insight fictício foi carregado.",
+  label: "dados indisponiveis",
+  detail: "A base real nao respondeu; nenhum insight ficticio foi carregado.",
 };
 
 const fallbackIngestionLab: CommandCenterData["ingestionLab"] = {
@@ -711,9 +704,9 @@ function EvidenceInspector({
       </div>
 
       <div className="mt-4 rounded-[var(--radius-sm)] border border-[rgba(64,224,208,0.24)] bg-[rgba(64,224,208,0.07)] p-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)]">workspace flow</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)]">proxima decisao</p>
         <p className="mt-2 text-sm leading-5 text-[color:var(--muted-strong)]">
-          {savedCount} sinais salvos em {storageLabel}. Próxima ação sugerida: {signal.nextAction}
+          {savedCount} sinais salvos em {storageLabel}. Proxima acao sugerida: {signal.nextAction}
         </p>
       </div>
     </motion.section>
@@ -733,9 +726,9 @@ function SavedAndHistory({
     <section className="min-w-0 rounded-[var(--radius-xl)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold">Fila de decisão</h2>
+          <h2 className="text-sm font-semibold">Lista de acao</h2>
           <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-            Salvos e revival
+            Salvos e retornando
           </p>
         </div>
         <Bookmark className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
@@ -773,9 +766,9 @@ function SavedAndHistory({
               className="rounded-[var(--radius-md)] border border-dashed border-[rgba(237, 73, 86,0.14)] bg-[rgba(237, 73, 86,0.03)] p-4 text-center"
             >
               <Bookmark className="mx-auto h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
-              <p className="mt-2 text-xs font-semibold text-[color:var(--muted-strong)]">Fila vazia</p>
+              <p className="mt-2 text-xs font-semibold text-[color:var(--muted-strong)]">Lista vazia</p>
               <p className="mt-1 text-[11px] leading-4 text-[color:var(--muted)]">
-                Marque um card para montar a fila de decisão.
+                Salve um sinal para montar sua proxima rodada de acao.
               </p>
             </motion.div>
           )}
@@ -951,7 +944,7 @@ function Sidebar({
               {tenant.userEmail}
             </p>
             <p className="mt-1 truncate text-[11px] text-[color:var(--muted)]">
-              {tenant.role.toLowerCase()}
+              {roleLabel(tenant.role)}
             </p>
             <div className="mt-3 flex gap-2">
               <Link
@@ -985,9 +978,7 @@ export function CommandCenter({
   persistence = fallbackPersistence,
   ingestionLab = fallbackIngestionLab,
   tenant,
-  initialJobRuns,
-  initialJobRunsFetchedAt,
-}: CommandCenterData & { initialJobRuns?: JobRunsListDto; initialJobRunsFetchedAt?: number }) {
+}: CommandCenterData) {
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(signals.length > 0 ? "ready" : "empty");
   const [query, setQuery] = useState("");
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("ALL");
@@ -1146,7 +1137,7 @@ export function CommandCenter({
       tone: "gold" as const,
     },
     {
-      label: "Score médio",
+      label: "Potencial medio",
       value: String(summary.avgScore),
       rawValue: summary.avgScore,
       delta: "média ponderada",
@@ -1186,7 +1177,7 @@ export function CommandCenter({
                     variants={itemVariants}
                     className="mt-1 text-[13px] leading-5 text-[color:var(--muted)]"
                   >
-                    Sinais, fontes e decisões em{" "}
+                    Radar de oportunidades em{" "}
                     <span className="text-[color:var(--muted-strong)]">{tenant.workspaceName}</span>
                     {persistence.mode !== "database" && (
                       <>
@@ -1207,7 +1198,7 @@ export function CommandCenter({
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Buscar sinais, creators…"
+                    placeholder="Buscar sinais, perfis..."
                     className="min-w-0 flex-1 bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted)]"
                   />
                   <span className="hidden font-mono text-[10px] tracking-[0.14em] text-[color:var(--muted)] sm:inline">
@@ -1229,7 +1220,7 @@ export function CommandCenter({
                     className="cta-ig inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-full px-5 text-[13px] font-medium"
                     href="/trends"
                   >
-                    Buscar trend
+                    Encontrar Reels
                     <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </motion.div>
@@ -1277,9 +1268,9 @@ export function CommandCenter({
                   variants={sectionVariants}
                   className="mb-4"
                 >
-                  <h2 className="text-xl font-semibold leading-tight md:text-2xl">Ranking de sinais</h2>
+                  <h2 className="text-xl font-semibold leading-tight md:text-2xl">Oportunidades priorizadas</h2>
                   <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                    Origem, score e janela verificados. Priorize, confira a evidência, decida.
+                    Veja o potencial, confira a origem e escolha a proxima acao.
                   </p>
                 </motion.div>
 
@@ -1404,17 +1395,17 @@ export function CommandCenter({
                       <EmptyState
                         key="empty"
                         variant="empty"
-                        title="Sem sinais para operar"
-                        body="Fontes oficiais, manuais e própria/licenciada alimentam o ranking. Sem ingestão, sem ranking."
-                        hint="envie um lote em Ingestion Lab →"
+                        title="Sem oportunidades ainda"
+                        body="Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar o radar."
+                        hint="adicione dados ao radar"
                       />
                     ) : workspaceState === "error" ? (
                       <EmptyState
                         key="error"
                         variant="error"
-                        title="Ingestão bloqueada"
-                        body="A fonte respondeu com erro. Falha não vira dado — corrija a origem antes de re-rodar o import."
-                        hint="revisar últimos jobs em Pipeline →"
+                        title="Entrada bloqueada"
+                        body="A fonte respondeu com erro. Corrija a origem antes de transformar isso em insight."
+                        hint="revisar atualizacoes"
                       />
                     ) : filteredSignals.length === 0 ? (
                       <EmptyState
@@ -1476,7 +1467,7 @@ export function CommandCenter({
                   <EvidenceInspector
                     signal={selectedSignal}
                     savedCount={savedIds.size}
-                    storageLabel={persistence.mode === "database" ? "Postgres gerenciado" : "fallback isolado"}
+                    storageLabel={persistence.mode === "database" ? "dados reais" : "modo seguro"}
                   />
                 </div>
               </motion.div>
