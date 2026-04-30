@@ -294,9 +294,9 @@ async function triggerSnapshot(triggerUrl: string, body: unknown, token: string)
   return snapshotId;
 }
 
-// Graduated delays to maximize chances of data arriving within Vercel's 60s limit.
-// Total wait budget: ~33s delays + 15s trigger + network overhead ≈ 55s.
-const POLL_DELAYS_MS = [0, 3_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000];
+// Graduated delays within Vercel's 120s maxDuration budget.
+// Total wait: ~75s delays + 15s trigger + network overhead ≈ 100s.
+const POLL_DELAYS_MS = [0, 4_000, 6_000, 7_000, 7_000, 7_000, 7_000, 7_000, 7_000, 7_000, 7_000, 7_000];
 
 async function pollSnapshot(snapshotId: string, token: string) {
   for (let attempt = 0; attempt < POLL_DELAYS_MS.length; attempt++) {

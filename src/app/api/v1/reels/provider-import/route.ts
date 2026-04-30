@@ -6,7 +6,7 @@ import { requireApiTenantContext } from "@/lib/services/auth-context-service";
 import { importProviderReels } from "@/lib/services/reels-provider-import-service";
 import { badRequest } from "@/lib/http/errors";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   return withRouteHandler(request, async (routeContext) => {
