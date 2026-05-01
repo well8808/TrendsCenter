@@ -109,12 +109,12 @@ export default async function TrendsPage({
                 `,
               }}
             />
-            <ReelsRadarScene3D className="absolute inset-x-0 top-0 h-[290px] opacity-40 md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[58%] md:opacity-95" />
+            <ReelsRadarScene3D className="absolute right-4 top-5 hidden h-[210px] w-[360px] opacity-55 lg:block 2xl:h-[240px] 2xl:w-[420px] 2xl:opacity-72" />
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-[290px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.22)_52%,rgba(12,12,10,0.88)_100%)] md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[62%]"
+              className="pointer-events-none absolute right-0 top-0 hidden h-[260px] w-[470px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.18)_45%,rgba(12,12,10,0.92)_100%)] lg:block"
               aria-hidden="true"
             />
-            <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
                 <Link
                   className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)] transition hover:gap-3"

@@ -1186,7 +1186,7 @@ export function CommandCenter({
             variants={headerVariants}
             initial="hidden"
             animate="show"
-            className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-5 py-8 md:px-8 md:py-10 lg:rounded-t-[var(--radius-lg)]"
+            className="app-hero relative m-0 min-h-[360px] overflow-hidden rounded-none border-x-0 border-t-0 px-5 pb-8 pt-6 md:min-h-[390px] md:px-8 md:pb-9 md:pt-7 lg:rounded-t-[var(--radius-lg)]"
           >
             {/* Atmospheric gradient */}
             <div
@@ -1202,14 +1202,23 @@ export function CommandCenter({
               }}
             />
             <ReelsRadarScene3D
-              intensity={0.78}
-              className="absolute inset-x-0 top-0 h-[300px] opacity-45 sm:opacity-55 xl:inset-y-0 xl:left-auto xl:right-0 xl:h-auto xl:w-[48%] xl:opacity-90"
+              mode="radar"
+              intensity={0.95}
+              className="absolute left-1 top-0 h-[230px] w-[320px] opacity-78 sm:left-6 sm:top-3 sm:h-[270px] sm:w-[390px] md:left-8 md:top-4 md:h-[305px] md:w-[440px] md:opacity-95"
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-[310px] bg-[linear-gradient(180deg,rgba(7,7,6,0.08),rgba(7,7,6,0.88)_88%),linear-gradient(90deg,rgba(7,7,6,0.88),rgba(7,7,6,0.1)_55%,rgba(7,7,6,0.32))] xl:inset-y-0 xl:left-auto xl:right-0 xl:h-auto xl:w-[54%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,rgba(7,7,6,0),rgba(7,7,6,0.76)_58%,rgba(7,7,6,0.92))]"
             />
-            <div className="relative z-10 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="pointer-events-none absolute left-[258px] top-[126px] hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)] sm:flex md:left-[364px] md:top-[154px]">
+              <span className="h-px w-8 bg-gradient-to-r from-transparent to-[rgba(88,200,190,0.65)]" />
+              US
+            </div>
+            <div className="pointer-events-none absolute left-8 top-[126px] hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)] sm:flex md:top-[150px]">
+              BR
+              <span className="h-px w-8 bg-gradient-to-r from-[rgba(237,73,86,0.65)] to-transparent" />
+            </div>
+            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-6 pt-[210px] md:min-h-[322px] md:pt-[236px] xl:flex-row xl:items-end xl:justify-between">
               <motion.div variants={itemVariants} className="flex items-center gap-3">
                 <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
                   <Command className="h-5 w-5" aria-hidden="true" />
@@ -1242,7 +1251,7 @@ export function CommandCenter({
                 </div>
               </motion.div>
 
-              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:justify-end">
+              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:min-w-[560px] xl:justify-end">
                 <motion.label
                   variants={itemVariants}
                   className="app-control flex min-h-[var(--control-height)] w-full min-w-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] sm:flex-1 xl:w-[360px] xl:flex-none"

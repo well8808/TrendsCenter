@@ -6,6 +6,7 @@ import * as THREE from "three";
 interface ReelsRadarScene3DProps {
   className?: string;
   intensity?: number;
+  mode?: "library" | "radar";
 }
 
 const palette = {
@@ -54,6 +55,37 @@ function makeReelCard(color: THREE.Color, index: number) {
   return group;
 }
 
+function makeSignalNode(color: THREE.Color, index: number) {
+  const group = new THREE.Group();
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.075, 20, 12),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.82,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(0.13, 0.19, 36),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.34,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+
+  halo.position.z = -0.005;
+  group.add(dot, halo);
+  group.userData.phase = index * 0.92;
+
+  return group;
+}
+
 function makeOrbit(radius: number, color: THREE.Color, opacity: number, tilt: number) {
   const curve = new THREE.EllipseCurve(0, 0, radius, radius * 0.42, 0, Math.PI * 2);
   const points = curve.getPoints(160).map((point) => new THREE.Vector3(point.x, point.y, 0));
@@ -71,7 +103,7 @@ function makeOrbit(radius: number, color: THREE.Color, opacity: number, tilt: nu
   return line;
 }
 
-export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3DProps) {
+export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }: ReelsRadarScene3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -89,8 +121,9 @@ export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
     const root = new THREE.Group();
-    const cards = new THREE.Group();
+    const orbitItems = new THREE.Group();
     const clock = new THREE.Clock();
+    const isRadar = mode === "radar";
     let frameId = 0;
     let visible = true;
 
@@ -102,11 +135,11 @@ export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3
     scene.add(root);
 
     const core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.16, 32, 16),
+      new THREE.SphereGeometry(isRadar ? 0.2 : 0.16, 32, 16),
       new THREE.MeshBasicMaterial({
         color: palette.hot,
         transparent: true,
-        opacity: 0.72 * intensity,
+        opacity: (isRadar ? 0.82 : 0.72) * intensity,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -114,11 +147,11 @@ export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3
     root.add(core);
 
     const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(0.86, 40, 20),
+      new THREE.SphereGeometry(isRadar ? 1.04 : 0.86, 40, 20),
       new THREE.MeshBasicMaterial({
         color: palette.violet,
         transparent: true,
-        opacity: 0.07 * intensity,
+        opacity: (isRadar ? 0.1 : 0.07) * intensity,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -126,20 +159,20 @@ export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3
     root.add(glow);
 
     root.add(
-      makeOrbit(1.25, palette.hot, 0.42 * intensity, 0.52),
-      makeOrbit(1.72, palette.aqua, 0.26 * intensity, -0.34),
-      makeOrbit(2.16, palette.gold, 0.16 * intensity, 0.12),
+      makeOrbit(1.22, palette.hot, (isRadar ? 0.52 : 0.42) * intensity, 0.52),
+      makeOrbit(1.72, palette.aqua, (isRadar ? 0.34 : 0.26) * intensity, -0.34),
+      makeOrbit(2.18, palette.gold, (isRadar ? 0.22 : 0.16) * intensity, 0.12),
     );
 
     const colors = [palette.hot, palette.aqua, palette.gold, palette.violet, palette.hot, palette.aqua];
     colors.forEach((color, index) => {
-      const card = makeReelCard(color, index);
-      cards.add(card);
+      const item = isRadar ? makeSignalNode(color, index) : makeReelCard(color, index);
+      orbitItems.add(item);
     });
-    root.add(cards);
+    root.add(orbitItems);
 
     const starGeometry = new THREE.BufferGeometry();
-    const starCount = 90;
+    const starCount = isRadar ? 68 : 90;
     const positions = new Float32Array(starCount * 3);
     const colorsArray = new Float32Array(starCount * 3);
 
@@ -191,14 +224,14 @@ export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3
       glow.scale.setScalar(1 + Math.sin(elapsed * 0.9) * 0.08);
       stars.rotation.y = elapsed * 0.025;
 
-      cards.children.forEach((child, index) => {
+      orbitItems.children.forEach((child, index) => {
         const phase = child.userData.phase as number;
         const angle = elapsed * 0.35 + phase;
         const radius = 1.18 + (index % 3) * 0.36;
 
         child.position.set(Math.cos(angle) * radius, Math.sin(angle * 1.15) * 0.38, Math.sin(angle) * 0.7);
-        child.rotation.y = -angle + Math.PI / 2;
-        child.rotation.z = Math.sin(angle * 0.8) * 0.12;
+        child.rotation.y = isRadar ? angle * 0.18 : -angle + Math.PI / 2;
+        child.rotation.z = Math.sin(angle * 0.8) * (isRadar ? 0.22 : 0.12);
       });
 
       renderer.render(scene, camera);
@@ -246,7 +279,7 @@ export function ReelsRadarScene3D({ className, intensity = 1 }: ReelsRadarScene3
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [intensity]);
+  }, [intensity, mode]);
 
   return (
     <div
