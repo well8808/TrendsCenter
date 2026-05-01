@@ -5,6 +5,7 @@ import {
   AnimatePresence,
   LayoutGroup,
   motion,
+  useReducedMotion,
   type Variants,
 } from "motion/react";
 import {
@@ -36,6 +37,8 @@ import { GSAPCounter } from "@/components/gsap-counter";
 import { GSAPScrollEntrance, GSAPSectionReveal } from "@/components/gsap-scroll-entrance";
 import { GSAPTileReveal } from "@/components/gsap-tile-reveal";
 import { IngestionLab } from "@/components/ingestion-lab";
+import { AnimatedNumber } from "@/components/motion-system/AnimatedNumber";
+import { MotionCard } from "@/components/motion-system/MotionCard";
 import { ParticleField } from "@/components/particle-field";
 import { ReelsRadarScene3D } from "@/components/reels-radar-scene-3d";
 import { SourcePill } from "@/components/source-pill";
@@ -239,6 +242,11 @@ function SegmentGroup<T extends string>({
   onChange: (v: T) => void;
   ariaLabel?: string;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const activeTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 520, damping: 44 };
+
   return (
     <LayoutGroup id={groupId}>
       <div
@@ -263,7 +271,7 @@ function SegmentGroup<T extends string>({
               {active && (
                 <motion.span
                   layoutId={`seg-${groupId}`}
-                  transition={{ type: "spring", stiffness: 520, damping: 44 }}
+                  transition={activeTransition}
                   className="absolute inset-0 -z-10 rounded-full border border-[rgba(237, 73, 86,0.34)] bg-[rgba(237, 73, 86,0.12)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
                 />
               )}
@@ -304,9 +312,10 @@ function MetricTile({
   const c = metricToneConfig[tone];
 
   return (
-    <motion.div
+    <MotionCard
       variants={tileVariants}
-      whileHover={{ y: -2, scale: 1.015 }}
+      interactive
+      lift={2}
       transition={{ duration: 0.16, ease }}
       className="group relative overflow-hidden rounded-[var(--radius-md)] border p-5"
       style={{
@@ -326,13 +335,18 @@ function MetricTile({
       </p>
       <p className="metric-value-hero mt-3" style={{ color: c.text }}>
         {isPlainNumber ? (
-          <GSAPCounter value={rawValue} delay={0.38 + index * 0.09} pad={value.length} />
+          <AnimatedNumber
+            value={rawValue}
+            delay={0.18 + index * 0.045}
+            duration={0.62}
+            minimumIntegerDigits={value.length > 1 ? value.length : undefined}
+          />
         ) : (
           value
         )}
       </p>
       <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted)]">{delta}</p>
-    </motion.div>
+    </MotionCard>
   );
 }
 
@@ -841,6 +855,11 @@ function SidebarNavGroup({
   setHoverKey: (k: string | null) => void;
   onNavigate: (key: string) => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const activeTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 520, damping: 44 };
+
   return (
     <div className="grid gap-0.5">
       {label ? (
@@ -860,6 +879,8 @@ function SidebarNavGroup({
             onHoverStart={() => setHoverKey(item.key)}
             onHoverEnd={() => setHoverKey(null)}
             variants={itemVariants}
+            aria-current={isActive ? "page" : undefined}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.985 }}
             className={cn(
               "nav-item relative flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-left text-sm transition-colors duration-200",
               isActive
@@ -870,15 +891,15 @@ function SidebarNavGroup({
             {isActive && (
               <motion.span
                 layoutId="sidebar-active"
-                transition={{ type: "spring", stiffness: 520, damping: 44 }}
+                transition={activeTransition}
                 className="nav-active-fill absolute inset-0 -z-10 rounded-[var(--radius-md)]"
               />
             )}
             {isActive && <span aria-hidden="true" className="nav-item-indicator" />}
-            {!isActive && isHover && (
+            {!prefersReducedMotion && !isActive && isHover && (
               <motion.span
                 layoutId="sidebar-hover"
-                transition={{ type: "spring", stiffness: 520, damping: 44 }}
+                transition={activeTransition}
                 className="absolute inset-0 -z-10 rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.025)]"
               />
             )}
@@ -1410,7 +1431,7 @@ export function CommandCenter({
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-xs text-[color:var(--muted)]">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="metric-number text-[color:var(--foreground)]">
-                        <GSAPCounter value={filteredSignals.length} delay={0.15} duration={0.6} />
+                        <AnimatedNumber value={filteredSignals.length} delay={0.06} duration={0.42} />
                       </span>
                       <span>de {signals.length} sinais</span>
                     </span>
@@ -1432,7 +1453,7 @@ export function CommandCenter({
                 </motion.div>
 
                 <GSAPScrollEntrance className="grid gap-3" stagger={0.07} y={24}>
-                  <AnimatePresence mode="popLayout">
+                  <AnimatePresence initial={false} mode="popLayout">
                     {workspaceState === "empty" ? (
                       <EmptyState
                         key="empty"
@@ -1470,7 +1491,15 @@ export function CommandCenter({
                       />
                     ) : (
                       filteredSignals.map((signal, index) => (
-                        <div key={signal.id} className="gse-item">
+                        <motion.div
+                          key={signal.id}
+                          layout="position"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.2, ease }}
+                          className="gse-item"
+                        >
                           <TrendCard
                             signal={signal}
                             index={index}
@@ -1479,7 +1508,7 @@ export function CommandCenter({
                             onSelect={() => setSelectedSignalId(signal.id)}
                             onToggleSave={() => toggleSaved(signal.id)}
                           />
-                        </div>
+                        </motion.div>
                       ))
                     )}
                   </AnimatePresence>
@@ -1549,6 +1578,7 @@ function EmptyState({
   hint?: string;
   onReset?: () => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const tone = variant === "error" ? "coral" : variant === "filtered" ? "aqua" : "gold";
   const Icon = variant === "error" ? FileWarning : variant === "filtered" ? Filter : DatabaseZap;
   const borderStyle =
@@ -1558,9 +1588,9 @@ function EmptyState({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
+      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
       transition={{ duration: 0.4, ease }}
       className={cn(
         "relative overflow-hidden rounded-[var(--radius-lg)] border p-10 text-center",
@@ -1569,7 +1599,7 @@ function EmptyState({
     >
       <motion.div
         aria-hidden="true"
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.36, ease }}
         className="mx-auto mb-4 grid h-12 w-12 place-items-center"
