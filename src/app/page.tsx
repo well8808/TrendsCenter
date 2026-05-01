@@ -11,6 +11,7 @@ export default async function Home() {
   const dataVersion = [
     commandCenterData.persistence.label,
     commandCenterData.tenant.workspaceSlug,
+    `${commandCenterData.reelStats.total}:${commandCenterData.reelStats.br}:${commandCenterData.reelStats.us}:${commandCenterData.reelStats.avgScore}`,
     commandCenterData.signals.map((signal) => `${signal.id}:${signal.saved}:${signal.evidence.length}`).join("|"),
     commandCenterData.trendSources.map((source) => `${source.id}:${source.status}:${source.updatedAt}`).join("|"),
   ].join("::");

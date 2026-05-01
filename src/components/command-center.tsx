@@ -36,6 +36,7 @@ import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
 import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionLab } from "@/components/ingestion-lab";
+import { ParticleField } from "@/components/particle-field";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
@@ -217,6 +218,14 @@ const fallbackIngestionLab: CommandCenterData["ingestionLab"] = {
     failedBatches: 0,
     succeededBatches: 0,
   },
+};
+
+const fallbackReelStats: CommandCenterData["reelStats"] = {
+  total: 0,
+  br: 0,
+  us: 0,
+  avgScore: 0,
+  evidenceCount: 0,
 };
 
 /* ---------- Counter primitive ---------- */
@@ -978,6 +987,7 @@ export function CommandCenter({
   trendSources = [],
   persistence = fallbackPersistence,
   ingestionLab = fallbackIngestionLab,
+  reelStats = fallbackReelStats,
   tenant,
 }: CommandCenterData) {
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(signals.length > 0 ? "ready" : "empty");
@@ -1013,6 +1023,12 @@ export function CommandCenter({
     () => signals.filter((signal) => signal.type === "REVIVAL" || signal.stage === "revival"),
     [signals],
   );
+  const hasSignals = signals.length > 0;
+  const activeCount = hasSignals ? filteredSignals.length : reelStats.total;
+  const brCount = hasSignals ? summary.brCount : reelStats.br;
+  const usCount = hasSignals ? summary.usCount : reelStats.us;
+  const evidenceCount = summary.evidenceCount || reelStats.evidenceCount;
+  const averageScore = summary.avgScore || reelStats.avgScore;
 
   function toggleSaved(signalId: string) {
     const wasSaved = savedIds.has(signalId);
@@ -1117,30 +1133,30 @@ export function CommandCenter({
 
   const metricTiles = [
     {
-      label: "Sinais ativos",
-      value: String(filteredSignals.length).padStart(2, "0"),
-      rawValue: filteredSignals.length,
-      delta: `${summary.highPriorityCount} em prioridade alta`,
+      label: hasSignals ? "Sinais ativos" : "Reels indexados",
+      value: String(activeCount).padStart(2, "0"),
+      rawValue: activeCount,
+      delta: hasSignals ? `${summary.highPriorityCount} em prioridade alta` : "na biblioteca de Reels",
       tone: "acid" as const,
     },
     {
       label: "Radar BR / US",
-      value: `${summary.brCount}/${summary.usCount}`,
-      rawValue: summary.brCount,
-      delta: "sinais por mercado",
+      value: `${brCount}/${usCount}`,
+      rawValue: brCount,
+      delta: hasSignals ? "sinais por mercado" : "Reels por mercado",
       tone: "aqua" as const,
     },
     {
       label: "Evidências",
-      value: String(summary.evidenceCount).padStart(2, "0"),
-      rawValue: summary.evidenceCount,
+      value: String(evidenceCount).padStart(2, "0"),
+      rawValue: evidenceCount,
       delta: "fontes verificadas",
       tone: "gold" as const,
     },
     {
       label: "Potencial medio",
-      value: String(summary.avgScore),
-      rawValue: summary.avgScore,
+      value: String(averageScore),
+      rawValue: averageScore,
       delta: "média ponderada",
       tone: "coral" as const,
     },
@@ -1148,6 +1164,7 @@ export function CommandCenter({
 
   return (
     <main className="relative min-h-dvh">
+      <ParticleField opacity={0.28} count={55} />
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
@@ -1160,8 +1177,20 @@ export function CommandCenter({
             variants={headerVariants}
             initial="hidden"
             animate="show"
-            className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 lg:rounded-t-[var(--radius-lg)]"
+            className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-5 py-8 md:px-8 md:py-10 lg:rounded-t-[var(--radius-lg)]"
           >
+            {/* Atmospheric gradient — adds depth and vibrancy to the hero */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: `
+                  radial-gradient(ellipse 80% 60% at 10% -20%, rgba(131,58,180,0.09) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 90% 120%, rgba(225,48,108,0.07) 0%, transparent 50%),
+                  radial-gradient(ellipse 100% 80% at 50% 50%, rgba(247,119,55,0.03) 0%, transparent 70%)
+                `,
+              }}
+            />
             <HeroOrb3D
               size="md"
               className="absolute right-0 top-0 hidden opacity-40 sm:block md:opacity-55"
@@ -1174,22 +1203,26 @@ export function CommandCenter({
                 <div className="min-w-0">
                   <motion.h1
                     variants={itemVariants}
-                    className="text-2xl font-semibold leading-tight tracking-tight md:text-[28px]"
+                    className="text-2xl font-semibold leading-tight tracking-tight md:text-[30px]"
                   >
-                    Reels Center
+                    Reels{" "}
+                    <span className="gradient-text-ig">Center</span>
                   </motion.h1>
                   <motion.p
                     variants={itemVariants}
-                    className="mt-1 text-[13px] leading-5 text-[color:var(--muted)]"
+                    className="mt-1.5 flex items-center gap-2 text-[13px] leading-5 text-[color:var(--muted)]"
                   >
-                    Radar de oportunidades em{" "}
-                    <span className="text-[color:var(--muted-strong)]">{tenant.workspaceName}</span>
-                    {persistence.mode !== "database" && (
-                      <>
-                        {" · "}
-                        <span className="text-[color:var(--gold)]">modo seguro</span>
-                      </>
-                    )}
+                    <span className="live-dot" aria-hidden="true" />
+                    <span>
+                      monitorando{" "}
+                      <span className="text-[color:var(--muted-strong)]">{tenant.workspaceName}</span>
+                      {persistence.mode !== "database" && (
+                        <>
+                          {" · "}
+                          <span className="text-[color:var(--gold)]">modo seguro</span>
+                        </>
+                      )}
+                    </span>
                   </motion.p>
                 </div>
               </motion.div>
@@ -1400,9 +1433,13 @@ export function CommandCenter({
                       <EmptyState
                         key="empty"
                         variant="empty"
-                        title="Sem oportunidades ainda"
-                        body="Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar o radar."
-                        hint="adicione dados ao radar"
+                        title={reelStats.total > 0 ? "Reels importados" : "Sem oportunidades ainda"}
+                        body={
+                          reelStats.total > 0
+                            ? "A biblioteca ja tem Reels reais. Abra Encontrar Reels para analisar videos; os sinais estrategicos ainda nao foram gerados."
+                            : "Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar o radar."
+                        }
+                        hint={reelStats.total > 0 ? "ver biblioteca em /trends" : "adicione dados ao radar"}
                       />
                     ) : workspaceState === "error" ? (
                       <EmptyState

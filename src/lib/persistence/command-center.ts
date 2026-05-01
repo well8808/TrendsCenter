@@ -145,12 +145,21 @@ export interface IngestionLabData {
   };
 }
 
+export interface ReelStatsData {
+  total: number;
+  br: number;
+  us: number;
+  avgScore: number;
+  evidenceCount: number;
+}
+
 export interface CommandCenterData {
   signals: TrendSignal[];
   sources: SourceRecord[];
   trendSources: TrendSourceRecord[];
   persistence: PersistenceState;
   ingestionLab: IngestionLabData;
+  reelStats: ReelStatsData;
   tenant: {
     userEmail: string;
     userName: string | null;
@@ -171,6 +180,14 @@ const emptyIngestionLab: IngestionLabData = {
     failedBatches: 0,
     succeededBatches: 0,
   },
+};
+
+const emptyReelStats: ReelStatsData = {
+  total: 0,
+  br: 0,
+  us: 0,
+  avgScore: 0,
+  evidenceCount: 0,
 };
 
 function lowerBand(value: string): ConfidenceBand {
@@ -374,7 +391,19 @@ function mapTenant(context: TenantContext): CommandCenterData["tenant"] {
 export async function getCommandCenterData(context: TenantContext): Promise<CommandCenterData> {
   try {
     const prisma = getPrisma();
-    const [signals, sources, trendSources, connectors, requests, batches, jobs] = await Promise.all([
+    const videoWhere = { workspaceId: context.workspaceId };
+    const [
+      signals,
+      sources,
+      trendSources,
+      connectors,
+      requests,
+      batches,
+      jobs,
+      videoStats,
+      videoMarketCounts,
+      videoEvidenceCount,
+    ] = await Promise.all([
       prisma.signal.findMany({
         where: { workspaceId: context.workspaceId },
         include: signalInclude,
@@ -410,7 +439,27 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
         orderBy: { createdAt: "desc" },
         take: 6,
       }),
+      prisma.video.aggregate({
+        where: videoWhere,
+        _count: { _all: true },
+        _avg: { trendScore: true },
+      }),
+      prisma.video.groupBy({
+        by: ["market"],
+        where: videoWhere,
+        _count: { _all: true },
+      }),
+      prisma.trendEvidence.count({
+        where: { workspaceId: context.workspaceId, videoId: { not: null } },
+      }),
     ]);
+    const reelStats: ReelStatsData = {
+      total: videoStats._count._all,
+      br: videoMarketCounts.find((item) => item.market === "BR")?._count._all ?? 0,
+      us: videoMarketCounts.find((item) => item.market === "US")?._count._all ?? 0,
+      avgScore: Math.round(videoStats._avg.trendScore ?? 0),
+      evidenceCount: videoEvidenceCount,
+    };
     const ingestionLab: IngestionLabData = {
       connectors: connectors.map((connector) => ({
         id: connector.id,
@@ -457,10 +506,13 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
         trendSources: trendSources.map(mapTrendSource),
         persistence: {
           mode: "database",
-          label: "Postgres vazio",
-          detail: "Postgres gerenciado ativo, sem sinais persistidos ainda. Use o Ingestion Lab para criar o primeiro sinal real.",
+          label: reelStats.total > 0 ? "Postgres real" : "Postgres vazio",
+          detail: reelStats.total > 0
+            ? `${reelStats.total} Reels carregados do workspace ${context.workspaceName}; sinais estrategicos ainda nao foram gerados.`
+            : "Postgres gerenciado ativo, sem sinais persistidos ainda. Use o Ingestion Lab para criar o primeiro sinal real.",
         },
         ingestionLab,
+        reelStats,
         tenant: mapTenant(context),
       };
     }
@@ -475,6 +527,7 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
         detail: `Sinais, evidências, fila de decisão, jobs e auditoria carregados do workspace ${context.workspaceName}.`,
       },
       ingestionLab,
+      reelStats,
       tenant: mapTenant(context),
     };
   } catch (error) {
@@ -489,6 +542,7 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
         detail: "Postgres não respondeu. Fallback isolado: nenhum insight fictício foi carregado.",
       },
       ingestionLab: emptyIngestionLab,
+      reelStats: emptyReelStats,
       tenant: mapTenant(context),
     };
   }

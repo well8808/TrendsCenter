@@ -18,6 +18,7 @@ vi.mock("@/lib/db", () => ({
 import { buildInstagramConnectorView, getSourcesConnectorsData } from "./connectors";
 
 const originalEnv = {
+  INSTAGRAM_OAUTH_ENABLED: process.env.INSTAGRAM_OAUTH_ENABLED,
   INSTAGRAM_CLIENT_ID: process.env.INSTAGRAM_CLIENT_ID,
   INSTAGRAM_CLIENT_SECRET: process.env.INSTAGRAM_CLIENT_SECRET,
   INSTAGRAM_REDIRECT_URI: process.env.INSTAGRAM_REDIRECT_URI,
@@ -112,6 +113,7 @@ describe("sources connectors data", () => {
   });
 
   it("keeps Instagram OAuth optional when env vars are absent", () => {
+    process.env.INSTAGRAM_OAUTH_ENABLED = "true";
     delete process.env.INSTAGRAM_CLIENT_ID;
     delete process.env.INSTAGRAM_CLIENT_SECRET;
     delete process.env.INSTAGRAM_REDIRECT_URI;
@@ -134,7 +136,23 @@ describe("sources connectors data", () => {
     });
   });
 
+  it("keeps the official Instagram connector paused by default", () => {
+    delete process.env.INSTAGRAM_OAUTH_ENABLED;
+    process.env.INSTAGRAM_CLIENT_ID = "client-id";
+
+    expect(buildInstagramConnectorView()).toMatchObject({
+      provider: "instagram",
+      state: "not_configured",
+      stateLabel: "Pausado",
+      readinessLabel: "Nao usado agora",
+      missingRequirements: [],
+      oauthImplemented: false,
+      canStartConnection: false,
+    });
+  });
+
   it("surfaces partial Instagram OAuth env as a configuration error", () => {
+    process.env.INSTAGRAM_OAUTH_ENABLED = "true";
     process.env.INSTAGRAM_CLIENT_ID = "client-id";
     delete process.env.INSTAGRAM_CLIENT_SECRET;
     delete process.env.INSTAGRAM_REDIRECT_URI;
@@ -156,7 +174,7 @@ describe("sources connectors data", () => {
       redirectUri: "https://trends.center/api/connectors/instagram/callback",
       scopes: ["instagram_business_basic", "instagram_business_manage_insights"],
       ready: true,
-    }, null, { tokenEncryptionReady: true });
+    }, null, { tokenEncryptionReady: true, oauthEnabled: true });
 
     expect(connector).toMatchObject({
       state: "ready",
@@ -183,7 +201,7 @@ describe("sources connectors data", () => {
         connectedAt: new Date("2026-04-27T12:00:00.000Z"),
         updatedAt: new Date("2026-04-27T12:05:00.000Z"),
       },
-      { tokenEncryptionReady: true },
+      { tokenEncryptionReady: true, oauthEnabled: true },
     );
 
     expect(connector).toMatchObject({

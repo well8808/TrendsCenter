@@ -36,6 +36,10 @@ export function getInstagramOAuthConfig(): InstagramOAuthConfig {
   };
 }
 
+export function isInstagramOAuthEnabled() {
+  return process.env.INSTAGRAM_OAUTH_ENABLED?.trim().toLowerCase() === "true";
+}
+
 export function getPublicInstagramOAuthConfig() {
   const config = getInstagramOAuthConfig();
 

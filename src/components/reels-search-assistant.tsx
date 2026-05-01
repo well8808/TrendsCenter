@@ -99,7 +99,7 @@ export function ReelsSearchAssistant() {
       </div>
       <h2 className="mt-3 text-lg font-semibold">Diga o que vale a pena achar</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-        A IA transforma seu objetivo em filtros, palavras-chave e criterios de coleta. Ela nao inventa videos: so orienta o radar.
+        O assistente transforma seu objetivo em filtros, palavras-chave e criterios de coleta. Se a IA externa estiver sem credito, ele usa o modo local.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-3">

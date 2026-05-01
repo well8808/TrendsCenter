@@ -146,7 +146,7 @@ function ConnectorStatusCard({ connector }: { connector: ExternalConnectorView }
         <div className="app-card rounded-[var(--radius-md)] p-4">
           <p className="eyebrow">conexao</p>
           <p className="mt-2 text-sm text-[color:var(--muted-strong)]">
-            {connector.oauthImplemented ? "Disponivel" : "Indisponivel"}
+            {connector.oauthImplemented ? "Disponivel" : "Pausada"}
           </p>
         </div>
       </div>

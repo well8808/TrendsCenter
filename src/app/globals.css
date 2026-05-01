@@ -852,3 +852,128 @@ select option {
   border-color: rgba(64, 224, 208, 0.28);
   background: rgba(64, 224, 208, 0.04);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   BIBLIOTECA VISUAL — sistema de design premium para reels virais
+   Adicionado: redesign biblioteca visual
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── A) Keyframes de biblioteca ──────────────────────────── */
+
+@keyframes lib-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes lib-glow-float {
+  0%, 100% { opacity: 0.5; transform: translateY(0px) scale(1); }
+  50%       { opacity: 0.8; transform: translateY(-6px) scale(1.05); }
+}
+
+@keyframes lib-score-ring {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes lib-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lib-pulse-ring {
+  0%   { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes ig-border-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* ─── B) Classes utilitárias de biblioteca ─────────────────── */
+
+.lib-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: lib-shimmer 2.4s ease-in-out infinite;
+}
+
+.lib-glow-hot {
+  box-shadow: 0 0 0 1px rgba(237,73,86,0.25), 0 0 30px rgba(237,73,86,0.12), 0 20px 60px rgba(0,0,0,0.4);
+}
+.lib-glow-gold {
+  box-shadow: 0 0 0 1px rgba(230,183,101,0.22), 0 0 24px rgba(230,183,101,0.10), 0 20px 60px rgba(0,0,0,0.4);
+}
+.lib-glow-aqua {
+  box-shadow: 0 0 0 1px rgba(88,200,190,0.20), 0 0 24px rgba(88,200,190,0.09), 0 20px 60px rgba(0,0,0,0.4);
+}
+.lib-glow-violet {
+  box-shadow: 0 0 0 1px rgba(157,131,236,0.22), 0 0 28px rgba(157,131,236,0.11), 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.lib-card {
+  background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), rgba(16,16,13,0.9);
+  border: 1px solid rgba(239,233,220,0.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 20px 60px rgba(0,0,0,0.35);
+  backdrop-filter: blur(20px);
+  transition: border-color 200ms cubic-bezier(0.22,1,0.36,1), box-shadow 200ms cubic-bezier(0.22,1,0.36,1), transform 200ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.lib-card:hover {
+  border-color: rgba(239,233,220,0.22);
+  transform: translateY(-2px);
+}
+
+.lib-card-hot {
+  border-color: rgba(237,73,86,0.28);
+  background: linear-gradient(160deg, rgba(237,73,86,0.07) 0%, rgba(16,16,13,0.95) 40%), rgba(16,16,13,0.9);
+}
+.lib-card-hot:hover {
+  border-color: rgba(237,73,86,0.45);
+  box-shadow: 0 0 0 1px rgba(237,73,86,0.22), 0 0 40px rgba(237,73,86,0.14), 0 24px 70px rgba(0,0,0,0.45);
+}
+
+.gradient-text-ig {
+  background: var(--ig-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.gradient-text-hot {
+  background: linear-gradient(135deg, #ed4956 0%, #f77737 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.lib-thumbnail-overlay {
+  background: linear-gradient(to top, rgba(7,7,6,0.92) 0%, rgba(7,7,6,0.45) 40%, rgba(7,7,6,0.10) 70%, transparent 100%);
+}
+
+.ig-border {
+  background: var(--ig-grad);
+  background-size: 200% 200%;
+  animation: ig-border-flow 4s ease-in-out infinite;
+}
+
+/* ─── C) Score number class (override da existente — maior) ─── */
+
+.score-value-lib {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lib-shimmer,
+  .lib-glow-float,
+  .ig-border {
+    animation: none;
+  }
+}

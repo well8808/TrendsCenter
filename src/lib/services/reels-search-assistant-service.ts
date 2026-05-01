@@ -1,7 +1,7 @@
 import type { Market } from "@prisma/client";
 
 import { getPrisma } from "@/lib/db";
-import { badRequest, serviceUnavailable } from "@/lib/http/errors";
+import { badRequest } from "@/lib/http/errors";
 import type { ApiTenantContext } from "@/lib/services/auth-context-service";
 
 type AssistantProvider = "openai" | "rules";
@@ -166,7 +166,8 @@ function buildRulesPlan(goal: string, market: AssistantMarket, recentSignals: Re
   return {
     provider: "rules",
     configured: false,
-    summary: "Modo local: usei seu objetivo e os Reels ja salvos para montar uma busca inicial. Conecte OPENAI_API_KEY para raciocinio de IA mais fino.",
+    summary:
+      "Modo local: usei seu objetivo e os Reels ja salvos para montar uma busca inicial. Quando a IA externa tiver credito ativo, ela refina esse plano automaticamente.",
     recommendedQuery,
     market: inferredMarket,
     sort,
@@ -368,19 +369,26 @@ async function buildOpenAiPlan(goal: string, market: AssistantMarket, fallback: 
   const body = await response.json().catch(async () => ({ raw: await response.text() }));
 
   if (!response.ok) {
-    throw serviceUnavailable("A IA nao respondeu agora. Tente novamente em instantes.", {
+    console.warn("[reels-search-assistant] OpenAI unavailable; using local rules", {
       status: response.status,
       provider: "openai",
     });
+    return fallback;
   }
 
   const outputText = outputTextFromResponse(body);
 
   if (!outputText) {
-    throw serviceUnavailable("A IA retornou uma resposta vazia.");
+    console.warn("[reels-search-assistant] OpenAI returned empty output; using local rules");
+    return fallback;
   }
 
-  return safePlanFromUnknown(JSON.parse(outputText), fallback);
+  try {
+    return safePlanFromUnknown(JSON.parse(outputText), fallback);
+  } catch (error) {
+    console.warn("[reels-search-assistant] OpenAI JSON parse failed; using local rules", error);
+    return fallback;
+  }
 }
 
 export async function buildReelsSearchAssistantPlan(context: ApiTenantContext, input: unknown) {
@@ -391,10 +399,7 @@ export async function buildReelsSearchAssistantPlan(context: ApiTenantContext, i
   const fallback = buildRulesPlan(goal, market, signals);
 
   return buildOpenAiPlan(goal, market, fallback, signals).catch((error) => {
-    if (error instanceof SyntaxError) {
-      return fallback;
-    }
-
-    throw error;
+    console.warn("[reels-search-assistant] OpenAI request failed; using local rules", error);
+    return fallback;
   });
 }

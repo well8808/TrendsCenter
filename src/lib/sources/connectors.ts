@@ -4,7 +4,11 @@ import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
 import { isOAuthTokenEncryptionConfigured } from "@/lib/oauth/secret-crypto.server";
 import { mapSafeInstagramOAuthConnection, type SafeOAuthConnectionRecord } from "@/lib/instagram/oauth-connections.server";
-import { getInstagramOAuthConfig, type InstagramOAuthConfig } from "@/lib/instagram/oauth-config.server";
+import {
+  getInstagramOAuthConfig,
+  isInstagramOAuthEnabled,
+  type InstagramOAuthConfig,
+} from "@/lib/instagram/oauth-config.server";
 import type { TrendSourceRecord } from "@/lib/types";
 
 export type ExternalConnectorProvider = "instagram";
@@ -62,9 +66,30 @@ function mapTrendSource(source: TrendSource): TrendSourceRecord {
 export function buildInstagramConnectorView(
   config: InstagramOAuthConfig = getInstagramOAuthConfig(),
   connection?: Pick<ExternalOAuthConnection, "status" | "connectedAt" | "updatedAt"> | null,
-  options: { tokenEncryptionReady?: boolean } = {},
+  options: { tokenEncryptionReady?: boolean; oauthEnabled?: boolean } = {},
 ): ExternalConnectorView {
   const safeConnection = mapSafeInstagramOAuthConnection(connection);
+  const oauthEnabled = options.oauthEnabled ?? isInstagramOAuthEnabled();
+
+  if (!oauthEnabled && safeConnection.status !== "connected") {
+    return {
+      provider: "instagram",
+      platform: "instagram",
+      title: "Conta Instagram oficial",
+      surface: "Instagram e Meta",
+      state: "not_configured",
+      stateLabel: "Pausado",
+      readinessLabel: "Nao usado agora",
+      description:
+        "O conector oficial via OAuth esta pausado. O radar continua usando importacao licenciada de Reels e fontes salvas, sem pedir permissao da sua conta Instagram.",
+      scopes: config.scopes,
+      missingRequirements: [],
+      oauthImplemented: false,
+      canStartConnection: false,
+      connection: safeConnection,
+    };
+  }
+
   const requiredVariables = [
     { label: "ID do app Meta", configured: Boolean(config.clientId) },
     { label: "segredo do app Meta", configured: Boolean(config.clientSecret) },

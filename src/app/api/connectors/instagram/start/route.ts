@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { isInstagramOAuthEnabled } from "@/lib/instagram/oauth-config.server";
 import { buildInstagramAuthorizationUrl } from "@/lib/instagram/oauth-flow.server";
 import {
   createInstagramOAuthState,
@@ -17,6 +18,10 @@ import { requireApiTenantContext } from "@/lib/services/auth-context-service";
 export async function GET(request: NextRequest) {
   return withRouteHandler(request, async () => {
     const context = await requireApiTenantContext(request, "operateSignals");
+
+    if (!isInstagramOAuthEnabled()) {
+      throw serviceUnavailable("Conector oficial do Instagram pausado. Use a importacao licenciada de Reels por enquanto.");
+    }
 
     if (!isOAuthTokenEncryptionConfigured()) {
       throw serviceUnavailable("OAUTH_TOKEN_ENCRYPTION_KEY nao configurado para persistir tokens Instagram.");

@@ -1,11 +1,14 @@
 "use client";
 
+import { AnimatePresence, motion, animate, useMotionValue, type Variants } from "motion/react";
 import Link from "next/link";
-import { AnimatePresence, animate, motion, useMotionValue, type Variants } from "motion/react";
-import { ArrowUpRight, Flame, Music2, Play, Radar, TrendingUp } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Play, ExternalLink, Eye, TrendingUp, Music, Hash, Flame, Radar } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/utils";
+/* ═══════════════════════════════════════════════════════════════
+   TrendVideoGrid — biblioteca visual premium para reels virais
+   Design: Netflix/Spotify para reels — não um dashboard SaaS
+   ═══════════════════════════════════════════════════════════════ */
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -15,7 +18,7 @@ const gridVariants: Variants = {
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
   show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.44, ease } },
 };
 
@@ -38,39 +41,52 @@ export interface TrendVideoView {
   hashtags: string[];
 }
 
-/* ─── utils ─────────────────────────────────────────────── */
+/* ─── Helpers ──────────────────────────────────────────────── */
 
-function scoreTier(score: number): "acid" | "gold" | "aqua" {
-  if (score >= 78) return "acid";
+type ScoreTier = "hot" | "gold" | "aqua";
+
+function scoreTier(score: number): ScoreTier {
+  if (score >= 78) return "hot";
   if (score >= 52) return "gold";
   return "aqua";
 }
 
-function scoreCssVar(score: number) {
-  if (score >= 78) return "var(--acid)";
+function scoreColor(score: number): string {
+  if (score >= 78) return "var(--hot)";
   if (score >= 52) return "var(--gold)";
   return "var(--aqua)";
 }
 
-const compactFmt = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
-const fmt = (n: number) => compactFmt.format(n);
-
-/* Gradient placeholder when thumbnail is absent or expired */
-function placeholderGradient(score: number, creator?: string) {
-  const tier = scoreTier(score);
-  const initial = (creator ?? "R").charAt(0).toUpperCase().charCodeAt(0);
-  const hue = (initial * 17) % 360;
-
-  if (tier === "acid") {
-    return `radial-gradient(ellipse at 30% 20%, rgba(237,73,86,0.55) 0%, rgba(131,58,180,0.38) 45%, rgba(7,7,6,0.95) 100%)`;
-  }
-  if (tier === "gold") {
-    return `radial-gradient(ellipse at 70% 30%, rgba(243,201,105,0.48) 0%, rgba(${hue},100,60,0.22) 50%, rgba(7,7,6,0.95) 100%)`;
-  }
-  return `radial-gradient(ellipse at 50% 20%, rgba(64,224,208,0.42) 0%, rgba(99,102,241,0.22) 55%, rgba(7,7,6,0.95) 100%)`;
+function tierLabel(tier: ScoreTier): string {
+  if (tier === "hot") return "EM CHAMAS";
+  if (tier === "gold") return "QUENTE";
+  return "MONITOR";
 }
 
-/* ─── AnimatedNumber ─────────────────────────────────────── */
+function placeholderGradient(score: number, creator?: string): string {
+  const tier = scoreTier(score);
+  const initial = (creator ?? "R").charAt(0).toUpperCase().charCodeAt(0);
+  const offset = ((initial * 17) % 30) - 15;
+
+  if (tier === "hot") {
+    return `radial-gradient(circle at ${30 + offset}% 30%, rgba(237,73,86,0.6), rgba(7,7,6,0.9))`;
+  }
+  if (tier === "gold") {
+    return `radial-gradient(circle at ${30 + offset}% 30%, rgba(230,183,101,0.5), rgba(7,7,6,0.9))`;
+  }
+  return `radial-gradient(circle at ${30 + offset}% 30%, rgba(88,200,190,0.5), rgba(7,7,6,0.9))`;
+}
+
+const compactFmt = new Intl.NumberFormat("pt-BR", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+function fmt(n: number): string {
+  return compactFmt.format(n);
+}
+
+/* ─── AnimatedNumber ───────────────────────────────────────── */
 
 function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number }) {
   const count = useMotionValue(0);
@@ -79,64 +95,86 @@ function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number })
   useEffect(() => {
     const controls = animate(count, value, { duration: 0.75, delay, ease });
     const unsub = count.on("change", (v) => setDisplay(Math.round(v)));
-    return () => { controls.stop(); unsub(); };
+    return () => {
+      controls.stop();
+      unsub();
+    };
   }, [count, value, delay]);
 
   return <>{display}</>;
 }
 
-/* ─── Score badge ────────────────────────────────────────── */
+/* ─── Score badge conic ────────────────────────────────────── */
 
-function ScoreBadge({ score, delay }: { score: number; delay: number }) {
-  const color = scoreCssVar(score);
-  const isHot = score >= 78;
-  const angle = useMotionValue(0);
+function ScoreBadge({
+  score,
+  delay,
+  size = "md",
+}: {
+  score: number;
+  delay: number;
+  size?: "sm" | "md" | "lg";
+}) {
+  const color = scoreColor(score);
+  const tier = scoreTier(score);
+  const isHot = tier === "hot";
 
-  useEffect(() => {
-    const controls = animate(angle, score * 3.6, { duration: 0.9, delay, ease });
-    return () => controls.stop();
-  }, [angle, score, delay]);
+  const dims = size === "lg" ? 80 : size === "sm" ? 52 : 64;
+  const inner = size === "lg" ? 64 : size === "sm" ? 40 : 50;
+  const fontSize = size === "lg" ? 20 : size === "sm" ? 13 : 17;
 
   return (
     <div className="relative flex flex-col items-center gap-1.5">
-      <div className="relative grid h-[64px] w-[64px] place-items-center rounded-full">
-        {isHot && (
-          <motion.div
-            aria-hidden="true"
-            className="absolute inset-[-3px] rounded-full"
-            style={{ border: `1px solid ${color}`, opacity: 0.6 }}
-            animate={{ opacity: [0.6, 0.15, 0.6], scale: [1, 1.08, 1] }}
-            transition={{ duration: 2.2, ease: "easeInOut", repeat: Infinity }}
-          />
-        )}
-        <motion.div
-          className="relative grid h-[64px] w-[64px] place-items-center rounded-full"
-          style={{
-            background: `conic-gradient(${color} ${score * 3.6}deg, rgba(255,255,255,0.05) 0deg)`,
-          }}
-          initial={{ rotate: -90 }}
-          animate={{ rotate: -90 }}
-        >
-          <div
-            className="grid h-[50px] w-[50px] place-items-center rounded-full"
-            style={{ background: "rgba(7,7,6,0.96)" }}
-          >
-            <p
-              className="metric-number text-[17px] font-semibold leading-none"
-              style={{ color }}
-            >
-              <AnimatedNumber value={score} delay={delay} />
-            </p>
-          </div>
-        </motion.div>
-      </div>
+      {/* pulse ring for hot */}
       {isHot && (
+        <motion.div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            inset: -4,
+            border: `1px solid ${color}`,
+          }}
+          animate={{ opacity: [0.7, 0.15, 0.7], scale: [1, 1.1, 1] }}
+          transition={{ duration: 2.2, ease: "easeInOut", repeat: Infinity }}
+        />
+      )}
+
+      {/* conic ring */}
+      <motion.div
+        className="relative grid place-items-center rounded-full"
+        style={{
+          width: dims,
+          height: dims,
+          background: `conic-gradient(${color} ${score * 3.6}deg, rgba(255,255,255,0.05) 0deg)`,
+          rotate: -90,
+        }}
+        aria-label={`Score ${score}`}
+      >
+        <div
+          className="grid place-items-center rounded-full"
+          style={{
+            width: inner,
+            height: inner,
+            background: "rgba(7,7,6,0.96)",
+          }}
+        >
+          <p
+            className="metric-number font-semibold leading-none"
+            style={{ color, fontSize }}
+          >
+            <AnimatedNumber value={score} delay={delay} />
+          </p>
+        </div>
+      </motion.div>
+
+      {/* hot label */}
+      {isHot && size !== "sm" && (
         <span
           className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] font-bold uppercase tracking-[0.2em]"
           style={{
             borderColor: "rgba(237,73,86,0.42)",
             background: "rgba(237,73,86,0.12)",
-            color: "var(--acid)",
+            color: "var(--hot)",
           }}
         >
           <Flame className="h-2.5 w-2.5" aria-hidden="true" />
@@ -147,24 +185,29 @@ function ScoreBadge({ score, delay }: { score: number; delay: number }) {
   );
 }
 
-/* ─── Thumbnail area ─────────────────────────────────────── */
+/* ─── Thumbnail com fallback ────────────────────────────────── */
 
-function ThumbnailArea({
+function ThumbnailImage({
   thumbnailUrl,
   score,
   creator,
-  isHot,
+  aspectRatio = "4 / 5",
+  shimmer = false,
 }: {
   thumbnailUrl?: string;
   score: number;
   creator?: string;
-  isHot: boolean;
+  aspectRatio?: string;
+  shimmer?: boolean;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showPlaceholder = !thumbnailUrl || imgFailed;
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
+    <div
+      className="relative w-full overflow-hidden"
+      style={{ aspectRatio }}
+    >
       {showPlaceholder ? (
         <div
           className="absolute inset-0"
@@ -184,29 +227,37 @@ function ThumbnailArea({
         />
       )}
 
-      {/* base gradient overlay — always visible */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: "linear-gradient(to top, rgba(7,7,6,0.96) 0%, rgba(7,7,6,0.42) 40%, rgba(7,7,6,0.08) 70%, transparent 100%)",
-        }}
-        aria-hidden="true"
-      />
-
-      {/* hot glow */}
-      {isHot && (
+      {/* shimmer overlay no featured card */}
+      {shimmer && (
         <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(circle at 50% 100%, rgba(237,73,86,0.18), transparent 65%)" }}
+          className="lib-shimmer pointer-events-none absolute inset-0 z-10"
           aria-hidden="true"
         />
       )}
 
-      {/* Play icon — center */}
+      {/* gradient overlay base */}
+      <div
+        className="lib-thumbnail-overlay pointer-events-none absolute inset-0"
+        aria-hidden="true"
+      />
+
+      {/* hot bottom glow */}
+      {scoreTier(score) === "hot" && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 110%, rgba(237,73,86,0.22), transparent 60%)",
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* play reveal */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div
           className="grid h-12 w-12 place-items-center rounded-full border border-white/20 backdrop-blur-sm"
-          style={{ background: "rgba(255,255,255,0.1)" }}
+          style={{ background: "rgba(255,255,255,0.12)" }}
         >
           <Play className="h-5 w-5 fill-white text-white" aria-hidden="true" />
         </div>
@@ -215,30 +266,35 @@ function ThumbnailArea({
   );
 }
 
-/* ─── Metric chip ────────────────────────────────────────── */
+/* ─── MetricChip ────────────────────────────────────────────── */
 
 function MetricChip({
+  icon: Icon,
   label,
   value,
-  tone,
+  color,
   animated,
   delay,
 }: {
+  icon?: React.ComponentType<{ className?: string }>;
   label: string;
   value: number;
-  tone?: string;
+  color?: string;
   animated?: boolean;
   delay?: number;
 }) {
   return (
     <div
-      className="flex flex-col gap-0.5 rounded-[var(--radius-sm)] border border-white/[0.08] px-2.5 py-2"
+      className="flex flex-col gap-0.5 rounded-[8px] border border-white/[0.07] px-2.5 py-2"
       style={{ background: "rgba(255,255,255,0.04)" }}
     >
-      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[color:var(--muted)]">{label}</span>
+      <span className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-[color:var(--muted)]">
+        {Icon && <Icon className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />}
+        {label}
+      </span>
       <span
-        className="metric-number text-sm font-semibold leading-none"
-        style={tone ? { color: `var(${tone})` } : { color: "var(--foreground)" }}
+        className="metric-number text-[13px] font-semibold leading-none"
+        style={color ? { color } : { color: "var(--foreground)" }}
       >
         {animated ? <AnimatedNumber value={value} delay={delay ?? 0} /> : fmt(value)}
       </span>
@@ -246,112 +302,377 @@ function MetricChip({
   );
 }
 
-/* ─── Single reel card ───────────────────────────────────── */
+/* ─── Featured card (score ≥ 78) — layout horizontal ───────── */
 
-function ReelCard({ video, index }: { video: TrendVideoView; index: number }) {
-  const isHot = video.trendScore >= 78;
-  const color = scoreCssVar(video.trendScore);
-  const baseDelay = 0.12 + index * 0.055;
-  const ref = useRef<HTMLDivElement>(null);
+function FeaturedReelCard({
+  video,
+  index,
+}: {
+  video: TrendVideoView;
+  index: number;
+}) {
+  const color = scoreColor(video.trendScore);
+  const baseDelay = 0.08 + index * 0.07;
 
   return (
-    <motion.div
-      ref={ref}
+    <motion.article
       variants={cardVariants}
       layout
       className="group relative"
     >
       <Link
         href={`/trends/${video.id}`}
-        className="block overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--line)] transition-all duration-300 group-hover:border-[rgba(255,255,255,0.2)] group-hover:shadow-[0_24px_80px_rgba(0,0,0,0.5)]"
+        className="relative block overflow-hidden rounded-[var(--radius-2xl)] transition-all duration-300"
         style={{
-          background: "var(--card-bg)",
-          boxShadow: isHot ? `0 0 0 1px rgba(237,73,86,0.24), 0 8px 40px rgba(0,0,0,0.3)` : undefined,
+          border: "1px solid rgba(237,73,86,0.32)",
+          background:
+            "linear-gradient(160deg, rgba(237,73,86,0.06) 0%, rgba(16,16,13,0.95) 40%), rgba(16,16,13,0.9)",
+          boxShadow:
+            "0 0 0 1px rgba(237,73,86,0.18), 0 0 30px rgba(237,73,86,0.10), 0 20px 60px rgba(0,0,0,0.4)",
         }}
+        aria-label={`Ver reel: ${video.title}`}
       >
-        {/* Top hairline */}
+        {/* hot top hairline */}
         <div
           className="absolute inset-x-0 top-0 z-10 h-px"
           style={{
-            background: isHot
-              ? "linear-gradient(90deg, transparent, rgba(237,73,86,0.6), transparent)"
-              : "linear-gradient(90deg, transparent, rgba(239,233,220,0.18), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(237,73,86,0.72) 50%, transparent)",
           }}
           aria-hidden="true"
         />
 
-        {/* Thumbnail */}
-        <ThumbnailArea
-          thumbnailUrl={video.thumbnailUrl}
-          score={video.trendScore}
-          creator={video.creator}
-          isHot={isHot}
+        {/* ambient glow top-left */}
+        <div
+          className="pointer-events-none absolute -left-20 -top-20 h-48 w-48 rounded-full blur-3xl"
+          style={{ background: "rgba(237,73,86,0.12)" }}
+          aria-hidden="true"
         />
 
-        {/* Score badge — overlaid top-right */}
-        <div className="absolute right-3 top-3 z-20">
-          <ScoreBadge score={video.trendScore} delay={baseDelay} />
+        {/* horizontal grid */}
+        <div className="grid md:grid-cols-[280px_minmax(0,1fr)]">
+
+          {/* thumbnail col */}
+          <div className="relative min-h-[220px] overflow-hidden md:min-h-[260px]">
+            <ThumbnailImage
+              thumbnailUrl={video.thumbnailUrl}
+              score={video.trendScore}
+              creator={video.creator}
+              aspectRatio="unset"
+              shimmer
+            />
+            {/* right fade overlay for seamless blend on desktop */}
+            <div
+              className="pointer-events-none absolute inset-0 hidden md:block"
+              style={{
+                background:
+                  "linear-gradient(to right, transparent 55%, rgba(16,16,13,0.95) 100%)",
+              }}
+              aria-hidden="true"
+            />
+          </div>
+
+          {/* info col */}
+          <div className="relative flex flex-col justify-between p-6 md:p-7">
+            {/* header row */}
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* HOT badge with pulse */}
+                <span
+                  className="relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em]"
+                  style={{
+                    borderColor: "rgba(237,73,86,0.44)",
+                    background: "rgba(237,73,86,0.14)",
+                    color: "var(--hot)",
+                  }}
+                >
+                  {/* pulse dot */}
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span
+                      className="signal-now-pulse absolute inline-flex h-full w-full rounded-full"
+                      style={{ background: "var(--hot)" }}
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="relative inline-flex h-1.5 w-1.5 rounded-full"
+                      style={{ background: "var(--hot)" }}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  HOT AGORA
+                </span>
+
+                {/* market tag */}
+                <span
+                  className="rounded-full border px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em]"
+                  style={
+                    video.market === "BR"
+                      ? {
+                          borderColor: "rgba(237,73,86,0.3)",
+                          background: "rgba(237,73,86,0.08)",
+                          color: "var(--hot)",
+                        }
+                      : {
+                          borderColor: "rgba(88,200,190,0.3)",
+                          background: "rgba(88,200,190,0.08)",
+                          color: "var(--aqua)",
+                        }
+                  }
+                >
+                  {video.market}
+                </span>
+
+                {/* creator */}
+                {video.creator && (
+                  <span className="font-mono text-[11px] text-[color:var(--muted-strong)]">
+                    @{video.creator}
+                  </span>
+                )}
+              </div>
+
+              {/* title */}
+              <h2 className="mt-4 text-xl font-semibold leading-[1.2] tracking-tight text-[color:var(--foreground)] transition-colors duration-200 group-hover:text-[color:var(--hot)] md:text-2xl">
+                {video.title}
+              </h2>
+
+              {/* caption */}
+              {video.caption && (
+                <p className="mt-2 line-clamp-2 max-w-prose text-sm leading-6 text-[color:var(--muted-strong)]">
+                  {video.caption}
+                </p>
+              )}
+            </div>
+
+            {/* metrics grid */}
+            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <MetricChip
+                icon={Eye}
+                label="views"
+                value={video.views}
+                delay={baseDelay + 0.1}
+              />
+              <MetricChip
+                icon={TrendingUp}
+                label="crescimento"
+                value={video.growthViews}
+                color={color}
+                delay={baseDelay + 0.14}
+              />
+              <MetricChip
+                label="velocidade"
+                value={video.velocityScore}
+                color="var(--aqua)"
+                animated
+                delay={baseDelay + 0.18}
+              />
+              <MetricChip
+                label="score"
+                value={video.trendScore}
+                color={color}
+                animated
+                delay={baseDelay + 0.22}
+              />
+            </div>
+
+            {/* bottom row */}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              {/* hashtags */}
+              <div className="flex flex-wrap gap-1.5 overflow-hidden">
+                {video.hashtags.slice(0, 3).map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[9px] text-[color:var(--muted)]"
+                  >
+                    <Hash className="h-2.5 w-2.5" aria-hidden="true" />
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {/* open reel CTA */}
+              <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-[color:var(--muted)] transition-all duration-200 group-hover:gap-2.5 group-hover:text-[color:var(--hot)]">
+                abrir reel
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Market tag — top-left */}
-        <div className="absolute left-3 top-3 z-20">
-          <span
-            className="rounded-full border px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.18em] backdrop-blur-sm"
-            style={
-              video.market === "BR"
-                ? { borderColor: "rgba(237,73,86,0.42)", background: "rgba(237,73,86,0.16)", color: "var(--acid)" }
-                : { borderColor: "rgba(64,224,208,0.42)", background: "rgba(64,224,208,0.14)", color: "var(--aqua)" }
-            }
-          >
-            {video.market}
-          </span>
+        {/* hover border glow upgrade */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            boxShadow:
+              "0 0 0 1px rgba(237,73,86,0.40), 0 0 50px rgba(237,73,86,0.16), 0 28px 80px rgba(0,0,0,0.55)",
+          }}
+          aria-hidden="true"
+        />
+      </Link>
+    </motion.article>
+  );
+}
+
+/* ─── Portrait card (grid regular) ─────────────────────────── */
+
+function PortraitReelCard({
+  video,
+  index,
+}: {
+  video: TrendVideoView;
+  index: number;
+}) {
+  const tier = scoreTier(video.trendScore);
+  const color = scoreColor(video.trendScore);
+  const baseDelay = 0.12 + index * 0.055;
+
+  const borderColor =
+    tier === "hot"
+      ? "rgba(237,73,86,0.30)"
+      : tier === "gold"
+      ? "rgba(230,183,101,0.24)"
+      : "rgba(88,200,190,0.20)";
+
+  const hoverBorder =
+    tier === "hot"
+      ? "rgba(237,73,86,0.50)"
+      : tier === "gold"
+      ? "rgba(230,183,101,0.42)"
+      : "rgba(88,200,190,0.38)";
+
+  return (
+    <motion.article
+      variants={cardVariants}
+      layout
+      className="group relative"
+    >
+      <Link
+        href={`/trends/${video.id}`}
+        className="block overflow-hidden rounded-[var(--radius-xl)] transition-all duration-300"
+        style={{
+          border: `1px solid ${borderColor}`,
+          background:
+            "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%), rgba(16,16,13,0.9)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+        }}
+        aria-label={`Ver reel: ${video.title}`}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLAnchorElement).style.borderColor = hoverBorder;
+          (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLAnchorElement).style.borderColor = borderColor;
+          (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
+        }}
+      >
+        {/* top hairline */}
+        <div
+          className="absolute inset-x-0 top-0 z-10 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${color}99, transparent)` }}
+          aria-hidden="true"
+        />
+
+        {/* thumbnail */}
+        <div className="relative">
+          <ThumbnailImage
+            thumbnailUrl={video.thumbnailUrl}
+            score={video.trendScore}
+            creator={video.creator}
+            aspectRatio="4 / 5"
+          />
+
+          {/* score badge — top right */}
+          <div className="absolute right-2.5 top-2.5 z-20">
+            <ScoreBadge score={video.trendScore} delay={baseDelay} size="sm" />
+          </div>
+
+          {/* market tag — top left */}
+          <div className="absolute left-2.5 top-2.5 z-20">
+            <span
+              className="rounded-full border px-2 py-0.5 font-mono text-[8px] font-bold uppercase tracking-[0.16em] backdrop-blur-sm"
+              style={
+                video.market === "BR"
+                  ? {
+                      borderColor: "rgba(237,73,86,0.44)",
+                      background: "rgba(7,7,6,0.7)",
+                      color: "var(--hot)",
+                    }
+                  : {
+                      borderColor: "rgba(88,200,190,0.44)",
+                      background: "rgba(7,7,6,0.7)",
+                      color: "var(--aqua)",
+                    }
+              }
+            >
+              {video.market}
+            </span>
+          </div>
         </div>
 
-        {/* Body below thumbnail */}
-        <div className="relative p-4">
-          {/* Creator + views row */}
+        {/* info panel */}
+        <div className="p-3.5">
+          {/* creator + views */}
           <div className="flex items-center justify-between gap-2">
             {video.creator && (
-              <span className="truncate font-mono text-[11px] font-medium text-[color:var(--muted-strong)]">
+              <span className="truncate font-mono text-[10px] font-medium text-[color:var(--muted-strong)]">
                 @{video.creator}
               </span>
             )}
-            <div className="flex shrink-0 items-center gap-1 text-[11px] text-[color:var(--muted)]">
-              <TrendingUp className="h-3 w-3" aria-hidden="true" />
-              <span className="metric-number font-semibold text-[color:var(--foreground)]">{fmt(video.views)}</span>
+            <div className="flex shrink-0 items-center gap-1 text-[10px] text-[color:var(--muted)]">
+              <Eye className="h-2.5 w-2.5" aria-hidden="true" />
+              <span className="metric-number font-semibold text-[color:var(--foreground)]">
+                {fmt(video.views)}
+              </span>
             </div>
           </div>
 
-          {/* Title */}
-          <p className="mt-2 line-clamp-2 text-sm font-semibold leading-[1.35] tracking-tight text-[color:var(--foreground)] transition-colors duration-200 group-hover:text-[color:var(--aqua)]">
+          {/* title */}
+          <p className="mt-2 line-clamp-2 text-[13px] font-semibold leading-[1.35] tracking-tight text-[color:var(--foreground)] transition-colors duration-200 group-hover:text-[color:var(--foreground)]">
             {video.title}
           </p>
 
-          {/* Metrics row — visible on hover or always */}
+          {/* metrics row */}
           <motion.div
-            className="mt-3 grid grid-cols-3 gap-1.5"
+            className="mt-2.5 grid grid-cols-2 gap-1.5"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.36, delay: baseDelay + 0.1, ease }}
           >
-            <MetricChip label="views" value={video.views} delay={baseDelay + 0.14} />
-            <MetricChip label="cresc." value={video.growthViews} tone="--acid" delay={baseDelay + 0.18} />
-            <MetricChip label="veloc." value={video.velocityScore} tone="--aqua" animated delay={baseDelay + 0.22} />
+            <MetricChip
+              icon={TrendingUp}
+              label="cresc."
+              value={video.growthViews}
+              color={color}
+              delay={baseDelay + 0.14}
+            />
+            <MetricChip
+              label="veloc."
+              value={video.velocityScore}
+              color="var(--aqua)"
+              animated
+              delay={baseDelay + 0.18}
+            />
           </motion.div>
 
-          {/* Sound + hashtags */}
+          {/* sound + hashtags */}
           {(video.sound || video.hashtags.length > 0) && (
-            <div className="mt-3 flex flex-wrap items-center gap-1.5 overflow-hidden">
+            <div className="mt-2.5 flex flex-wrap items-center gap-1 overflow-hidden">
               {video.sound && (
-                <span className="flex items-center gap-1 truncate max-w-[140px] rounded-full border border-[rgba(169,140,255,0.28)] bg-[rgba(169,140,255,0.08)] px-2 py-0.5 font-mono text-[9px] text-[color:var(--violet)]">
-                  <Music2 className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+                <span
+                  className="flex max-w-[120px] items-center gap-1 truncate rounded-full border px-2 py-0.5 font-mono text-[8px]"
+                  style={{
+                    borderColor: "rgba(157,131,236,0.28)",
+                    background: "rgba(157,131,236,0.08)",
+                    color: "var(--violet)",
+                  }}
+                >
+                  <Music className="h-2 w-2 shrink-0" aria-hidden="true" />
                   <span className="truncate">{video.sound}</span>
                 </span>
               )}
               {video.hashtags.slice(0, 2).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5 font-mono text-[9px] text-[color:var(--muted)]"
+                  className="rounded-full border border-[color:var(--line)] px-2 py-0.5 font-mono text-[8px] text-[color:var(--muted)]"
                 >
                   #{tag}
                 </span>
@@ -359,165 +680,76 @@ function ReelCard({ video, index }: { video: TrendVideoView; index: number }) {
             </div>
           )}
 
-          {/* Open detail CTA */}
-          <div className="mt-3 flex items-center justify-between">
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[color:var(--muted)] transition-all duration-200 group-hover:gap-2 group-hover:text-[color:var(--aqua)]">
+          {/* CTA row */}
+          <div className="mt-2.5 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[color:var(--muted)] transition-all duration-200 group-hover:gap-1.5 group-hover:text-[color:var(--foreground)]">
               ver detalhe
-              <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+              <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
             </span>
             {video.snapshotCount > 1 && (
-              <span className="rounded-full bg-[rgba(64,224,208,0.08)] px-2 py-0.5 font-mono text-[9px] text-[color:var(--aqua)]">
+              <span
+                className="rounded-full px-2 py-0.5 font-mono text-[8px]"
+                style={{
+                  background: "rgba(88,200,190,0.08)",
+                  color: "var(--aqua)",
+                }}
+              >
                 {video.snapshotCount} leituras
               </span>
             )}
           </div>
         </div>
       </Link>
-    </motion.div>
+    </motion.article>
   );
 }
 
-/* ─── Featured card (top 2, score >= 78) ────────────────── */
+/* ─── Section header ─────────────────────────────────────────── */
 
-function FeaturedReelCard({ video, index }: { video: TrendVideoView; index: number }) {
-  const isHot = video.trendScore >= 78;
-  const color = scoreCssVar(video.trendScore);
-  const baseDelay = 0.08 + index * 0.06;
-  const [imgFailed, setImgFailed] = useState(false);
-  const showPlaceholder = !video.thumbnailUrl || imgFailed;
+function SectionHeader({
+  tier,
+  count,
+}: {
+  tier: ScoreTier;
+  count: number;
+}) {
+  const color = tier === "hot" ? "var(--hot)" : tier === "gold" ? "var(--gold)" : "var(--aqua)";
+  const label = tierLabel(tier);
 
   return (
-    <motion.div variants={cardVariants} layout className="group relative">
-      <Link
-        href={`/trends/${video.id}`}
-        className="relative block overflow-hidden rounded-[var(--radius-2xl)] border transition-all duration-300 group-hover:shadow-[0_32px_100px_rgba(0,0,0,0.6)]"
-        style={{
-          border: isHot ? "1px solid rgba(237,73,86,0.36)" : "1px solid rgba(239,233,220,0.12)",
-          background: "var(--card-bg)",
-        }}
+    <div className="flex items-center gap-3">
+      {tier === "hot" && (
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span
+            className="signal-now-pulse absolute inline-flex h-full w-full rounded-full"
+            style={{ background: "var(--hot)" }}
+            aria-hidden="true"
+          />
+          <span
+            className="relative inline-flex h-2 w-2 rounded-full"
+            style={{ background: "var(--hot)" }}
+            aria-hidden="true"
+          />
+        </span>
+      )}
+      <h2
+        className="font-mono text-[11px] font-bold uppercase tracking-[0.18em]"
+        style={{ color }}
       >
-        {/* Horizontal layout: thumbnail left, info right */}
-        <div className="grid md:grid-cols-[280px_minmax(0,1fr)]">
-          {/* Thumbnail */}
-          <div className="relative overflow-hidden" style={{ minHeight: 240 }}>
-            {showPlaceholder ? (
-              <div
-                className="absolute inset-0"
-                style={{ background: placeholderGradient(video.trendScore, video.creator) }}
-                aria-hidden="true"
-              />
-            ) : (
-              <motion.img
-                src={video.thumbnailUrl}
-                alt=""
-                onError={() => setImgFailed(true)}
-                className="absolute inset-0 h-full w-full object-cover"
-                initial={{ scale: 1.03 }}
-                whileHover={{ scale: 1.07 }}
-                transition={{ duration: 0.55, ease }}
-                aria-hidden="true"
-              />
-            )}
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{ background: "linear-gradient(to right, transparent 60%, rgba(7,7,6,0.9) 100%)" }}
-              aria-hidden="true"
-            />
-            {/* Play button */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <div
-                className="grid h-14 w-14 place-items-center rounded-full border border-white/20 backdrop-blur-sm"
-                style={{ background: "rgba(255,255,255,0.12)" }}
-              >
-                <Play className="h-6 w-6 fill-white text-white" aria-hidden="true" />
-              </div>
-            </div>
-          </div>
-
-          {/* Info panel */}
-          <div className="relative flex flex-col justify-between p-6">
-            {/* Top row */}
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em]"
-                  style={{ borderColor: "rgba(237,73,86,0.42)", background: "rgba(237,73,86,0.14)", color: "var(--acid)" }}
-                >
-                  <Flame className="h-3 w-3" aria-hidden="true" />
-                  hot agora
-                </span>
-                <span
-                  className="rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em]"
-                  style={
-                    video.market === "BR"
-                      ? { borderColor: "rgba(237,73,86,0.3)", background: "rgba(237,73,86,0.08)", color: "var(--acid)" }
-                      : { borderColor: "rgba(64,224,208,0.3)", background: "rgba(64,224,208,0.08)", color: "var(--aqua)" }
-                  }
-                >
-                  {video.market}
-                </span>
-                {video.creator && (
-                  <span className="font-mono text-[11px] text-[color:var(--muted-strong)]">@{video.creator}</span>
-                )}
-              </div>
-
-              <h2 className="mt-4 break-words text-xl font-semibold leading-[1.2] tracking-tight text-[color:var(--foreground)] transition-colors duration-200 group-hover:text-[color:var(--aqua)] md:text-2xl">
-                {video.title}
-              </h2>
-
-              {video.caption && (
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-[color:var(--muted-strong)]">
-                  {video.caption}
-                </p>
-              )}
-            </div>
-
-            {/* Metrics */}
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <MetricChip label="views" value={video.views} delay={baseDelay + 0.1} />
-              <MetricChip label="crescimento" value={video.growthViews} tone="--acid" delay={baseDelay + 0.14} />
-              <MetricChip label="velocidade" value={video.velocityScore} tone="--aqua" animated delay={baseDelay + 0.18} />
-              <MetricChip label="score" value={video.trendScore} tone="--acid" animated delay={baseDelay + 0.22} />
-            </div>
-
-            {/* Bottom */}
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-1.5">
-                {video.hashtags.slice(0, 3).map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-[color:var(--line)] px-2.5 py-1 font-mono text-[9px] text-[color:var(--muted)]"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--muted)] transition-all duration-200 group-hover:gap-2.5 group-hover:text-[color:var(--aqua)]">
-                abrir reel
-                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hot top border gradient */}
-        <div
-          className="absolute inset-x-0 top-0 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(237,73,86,0.7) 50%, transparent)" }}
-          aria-hidden="true"
-        />
-        {/* Hot glow */}
-        <div
-          className="pointer-events-none absolute -left-24 -top-24 h-52 w-52 rounded-full blur-3xl"
-          style={{ background: "rgba(237,73,86,0.1)" }}
-          aria-hidden="true"
-        />
-      </Link>
-    </motion.div>
+        {label}
+      </h2>
+      <div className="h-px flex-1" style={{ background: `linear-gradient(to right, ${color}40, transparent)` }} aria-hidden="true" />
+      <span
+        className="font-mono text-[10px] font-semibold"
+        style={{ color: "var(--muted)" }}
+      >
+        {count}
+      </span>
+    </div>
   );
 }
 
-/* ─── Empty state ────────────────────────────────────────── */
+/* ─── Empty state ─────────────────────────────────────────────── */
 
 function EmptyLibrary() {
   return (
@@ -530,15 +762,20 @@ function EmptyLibrary() {
     >
       <motion.div
         aria-hidden="true"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.25, 0.5, 0.25] }}
+        animate={{ scale: [1, 1.1, 1], opacity: [0.22, 0.48, 0.22] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         className="mx-auto mb-6 h-20 w-20 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(64,224,208,0.5), transparent 70%)" }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(88,200,190,0.5), transparent 70%)",
+        }}
       />
       <Radar className="mx-auto mb-4 h-8 w-8 text-[color:var(--muted)]" aria-hidden="true" />
-      <h2 className="text-2xl font-semibold tracking-tight">Biblioteca vazia</h2>
+      <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--foreground)]">
+        Biblioteca vazia
+      </h2>
       <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[color:var(--muted-strong)]">
-        Cole perfis do Instagram no painel ao lado e inicie a primeira coleta. Os reels virais aparecem aqui automaticamente.
+        Cole perfis do Instagram no painel lateral e inicie a primeira coleta. Os reels virais aparecem aqui automaticamente.
       </p>
       <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--muted)]">
         <Radar className="h-3.5 w-3.5" aria-hidden="true" />
@@ -548,41 +785,92 @@ function EmptyLibrary() {
   );
 }
 
-/* ─── Main export ────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   Export principal
+   ═══════════════════════════════════════════════════════════════ */
 
 export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
   if (results.length === 0) {
     return <EmptyLibrary />;
   }
 
+  // Separa por tier, mantendo ordem original dentro de cada tier
   const hotCards = results.filter((v) => v.trendScore >= 78).slice(0, 2);
-  const restCards = results.filter((v) => v.trendScore < 78 || !hotCards.find((h) => h.id === v.id));
+  const hotIds = new Set(hotCards.map((v) => v.id));
+
+  const warmCards = results.filter(
+    (v) => v.trendScore >= 52 && v.trendScore < 78
+  );
+
+  const coolCards = results.filter(
+    (v) => v.trendScore < 52 && !hotIds.has(v.id)
+  );
+
+  // cards que caíram fora dos featured hot (score >=78 mas além dos 2 exibidos)
+  const extraHotAsWarm = results.filter(
+    (v) => v.trendScore >= 78 && !hotIds.has(v.id)
+  );
+  const gridWarm = [...extraHotAsWarm, ...warmCards];
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key="library-grid"
+        key="library-root"
         variants={gridVariants}
         initial="hidden"
         animate="show"
-        className="grid gap-4"
+        className="grid gap-8"
+        role="feed"
+        aria-label="Biblioteca de reels virais"
       >
-        {/* Featured HOT cards — full-width horizontal layout */}
+        {/* ── EM CHAMAS — featured horizontal ── */}
         {hotCards.length > 0 && (
-          <div className="grid gap-4">
-            {hotCards.map((video, idx) => (
-              <FeaturedReelCard key={video.id} video={video} index={idx} />
-            ))}
-          </div>
+          <section aria-labelledby="section-hot">
+            <div id="section-hot" className="mb-4">
+              <SectionHeader tier="hot" count={hotCards.length} />
+            </div>
+            <div className="grid gap-4">
+              {hotCards.map((video, idx) => (
+                <FeaturedReelCard key={video.id} video={video} index={idx} />
+              ))}
+            </div>
+          </section>
         )}
 
-        {/* Regular grid — 2 cols mobile, 3 cols desktop */}
-        {restCards.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            {restCards.map((video, idx) => (
-              <ReelCard key={video.id} video={video} index={hotCards.length + idx} />
-            ))}
-          </div>
+        {/* ── QUENTES — grid portrait 2-3 cols ── */}
+        {gridWarm.length > 0 && (
+          <section aria-labelledby="section-warm">
+            <div id="section-warm" className="mb-4">
+              <SectionHeader tier="gold" count={gridWarm.length} />
+            </div>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+              {gridWarm.map((video, idx) => (
+                <PortraitReelCard
+                  key={video.id}
+                  video={video}
+                  index={hotCards.length + idx}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── MONITORANDO — grid compacto 2-4 cols ── */}
+        {coolCards.length > 0 && (
+          <section aria-labelledby="section-cool">
+            <div id="section-cool" className="mb-4">
+              <SectionHeader tier="aqua" count={coolCards.length} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {coolCards.map((video, idx) => (
+                <PortraitReelCard
+                  key={video.id}
+                  video={video}
+                  index={hotCards.length + gridWarm.length + idx}
+                />
+              ))}
+            </div>
+          </section>
         )}
       </motion.div>
     </AnimatePresence>

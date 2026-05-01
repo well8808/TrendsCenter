@@ -11,6 +11,7 @@ import {
 
 import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
+import { ParticleField } from "@/components/particle-field";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
@@ -89,12 +90,25 @@ export default async function TrendsPage({
 
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
+      <ParticleField opacity={0.25} count={50} />
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
       <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="min-w-0 space-y-7">
           <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-7">
+            {/* Atmospheric gradient */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: `
+                  radial-gradient(ellipse 70% 50% at 100% 0%, rgba(131,58,180,0.10) 0%, transparent 55%),
+                  radial-gradient(ellipse 50% 40% at 0% 100%, rgba(225,48,108,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse 80% 60% at 50% 50%, rgba(247,119,55,0.03) 0%, transparent 65%)
+                `,
+              }}
+            />
             <HeroOrb3D className="absolute right-0 top-0 hidden opacity-60 sm:block md:opacity-75 xl:opacity-90" />
             <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
@@ -109,7 +123,7 @@ export default async function TrendsPage({
                 <div className="mt-5 flex flex-wrap items-center gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-[color:var(--muted)]">
                   <span className="inline-flex items-center gap-2 text-[color:var(--hot)]">
                     <span className="live-dot" aria-hidden="true" />
-                    radar de oportunidades
+                    biblioteca viral
                   </span>
                   <span aria-hidden="true" className="text-[color:var(--line-strong)]">/</span>
                   <span className="font-mono text-[color:var(--muted-strong)]">
@@ -118,11 +132,11 @@ export default async function TrendsPage({
                 </div>
 
                 <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">
-                  Encontrar Reels em alta
+                  Biblioteca de{" "}
+                  <span className="gradient-text-ig">Reels Virais</span>
                 </h1>
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-[color:var(--muted)] md:text-[15px]">
-                  Pesquise Reels, creators, sons e hashtags salvos com origem clara e sinais de crescimento.
-                  Analise 18+ fica limitada a padroes de marketing, formato e funil; sem conteudo explicito e sem origem duvidosa.
+                  Descubra quais reels estao viralizando agora. Pesquise por creator, som, hashtag ou formato — e replique na sua operacao de conteudo.
                 </p>
               </div>
 
