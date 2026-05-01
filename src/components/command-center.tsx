@@ -34,6 +34,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
+import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionLab } from "@/components/ingestion-lab";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
@@ -1161,6 +1162,10 @@ export function CommandCenter({
             animate="show"
             className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 lg:rounded-t-[var(--radius-lg)]"
           >
+            <HeroOrb3D
+              size="md"
+              className="absolute -right-12 -top-12 hidden opacity-45 sm:block sm:opacity-50 md:opacity-60"
+            />
             <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <motion.div variants={itemVariants} className="flex items-center gap-3">
                 <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
