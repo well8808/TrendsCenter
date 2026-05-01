@@ -229,18 +229,27 @@ export function TrendCard({
       transition={{ delay: baseDelay }}
       whileHover={{ y: -2 }}
       className={cn(
-        "group relative overflow-hidden rounded-[var(--radius-2xl)] border bg-[rgba(255,255,255,0.018)] backdrop-blur-xl transition-colors",
-        selected
-          ? "border-[rgba(225,48,108,0.32)]"
-          : "border-[color:var(--line)] hover:border-[rgba(255,255,255,0.14)]",
+        "group relative overflow-hidden rounded-[var(--radius-2xl)] border backdrop-blur-xl transition-colors",
+        isNow
+          ? "border-[rgba(237,73,86,0.38)] bg-[rgba(237,73,86,0.04)]"
+          : selected
+          ? "border-[rgba(225,48,108,0.32)] bg-[rgba(255,255,255,0.018)]"
+          : "border-[color:var(--line)] bg-[rgba(255,255,255,0.018)] hover:border-[rgba(255,255,255,0.14)]",
       )}
     >
       {isNow ? (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-20 -top-20 h-44 w-44 rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(225,48,108,0.22), transparent 65%)" }}
-        />
+        <>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full opacity-70 blur-3xl"
+            style={{ background: "radial-gradient(circle, rgba(237,73,86,0.30), transparent 65%)" }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(237,73,86,0.55), transparent)" }}
+          />
+        </>
       ) : null}
 
       <div className="relative grid gap-5 p-5 md:p-6 xl:grid-cols-[minmax(0,1fr)_180px]">

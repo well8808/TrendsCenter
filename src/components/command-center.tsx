@@ -313,6 +313,13 @@ function SegmentGroup<T extends string>({
 
 /* ---------- Metric tile ---------- */
 
+const metricToneConfig = {
+  acid:  { bg: "rgba(237,73,86,0.11)",    border: "rgba(237,73,86,0.32)",    text: "var(--hot)",   top: "rgba(237,73,86,0.6)",    glow: "rgba(237,73,86,0.14)"  },
+  aqua:  { bg: "rgba(88,200,190,0.09)",   border: "rgba(88,200,190,0.28)",   text: "var(--aqua)",  top: "rgba(88,200,190,0.55)",   glow: "rgba(88,200,190,0.11)" },
+  gold:  { bg: "rgba(230,183,101,0.09)",  border: "rgba(230,183,101,0.28)",  text: "var(--gold)",  top: "rgba(230,183,101,0.55)",  glow: "rgba(230,183,101,0.11)"},
+  coral: { bg: "rgba(255,111,97,0.09)",   border: "rgba(255,111,97,0.28)",   text: "var(--coral)", top: "rgba(255,111,97,0.55)",   glow: "rgba(255,111,97,0.11)" },
+};
+
 function MetricTile({
   label,
   value,
@@ -329,24 +336,30 @@ function MetricTile({
   index: number;
 }) {
   const isPlainNumber = /^\d+$/.test(value);
-  // Só destaca em vermelho quando é alto (>= 78). Caso contrário fica em
-  // foreground neutro — sem ig-gradient-text que colorizava todo primeiro KPI.
-  const isHigh = tone === "acid" && rawValue >= 78;
+  const c = metricToneConfig[tone];
 
   return (
     <motion.div
       variants={tileVariants}
-      whileHover={{ y: -1 }}
+      whileHover={{ y: -2, scale: 1.015 }}
       transition={{ duration: 0.16, ease }}
-      className="group relative rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-5 transition-colors hover:border-[rgba(255,255,255,0.18)]"
+      className="group relative overflow-hidden rounded-[var(--radius-md)] border p-5"
+      style={{
+        background: `linear-gradient(145deg, ${c.bg} 0%, rgba(255,255,255,0.006) 100%)`,
+        borderColor: c.border,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.07), 0 0 52px ${c.glow}`,
+      }}
     >
+      {/* Accent line top */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${c.top}, transparent)` }}
+      />
       <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[color:var(--muted)]">
         {label}
       </p>
-      <p
-        className="metric-value-hero mt-3"
-        style={{ color: isHigh ? "var(--hot)" : "var(--foreground)" }}
-      >
+      <p className="metric-value-hero mt-3" style={{ color: c.text }}>
         {isPlainNumber ? (
           <AnimatedNumber value={rawValue} delay={0.28 + index * 0.06} pad={value.length} />
         ) : (
@@ -376,10 +389,20 @@ function MarketBridgeBR({ signal }: { signal?: TrendSignal }) {
   return (
     <motion.div
       variants={bridgeItemVariants}
-      whileHover={{ y: -1 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-4 transition-colors hover:border-[rgba(237,73,86,0.32)]"
+      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border p-4"
+      style={{
+        background: "linear-gradient(145deg, rgba(237,73,86,0.11) 0%, rgba(255,255,255,0.008) 100%)",
+        borderColor: "rgba(237,73,86,0.32)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 48px rgba(237,73,86,0.12)",
+      }}
     >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(237,73,86,0.6), transparent)" }} />
+      <div aria-hidden="true"
+        className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl"
+        style={{ background: "rgba(237,73,86,0.10)" }} />
       <div className="flex items-center justify-between gap-2">
         <p className="card-eyebrow text-[color:var(--hot)]">top BR agora</p>
         <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
@@ -414,10 +437,20 @@ function MarketBridgeUS({ signal }: { signal?: TrendSignal }) {
   return (
     <motion.div
       variants={bridgeItemVariants}
-      whileHover={{ y: -1 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-4 transition-colors hover:border-[rgba(255,255,255,0.18)]"
+      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border p-4"
+      style={{
+        background: "linear-gradient(145deg, rgba(88,200,190,0.09) 0%, rgba(255,255,255,0.008) 100%)",
+        borderColor: "rgba(88,200,190,0.28)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 48px rgba(88,200,190,0.09)",
+      }}
     >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(88,200,190,0.55), transparent)" }} />
+      <div aria-hidden="true"
+        className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl"
+        style={{ background: "rgba(88,200,190,0.07)" }} />
       <div className="flex items-center justify-between gap-2">
         <p className="card-eyebrow text-[color:var(--aqua)]">early signal EUA</p>
         <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
@@ -457,10 +490,20 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
   return (
     <motion.div
       variants={bridgeItemVariants}
-      whileHover={{ y: -1 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.2, ease }}
-      className="relative min-w-0 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(255,255,255,0.012)] p-4 transition-colors hover:border-[rgba(255,255,255,0.18)] lg:col-span-2 xl:col-span-1"
+      className="relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border p-4 lg:col-span-2 xl:col-span-1"
+      style={{
+        background: "linear-gradient(145deg, rgba(157,131,236,0.10) 0%, rgba(255,255,255,0.008) 100%)",
+        borderColor: "rgba(157,131,236,0.30)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 48px rgba(157,131,236,0.10)",
+      }}
     >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(157,131,236,0.58), transparent)" }} />
+      <div aria-hidden="true"
+        className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl"
+        style={{ background: "rgba(157,131,236,0.08)" }} />
       <div className="flex items-center justify-between gap-2">
         <p className="card-eyebrow text-[color:var(--violet)]">ponte US → BR</p>
         <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
@@ -1179,21 +1222,22 @@ export function CommandCenter({
             animate="show"
             className="app-hero relative m-0 overflow-hidden rounded-none border-x-0 border-t-0 px-5 py-8 md:px-8 md:py-10 lg:rounded-t-[var(--radius-lg)]"
           >
-            {/* Atmospheric gradient — adds depth and vibrancy to the hero */}
+            {/* Atmospheric gradient */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0"
               style={{
                 background: `
-                  radial-gradient(ellipse 80% 60% at 10% -20%, rgba(131,58,180,0.09) 0%, transparent 60%),
-                  radial-gradient(ellipse 60% 50% at 90% 120%, rgba(225,48,108,0.07) 0%, transparent 50%),
-                  radial-gradient(ellipse 100% 80% at 50% 50%, rgba(247,119,55,0.03) 0%, transparent 70%)
+                  radial-gradient(ellipse 80% 60% at 10% -20%, rgba(131,58,180,0.16) 0%, transparent 60%),
+                  radial-gradient(ellipse 70% 55% at 92% 110%, rgba(225,48,108,0.14) 0%, transparent 55%),
+                  radial-gradient(ellipse 100% 80% at 50% 50%, rgba(247,119,55,0.05) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 30% at 75% 0%, rgba(157,131,236,0.10) 0%, transparent 50%)
                 `,
               }}
             />
             <HeroOrb3D
               size="md"
-              className="absolute right-0 top-0 hidden opacity-40 sm:block md:opacity-55"
+              className="absolute right-0 top-0 hidden opacity-60 sm:block md:opacity-80"
             />
             <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <motion.div variants={itemVariants} className="flex items-center gap-3">
@@ -1203,7 +1247,7 @@ export function CommandCenter({
                 <div className="min-w-0">
                   <motion.h1
                     variants={itemVariants}
-                    className="text-2xl font-semibold leading-tight tracking-tight md:text-[30px]"
+                    className="text-[28px] font-semibold leading-tight tracking-[-0.02em] md:text-[38px]"
                   >
                     Reels{" "}
                     <span className="gradient-text-ig">Center</span>
@@ -1306,7 +1350,10 @@ export function CommandCenter({
                   variants={sectionVariants}
                   className="mb-4"
                 >
-                  <h2 className="text-xl font-semibold leading-tight md:text-2xl">Oportunidades priorizadas</h2>
+                  <h2 className="text-xl font-semibold leading-tight tracking-[-0.015em] md:text-[26px]">
+                    <span className="gradient-text-ig">Oportunidades</span>{" "}
+                    priorizadas
+                  </h2>
                   <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
                     Veja o potencial, confira a origem e escolha a proxima acao.
                   </p>
