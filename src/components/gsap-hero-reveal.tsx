@@ -21,9 +21,22 @@ export function GSAPHeroReveal({ children, className, delay = 0.05 }: GSAPHeroRe
 
   useGSAP(
     () => {
-      gsap.from(".ghr-word", {
+      const words = gsap.utils.toArray<HTMLElement>(".ghr-word");
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (!words.length) return;
+
+      if (prefersReducedMotion) {
+        gsap.set(words, { autoAlpha: 1, y: 0 });
+        return;
+      }
+
+      gsap.fromTo(words, {
         y: 44,
         autoAlpha: 0,
+      }, {
+        y: 0,
+        autoAlpha: 1,
         stagger: 0.07,
         duration: 0.72,
         ease: "power3.out",

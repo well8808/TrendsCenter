@@ -9,12 +9,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
 import { ParticleField } from "@/components/particle-field";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
+import { ReelsRadarScene3D } from "@/components/reels-radar-scene-3d";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
 import { requireTenantContext } from "@/lib/auth/session";
@@ -109,7 +109,11 @@ export default async function TrendsPage({
                 `,
               }}
             />
-            <HeroOrb3D className="absolute right-0 top-0 hidden opacity-60 sm:block md:opacity-75 xl:opacity-90" />
+            <ReelsRadarScene3D className="absolute inset-x-0 top-0 h-[290px] opacity-40 md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[58%] md:opacity-95" />
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-[290px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.22)_52%,rgba(12,12,10,0.88)_100%)] md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[62%]"
+              aria-hidden="true"
+            />
             <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
                 <Link

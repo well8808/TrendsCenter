@@ -4,9 +4,7 @@ import Link from "next/link";
 import {
   AnimatePresence,
   LayoutGroup,
-  animate,
   motion,
-  useMotionValue,
   type Variants,
 } from "motion/react";
 import {
@@ -30,7 +28,7 @@ import {
   SlidersHorizontal,
   Tags,
 } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
@@ -38,9 +36,9 @@ import { GSAPCounter } from "@/components/gsap-counter";
 import { GSAPHeroReveal, GSAPWordSplit } from "@/components/gsap-hero-reveal";
 import { GSAPScrollEntrance, GSAPSectionReveal } from "@/components/gsap-scroll-entrance";
 import { GSAPTileReveal } from "@/components/gsap-tile-reveal";
-import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionLab } from "@/components/ingestion-lab";
 import { ParticleField } from "@/components/particle-field";
+import { ReelsRadarScene3D } from "@/components/reels-radar-scene-3d";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
@@ -74,11 +72,6 @@ const sidebarVariants: Variants = {
 const headerVariants: Variants = {
   hidden: { opacity: 0, y: -12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease, delay: 0.1, staggerChildren: 0.04, delayChildren: 0.15 } },
-};
-
-const tilesContainerVariants: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06, delayChildren: 0.2 } },
 };
 
 const tileVariants: Variants = {
@@ -231,37 +224,6 @@ const fallbackReelStats: CommandCenterData["reelStats"] = {
   avgScore: 0,
   evidenceCount: 0,
 };
-
-/* ---------- Counter primitive ---------- */
-
-function AnimatedNumber({
-  value,
-  delay = 0,
-  duration = 0.9,
-  format,
-  pad,
-}: {
-  value: number;
-  delay?: number;
-  duration?: number;
-  format?: (v: number) => string;
-  pad?: number;
-}) {
-  const count = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const controls = animate(count, value, { duration, delay, ease });
-    const unsub = count.on("change", (v) => setDisplay(Math.round(v)));
-    return () => {
-      controls.stop();
-      unsub();
-    };
-  }, [count, value, delay, duration]);
-
-  const text = format ? format(display) : pad ? String(display).padStart(pad, "0") : String(display);
-  return <>{text}</>;
-}
 
 /* ---------- Segment with sliding indicator ---------- */
 
@@ -1239,11 +1201,15 @@ export function CommandCenter({
                 `,
               }}
             />
-            <HeroOrb3D
-              size="md"
-              className="absolute right-0 top-0 hidden opacity-60 sm:block md:opacity-80"
+            <ReelsRadarScene3D
+              intensity={0.78}
+              className="absolute inset-x-0 top-0 h-[300px] opacity-45 sm:opacity-55 xl:inset-y-0 xl:left-auto xl:right-0 xl:h-auto xl:w-[48%] xl:opacity-90"
             />
-            <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-0 h-[310px] bg-[linear-gradient(180deg,rgba(7,7,6,0.08),rgba(7,7,6,0.88)_88%),linear-gradient(90deg,rgba(7,7,6,0.88),rgba(7,7,6,0.1)_55%,rgba(7,7,6,0.32))] xl:inset-y-0 xl:left-auto xl:right-0 xl:h-auto xl:w-[54%]"
+            />
+            <div className="relative z-10 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <motion.div variants={itemVariants} className="flex items-center gap-3">
                 <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
                   <Command className="h-5 w-5" aria-hidden="true" />
@@ -1276,10 +1242,10 @@ export function CommandCenter({
                 </div>
               </motion.div>
 
-              <motion.div variants={sectionVariants} className="flex items-center gap-2 xl:justify-end">
+              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:justify-end">
                 <motion.label
                   variants={itemVariants}
-                  className="app-control flex min-h-[var(--control-height)] min-w-0 flex-1 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] xl:w-[360px] xl:flex-none"
+                  className="app-control flex min-h-[var(--control-height)] w-full min-w-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] sm:flex-1 xl:w-[360px] xl:flex-none"
                 >
                   <Search className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                   <input

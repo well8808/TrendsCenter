@@ -37,6 +37,13 @@ export function GSAPScrollEntrance({
       const items = ref.current.querySelectorAll<HTMLElement>(itemSelector);
       if (!items.length) return;
 
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReducedMotion) {
+        gsap.set(items, { autoAlpha: 1, y: 0 });
+        return;
+      }
+
       // Set initial state immediately
       gsap.set(items, { autoAlpha: 0, y });
 
@@ -51,6 +58,7 @@ export function GSAPScrollEntrance({
             ease: "power3.out",
             stagger,
             overwrite: true,
+            onComplete: () => ScrollTrigger.refresh(),
           });
         },
       });
@@ -86,6 +94,15 @@ export function GSAPSectionReveal({
 
   useGSAP(
     () => {
+      if (!ref.current) return;
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReducedMotion) {
+        gsap.set(ref.current, { autoAlpha: 1, y: 0 });
+        return;
+      }
+
       gsap.from(ref.current, {
         y,
         autoAlpha: 0,

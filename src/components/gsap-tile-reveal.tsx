@@ -23,10 +23,23 @@ export function GSAPTileReveal({ children, className, index = 0 }: GSAPTileRevea
 
   useGSAP(
     () => {
-      gsap.from(ref.current, {
+      if (!ref.current) return;
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReducedMotion) {
+        gsap.set(ref.current, { autoAlpha: 1, y: 0, rotationX: 0 });
+        return;
+      }
+
+      gsap.fromTo(ref.current, {
         y: 32,
         autoAlpha: 0,
         rotationX: 18,
+      }, {
+        y: 0,
+        autoAlpha: 1,
+        rotationX: 0,
         transformOrigin: "50% 100%",
         duration: 0.7,
         ease: "power3.out",
@@ -37,7 +50,7 @@ export function GSAPTileReveal({ children, className, index = 0 }: GSAPTileRevea
   );
 
   return (
-    <div ref={ref} className={className} style={{ perspective: 800 }}>
+    <div ref={ref} className={className} style={{ perspective: 800, willChange: "transform, opacity" }}>
       {children}
     </div>
   );
