@@ -12,9 +12,9 @@ import {
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
 import { ParticleField } from "@/components/particle-field";
 import { JobRunsFeed } from "@/components/job-runs-feed";
+import { LazyReelsRadarScene3D } from "@/components/lazy-reels-radar-scene-3d";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
-import { ReelsRadarScene3D } from "@/components/reels-radar-scene-3d";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
 import { requireTenantContext } from "@/lib/auth/session";
@@ -109,7 +109,7 @@ export default async function TrendsPage({
                 `,
               }}
             />
-            <ReelsRadarScene3D className="absolute right-4 top-5 hidden h-[210px] w-[360px] opacity-55 lg:block 2xl:h-[240px] 2xl:w-[420px] 2xl:opacity-72" />
+            <LazyReelsRadarScene3D className="absolute right-4 top-5 hidden h-[210px] w-[360px] opacity-55 lg:block 2xl:h-[240px] 2xl:w-[420px] 2xl:opacity-72" />
             <div
               className="pointer-events-none absolute right-0 top-0 hidden h-[260px] w-[470px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.18)_45%,rgba(12,12,10,0.92)_100%)] lg:block"
               aria-hidden="true"

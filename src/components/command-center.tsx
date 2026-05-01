@@ -40,7 +40,7 @@ import { IngestionLab } from "@/components/ingestion-lab";
 import { AnimatedNumber } from "@/components/motion-system/AnimatedNumber";
 import { MotionCard } from "@/components/motion-system/MotionCard";
 import { ParticleField } from "@/components/particle-field";
-import { ReelsRadarScene3D } from "@/components/reels-radar-scene-3d";
+import { LazyReelsRadarScene3D } from "@/components/lazy-reels-radar-scene-3d";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
@@ -284,6 +284,227 @@ function SegmentGroup<T extends string>({
   );
 }
 
+function optionLabel<T extends string>(options: { value: T; label: string }[], value: T) {
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function ActiveFilterSummary({
+  query,
+  market,
+  priority,
+  type,
+  sort,
+}: {
+  query: string;
+  market: MarketFilter;
+  priority: PriorityFilter;
+  type: TypeFilter;
+  sort: SortMode;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+  const chips = [
+    query.trim() ? { key: "query", label: `busca: ${query.trim()}` } : null,
+    market !== "ALL" ? { key: "market", label: `mercado: ${optionLabel(marketOptions, market)}` } : null,
+    priority !== "ALL" ? { key: "priority", label: `prioridade: ${optionLabel(priorityOptions, priority)}` } : null,
+    type !== "ALL" ? { key: "type", label: `tipo: ${optionLabel(typeOptions, type)}` } : null,
+    sort !== "priority" ? { key: "sort", label: `ordem: ${optionLabel(sortOptions, sort)}` } : null,
+  ].filter((chip): chip is { key: string; label: string } => Boolean(chip));
+
+  return (
+    <AnimatePresence initial={false}>
+      {chips.length > 0 ? (
+        <motion.div
+          key="active-filter-summary"
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+          transition={{ duration: 0.2, ease }}
+          aria-live="polite"
+          className="mt-3 flex flex-wrap items-center gap-2"
+        >
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
+            recorte ativo
+          </span>
+          {chips.map((chip, index) => (
+            <motion.span
+              key={chip.key}
+              layout={prefersReducedMotion ? false : "position"}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.18, delay: prefersReducedMotion ? 0 : index * 0.025, ease }}
+              className="rounded-full border border-[rgba(64,224,208,0.28)] bg-[rgba(64,224,208,0.07)] px-2.5 py-1 text-[11px] text-[color:var(--aqua)]"
+            >
+              {chip.label}
+            </motion.span>
+          ))}
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+function signalEvidenceTotal(signal: TrendSignal) {
+  return Math.max(signal.evidence.length, signal.source.evidenceCount);
+}
+
+function CommandStatusStrip({
+  focusSignal,
+  highPriorityCount,
+  filteredCount,
+  totalSignals,
+  reelTotal,
+}: {
+  focusSignal?: TrendSignal;
+  highPriorityCount: number;
+  filteredCount: number;
+  totalSignals: number;
+  reelTotal: number;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (!focusSignal && reelTotal === 0) {
+    return null;
+  }
+
+  const statusItems = focusSignal
+    ? [
+        {
+          label: "acontecendo",
+          value: `${filteredCount}/${totalSignals}`,
+          detail: highPriorityCount > 0 ? `${highPriorityCount} com prioridade alta` : "sem urgencia alta",
+          tone: "text-[color:var(--hot)]",
+        },
+        {
+          label: "atenção",
+          value: focusSignal.market,
+          detail: `${priorityLabel[focusSignal.priority]} · ${focusSignal.score.value}/100`,
+          tone: "text-[color:var(--aqua)]",
+        },
+        {
+          label: "decisão",
+          value: focusSignal.nextAction,
+          detail: `${signalEvidenceTotal(focusSignal)} evidencias · ${focusSignal.source.confidence}`,
+          tone: "text-[color:var(--gold)]",
+        },
+      ]
+    : [
+        {
+          label: "acontecendo",
+          value: String(reelTotal).padStart(2, "0"),
+          detail: reelTotal > 0 ? "Reels na biblioteca" : "aguardando primeira coleta",
+          tone: "text-[color:var(--aqua)]",
+        },
+        {
+          label: "atenção",
+          value: "sem sinal",
+          detail: "gere scores a partir de Reels reais",
+          tone: "text-[color:var(--muted-strong)]",
+        },
+        {
+          label: "decisão",
+          value: "Encontrar Reels",
+          detail: "abrir biblioteca e validar fontes",
+          tone: "text-[color:var(--gold)]",
+        },
+      ];
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      aria-label="Resumo operacional do command center"
+      className="relative z-10 mt-5 grid gap-2 rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.14)] bg-[rgba(8,8,7,0.58)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl sm:grid-cols-3"
+    >
+      {statusItems.map((item, index) => (
+        <motion.div
+          key={`${item.label}-${item.value}`}
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, delay: prefersReducedMotion ? 0 : index * 0.04, ease }}
+          className="min-w-0 rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.018)] px-3 py-2.5"
+        >
+          <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
+            {item.label}
+          </p>
+          <p className={cn("mt-1 truncate text-sm font-semibold leading-5", item.tone)}>
+            {item.value}
+          </p>
+          <p className="mt-0.5 truncate text-[11px] text-[color:var(--muted)]">
+            {item.detail}
+          </p>
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
+function PriorityBrief({
+  signal,
+  onInspect,
+}: {
+  signal?: TrendSignal;
+  onInspect: (signalId: string) => void;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (!signal) return null;
+
+  return (
+    <motion.div
+      layout={prefersReducedMotion ? false : "position"}
+      initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+      transition={{ duration: 0.24, ease }}
+      className="mb-4 overflow-hidden rounded-[var(--radius-xl)] border border-[rgba(237,73,86,0.22)] bg-[linear-gradient(135deg,rgba(237,73,86,0.08),rgba(255,255,255,0.014)_46%,rgba(88,200,190,0.05))] p-4"
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="card-eyebrow text-[color:var(--hot)]">foco do recorte</span>
+            <span className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
+              prioridade: {priorityLabel[signal.priority]}
+            </span>
+          </div>
+          <h3 className="mt-2 break-words text-lg font-semibold leading-snug tracking-[-0.01em] text-[color:var(--foreground)]">
+            {signal.title}
+          </h3>
+          <p className="mt-2 break-words text-sm leading-6 text-[color:var(--muted-strong)]">
+            {signal.decision}
+          </p>
+        </div>
+
+        <div className="grid shrink-0 gap-3 sm:grid-cols-[auto_auto] lg:min-w-[300px] lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(0,0,0,0.18)] p-2">
+              <p className="metric-number text-base font-semibold text-[color:var(--hot)]">{signal.score.value}</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--muted)]">score</p>
+            </div>
+            <div className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(0,0,0,0.18)] p-2">
+              <p className="metric-number text-base font-semibold text-[color:var(--aqua)]">
+                {signalEvidenceTotal(signal)}
+              </p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--muted)]">provas</p>
+            </div>
+            <div className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(0,0,0,0.18)] p-2">
+              <p className="metric-number text-base font-semibold text-[color:var(--gold)]">{signal.market}</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--muted)]">mercado</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onInspect(signal.id)}
+            className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-[rgba(237,73,86,0.28)] bg-[rgba(237,73,86,0.08)] px-4 text-[12px] font-medium text-[color:var(--foreground)] transition hover:border-[rgba(237,73,86,0.42)]"
+          >
+            Ver evidencias
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ---------- Metric tile ---------- */
 
 const metricToneConfig = {
@@ -314,8 +535,7 @@ function MetricTile({
   return (
     <MotionCard
       variants={tileVariants}
-      interactive
-      lift={2}
+      interactive={false}
       transition={{ duration: 0.16, ease }}
       className="group relative overflow-hidden rounded-[var(--radius-md)] border p-5"
       style={{
@@ -337,8 +557,8 @@ function MetricTile({
         {isPlainNumber ? (
           <AnimatedNumber
             value={rawValue}
-            delay={0.18 + index * 0.045}
-            duration={0.62}
+            delay={0.08 + index * 0.025}
+            duration={0.42}
             minimumIntegerDigits={value.length > 1 ? value.length : undefined}
           />
         ) : (
@@ -1019,6 +1239,7 @@ export function CommandCenter({
   reelStats = fallbackReelStats,
   tenant,
 }: CommandCenterData) {
+  const prefersReducedMotion = useReducedMotion();
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(signals.length > 0 ? "ready" : "empty");
   const [query, setQuery] = useState("");
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("ALL");
@@ -1042,6 +1263,8 @@ export function CommandCenter({
   }, [filters, signals, sortMode]);
 
   const summary = useMemo(() => summarizeSignals(signals), [signals]);
+  const topSignal = useMemo(() => rankSignals(signals, "priority")[0], [signals]);
+  const focusSignal = filteredSignals[0] ?? topSignal;
   const selectedSignal =
     signals.find((signal) => signal.id === selectedSignalId) ?? filteredSignals[0] ?? signals[0];
   const savedSignals = useMemo(
@@ -1100,6 +1323,16 @@ export function CommandCenter({
     setTypeFilter("ALL");
     setPriorityFilter("ALL");
     setSortMode("priority");
+  }
+
+  function clearSignalFilters() {
+    resetSignalFilters();
+    setShowAdvancedFilters(false);
+  }
+
+  function inspectSignal(signalId: string) {
+    setSelectedSignalId(signalId);
+    scrollToSection("alerts-rail");
   }
 
   function navigateDashboard(key: string) {
@@ -1221,7 +1454,7 @@ export function CommandCenter({
                 `,
               }}
             />
-            <ReelsRadarScene3D
+            <LazyReelsRadarScene3D
               mode="radar"
               intensity={0.95}
               className="absolute left-1 top-0 h-[230px] w-[320px] opacity-[0.78] sm:left-6 sm:top-3 sm:h-[270px] sm:w-[390px] md:left-8 md:top-4 md:h-[305px] md:w-[440px] md:opacity-95"
@@ -1299,6 +1532,14 @@ export function CommandCenter({
               </motion.div>
             </div>
 
+            <CommandStatusStrip
+              focusSignal={focusSignal}
+              highPriorityCount={summary.highPriorityCount}
+              filteredCount={filteredSignals.length}
+              totalSignals={signals.length}
+              reelTotal={reelStats.total}
+            />
+
             {persistence.mode !== "database" && (
               <motion.p
                 variants={itemVariants}
@@ -1344,6 +1585,16 @@ export function CommandCenter({
                     Veja o potencial, confira a origem e escolha a proxima acao.
                   </p>
                 </GSAPSectionReveal>
+
+                <AnimatePresence initial={false} mode="popLayout">
+                  {filteredSignals.length > 0 ? (
+                    <PriorityBrief
+                      key={filteredSignals[0].id}
+                      signal={filteredSignals[0]}
+                      onInspect={inspectSignal}
+                    />
+                  ) : null}
+                </AnimatePresence>
 
                 <motion.div
                   id="signal-filters"
@@ -1428,23 +1679,24 @@ export function CommandCenter({
                     ) : null}
                   </AnimatePresence>
 
+                  <ActiveFilterSummary
+                    query={query}
+                    market={marketFilter}
+                    priority={priorityFilter}
+                    type={typeFilter}
+                    sort={sortMode}
+                  />
+
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-xs text-[color:var(--muted)]">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="metric-number text-[color:var(--foreground)]">
-                        <AnimatedNumber value={filteredSignals.length} delay={0.06} duration={0.42} />
+                        <AnimatedNumber value={filteredSignals.length} delay={0.03} duration={0.28} />
                       </span>
                       <span>de {signals.length} sinais</span>
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setQuery("");
-                        setMarketFilter("ALL");
-                        setTypeFilter("ALL");
-                        setPriorityFilter("ALL");
-                        setSortMode("priority");
-                        setShowAdvancedFilters(false);
-                      }}
+                      onClick={clearSignalFilters}
                       className="rounded-full border border-[color:var(--line)] px-3 py-1.5 text-[color:var(--muted)] transition hover:border-[rgba(225,48,108,0.32)] hover:text-[color:var(--foreground)]"
                     >
                       Limpar
@@ -1482,21 +1734,17 @@ export function CommandCenter({
                         body="Combinação de filtros sem match. Reduza um critério ou limpe tudo para voltar ao ranking completo."
                         hint={`${signals.length} sinais ignorados pelos filtros`}
                         onReset={() => {
-                          setQuery("");
-                          setMarketFilter("ALL");
-                          setTypeFilter("ALL");
-                          setPriorityFilter("ALL");
-                          setSortMode("priority");
+                          clearSignalFilters();
                         }}
                       />
                     ) : (
                       filteredSignals.map((signal, index) => (
                         <motion.div
                           key={signal.id}
-                          layout="position"
-                          initial={{ opacity: 0, y: 6 }}
+                          layout={prefersReducedMotion ? false : "position"}
+                          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
+                          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
                           transition={{ duration: 0.2, ease }}
                           className="gse-item"
                         >

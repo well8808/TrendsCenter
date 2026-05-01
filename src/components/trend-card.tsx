@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, type Variants } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { useState } from "react";
 import {
   ArrowUpRight,
@@ -192,8 +192,9 @@ export function TrendCard({
     signal.type === "AUDIO" ? "aqua" : signal.market === "US" ? "gold" : "acid";
   const scoreColor = scoreTone(signal.score.value);
   const isNow = signal.priority === "now";
-  const baseDelay = index * 0.05;
-  const scoreDelay = baseDelay + 0.2;
+  const prefersReducedMotion = useReducedMotion();
+  const baseDelay = prefersReducedMotion ? 0 : Math.min(index, 4) * 0.035;
+  const scoreDelay = baseDelay + 0.14;
   const [showDetails, setShowDetails] = useState(false);
   const scoreTierInfo = scoreTier(signal.score.value);
 
@@ -204,7 +205,7 @@ export function TrendCard({
       initial="hidden"
       animate="show"
       transition={{ delay: baseDelay }}
-      whileHover={{ y: -2 }}
+      whileHover={prefersReducedMotion ? undefined : { y: selected || isNow ? -1 : -2 }}
       className={cn(
         "group relative overflow-hidden rounded-[var(--radius-2xl)] border backdrop-blur-xl transition-colors",
         isNow
@@ -216,14 +217,19 @@ export function TrendCard({
     >
       {isNow ? (
         <>
-          <div
+          <motion.div
             aria-hidden="true"
-            className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full opacity-70 blur-3xl"
-            style={{ background: "radial-gradient(circle, rgba(237,73,86,0.30), transparent 65%)" }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scaleY: 0.6 }}
+            animate={{ opacity: 1, scaleY: 1 }}
+            transition={{ duration: 0.28, ease }}
+            className="pointer-events-none absolute inset-y-4 left-0 w-[3px] origin-center rounded-full bg-[color:var(--hot)]"
           />
-          <div
+          <motion.div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.24, delay: baseDelay, ease }}
             style={{ background: "linear-gradient(90deg, transparent, rgba(237,73,86,0.55), transparent)" }}
           />
         </>
@@ -259,6 +265,26 @@ export function TrendCard({
           >
             {signal.summary}
           </motion.p>
+
+          <motion.div
+            variants={itemVariants}
+            className="mt-3 rounded-[var(--radius-md)] border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] p-3"
+          >
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--aqua)]" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--aqua)]">
+                  decisao
+                </p>
+                <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[color:var(--foreground)]">
+                  {signal.decision}
+                </p>
+                <p className="mt-1 line-clamp-2 break-words text-[12px] leading-5 text-[color:var(--muted)]">
+                  proxima acao: {signal.nextAction}
+                </p>
+              </div>
+            </div>
+          </motion.div>
 
           <motion.div
             className="mt-3 flex flex-wrap items-center gap-2"
@@ -308,7 +334,7 @@ export function TrendCard({
           </div>
           <motion.button
             variants={itemVariants}
-            whileTap={{ scale: 0.96 }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
             type="button"
             onClick={onToggleSave}
             className={cn(
@@ -356,10 +382,10 @@ export function TrendCard({
       <AnimatePresence initial={false}>
         {showDetails ? (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
+            initial={prefersReducedMotion ? { opacity: 1, height: 0 } : { opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.28, ease }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease }}
             className="overflow-hidden border-t border-[color:var(--line)] bg-[rgba(0,0,0,0.12)]"
           >
             <div className="grid gap-5 p-5 md:p-6 lg:grid-cols-[1.2fr_1fr_0.9fr]">
@@ -398,9 +424,9 @@ export function TrendCard({
                         </div>
                         <div className="relative mt-1 h-1 overflow-hidden rounded-full bg-[rgba(255,255,255,0.05)]">
                           <motion.div
-                            initial={{ width: 0 }}
+                            initial={prefersReducedMotion ? false : { width: 0 }}
                             animate={{ width: `${value}%` }}
-                            transition={{ duration: 0.5, ease }}
+                            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease }}
                             className="h-full rounded-full"
                             style={{ background: scoreColor }}
                           />

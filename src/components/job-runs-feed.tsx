@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, type Variants } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import {
   AlertOctagon,
   AlertTriangle,
@@ -106,6 +106,22 @@ function jobContext(job: JobRunDto) {
   return "sem atividade";
 }
 
+function jobStepModel(status: JobStatus) {
+  if (status === "SUCCEEDED") {
+    return { activeIndex: 3, completeThrough: 3, failed: false };
+  }
+
+  if (status === "FAILED" || status === "DEAD_LETTERED" || status === "CANCELED") {
+    return { activeIndex: 3, completeThrough: -1, failed: true };
+  }
+
+  if (status === "RUNNING") {
+    return { activeIndex: 1, completeThrough: 0, failed: false };
+  }
+
+  return { activeIndex: 0, completeThrough: -1, failed: false };
+}
+
 export interface JobRunsFeedProps {
   /** Hidratacao SSR opcional. */
   initialData?: JobRunsListDto;
@@ -131,6 +147,7 @@ export function JobRunsFeed({
   paused,
   className,
 }: JobRunsFeedProps) {
+  const prefersReducedMotion = useReducedMotion();
   const resource = useApiResource<JobRunsListDto>(
     (signal) => listJobRunsApi({ queue, limit }, { signal }),
     [queue, limit],
@@ -182,7 +199,11 @@ export function JobRunsFeed({
                   "absolute inset-0 rounded-full",
                   active > 0 ? "bg-[color:var(--aqua)]" : "bg-[color:var(--muted)]",
                 )}
-                style={active > 0 ? { animation: "live-pulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite" } : undefined}
+                style={
+                  active > 0 && !prefersReducedMotion
+                    ? { animation: "live-pulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite" }
+                    : undefined
+                }
               />
               <span
                 className={cn(
@@ -202,7 +223,10 @@ export function JobRunsFeed({
           className="app-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)] disabled:opacity-60"
           aria-label="Atualizar radar"
         >
-          <RefreshCw className={cn("h-3 w-3", resource.isFetching && "animate-spin")} aria-hidden="true" />
+          <RefreshCw
+            className={cn("h-3 w-3", resource.isFetching && !prefersReducedMotion && "animate-spin")}
+            aria-hidden="true"
+          />
           {resource.isFetching ? "checando" : "atualizar"}
         </button>
       </header>
@@ -222,17 +246,15 @@ export function JobRunsFeed({
           {items.length === 0 && resource.status === "success" ? (
             <motion.div
               key="empty"
-              initial={{ opacity: 0, y: 6 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.32, ease }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.32, ease }}
               className="rounded-[var(--radius-md)] border border-dashed border-[rgba(239,233,220,0.12)] bg-[rgba(255,255,255,0.016)] p-5 text-center"
             >
-              <motion.div
+              <div
                 aria-hidden="true"
-                animate={{ scale: [1, 1.04, 1], opacity: [0.18, 0.36, 0.18] }}
-                transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
-                className="mx-auto mb-3 h-9 w-9 rounded-full"
+                className="mx-auto mb-3 h-9 w-9 rounded-full opacity-25"
                 style={{ background: "radial-gradient(circle, rgba(64,224,208,0.4), transparent 70%)" }}
               />
               <CircleDashed className="mx-auto mb-2 h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
@@ -247,7 +269,7 @@ export function JobRunsFeed({
           ) : null}
 
           {items.map((job) => (
-            <JobRow key={job.id} job={job} nowMs={displayNow} />
+            <JobRow key={job.id} job={job} nowMs={displayNow} prefersReducedMotion={prefersReducedMotion} />
           ))}
         </AnimatePresence>
       </div>
@@ -261,7 +283,15 @@ export function JobRunsFeed({
   );
 }
 
-function JobRow({ job, nowMs }: { job: JobRunDto; nowMs: number | null }) {
+function JobRow({
+  job,
+  nowMs,
+  prefersReducedMotion,
+}: {
+  job: JobRunDto;
+  nowMs: number | null;
+  prefersReducedMotion: boolean | null;
+}) {
   const meta = statusMeta[job.status];
   const Icon = meta.Icon;
   const isRetry = job.attemptCount > 1 && job.status !== "DEAD_LETTERED";
@@ -279,7 +309,7 @@ function JobRow({ job, nowMs }: { job: JobRunDto; nowMs: number | null }) {
         <div className="min-w-0">
           <p className="flex min-w-0 items-center gap-2 text-sm font-medium leading-5">
             <Icon
-              className={cn("h-3.5 w-3.5 shrink-0", toneClass[meta.tone], meta.animate && "animate-spin")}
+              className={cn("h-3.5 w-3.5 shrink-0", toneClass[meta.tone], meta.animate && !prefersReducedMotion && "animate-spin")}
               aria-hidden="true"
             />
             <span className="min-w-0 truncate">{jobTitle(job)}</span>
@@ -298,6 +328,8 @@ function JobRow({ job, nowMs }: { job: JobRunDto; nowMs: number | null }) {
           {meta.label}
         </span>
       </div>
+
+      <JobProgressSteps status={job.status} prefersReducedMotion={prefersReducedMotion} />
 
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[color:var(--muted)]">
         <span className="inline-flex items-center gap-1">
@@ -330,6 +362,69 @@ function JobRow({ job, nowMs }: { job: JobRunDto; nowMs: number | null }) {
         </p>
       ) : null}
     </motion.div>
+  );
+}
+
+function JobProgressSteps({
+  status,
+  prefersReducedMotion,
+}: {
+  status: JobStatus;
+  prefersReducedMotion: boolean | null;
+}) {
+  const model = jobStepModel(status);
+  const finalLabel = model.failed ? "erro" : "pronto";
+  const steps = ["fila", "validar", "score", finalLabel];
+
+  return (
+    <>
+      <div className="mt-3 grid grid-cols-4 gap-1.5" aria-hidden="true">
+        {steps.map((step, index) => {
+          const isComplete = index <= model.completeThrough;
+          const isActive = index === model.activeIndex;
+          const isFailed = model.failed && index === model.activeIndex;
+
+          return (
+            <div key={`${step}-${index}`} className="min-w-0">
+              <div className="h-1 overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
+                <motion.div
+                  initial={prefersReducedMotion ? false : { scaleX: 0 }}
+                  animate={{ scaleX: isComplete || isActive ? 1 : 0.28 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease }}
+                  className={cn(
+                    "h-full origin-left rounded-full",
+                    isFailed
+                      ? "bg-[color:var(--coral)]"
+                      : isComplete
+                        ? "bg-[color:var(--aqua)]"
+                        : isActive
+                          ? "bg-[color:var(--gold)]"
+                          : "bg-[rgba(239,233,220,0.18)]",
+                  )}
+                />
+              </div>
+              <span
+                className={cn(
+                  "mt-1 block truncate font-mono text-[9px] uppercase tracking-[0.14em]",
+                  isFailed
+                    ? "text-[color:var(--coral)]"
+                    : isActive
+                      ? "text-[color:var(--gold)]"
+                      : isComplete
+                        ? "text-[color:var(--aqua)]"
+                        : "text-[color:var(--muted)]",
+                )}
+              >
+                {step}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <span className="sr-only">
+        Fluxo do job: {steps.join(", ")}. Etapa atual: {steps[model.activeIndex]}.
+      </span>
+    </>
   );
 }
 

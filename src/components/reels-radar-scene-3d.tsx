@@ -188,7 +188,7 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     const root = new THREE.Group();
     const flow = new THREE.Group();
     const orbitItems = new THREE.Group();
-    const clock = new THREE.Clock();
+    const startedAt = performance.now();
     const isRadar = mode === "radar";
     let incomingCurve: THREE.CubicBezierCurve3 | undefined;
     let decisionCurve: THREE.CubicBezierCurve3 | undefined;
@@ -345,7 +345,7 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     }
 
     function render() {
-      const elapsed = clock.getElapsedTime();
+      const elapsed = (performance.now() - startedAt) / 1000;
 
       root.rotation.y = isRadar ? 0 : elapsed * 0.13;
       root.rotation.x = isRadar ? -0.08 : Math.sin(elapsed * 0.34) * 0.08 - 0.08;

@@ -4,7 +4,7 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 
 import { useEffect, useMemo } from "react";
 
 type AnimatedNumberProps = {
-  value: number;
+  value: number | null | undefined;
   from?: number;
   duration?: number;
   delay?: number;
@@ -12,6 +12,7 @@ type AnimatedNumberProps = {
   locale?: string;
   maximumFractionDigits?: number;
   minimumIntegerDigits?: number;
+  fallback?: string;
   format?: (value: number) => string;
 };
 
@@ -24,10 +25,12 @@ export function AnimatedNumber({
   locale = "pt-BR",
   maximumFractionDigits = 0,
   minimumIntegerDigits,
+  fallback = "-",
   format,
 }: AnimatedNumberProps) {
   const prefersReducedMotion = useReducedMotion();
-  const motionValue = useMotionValue(prefersReducedMotion ? value : from);
+  const numericValue = typeof value === "number" && Number.isFinite(value) ? value : null;
+  const motionValue = useMotionValue(prefersReducedMotion ? numericValue ?? from : from);
   const formatter = useMemo(
     () =>
       new Intl.NumberFormat(locale, {
@@ -41,19 +44,28 @@ export function AnimatedNumber({
   );
 
   useEffect(() => {
-    if (prefersReducedMotion) {
-      motionValue.set(value);
+    if (numericValue === null) {
+      motionValue.set(from);
       return;
     }
 
-    const controls = animate(motionValue, value, {
+    if (prefersReducedMotion) {
+      motionValue.set(numericValue);
+      return;
+    }
+
+    const controls = animate(motionValue, numericValue, {
       duration,
       delay,
       ease: [0.22, 1, 0.36, 1],
     });
 
     return () => controls.stop();
-  }, [delay, duration, motionValue, prefersReducedMotion, value]);
+  }, [delay, duration, from, motionValue, numericValue, prefersReducedMotion]);
+
+  if (numericValue === null) {
+    return <span className={className}>{fallback}</span>;
+  }
 
   return <motion.span className={className}>{display}</motion.span>;
 }
