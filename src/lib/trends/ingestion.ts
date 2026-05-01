@@ -53,6 +53,7 @@ interface NormalizedSound {
 interface NormalizedVideo {
   platformVideoId?: string;
   url?: string;
+  thumbnailUrl?: string;
   title: string;
   caption?: string;
   postedAt?: Date;
@@ -193,6 +194,7 @@ function parseVideos(payloadJson: string): NormalizedVideo[] {
     return {
       platformVideoId: optionalText(item.platformVideoId) ?? optionalText(item.id),
       url: optionalText(item.url),
+      thumbnailUrl: optionalText(item.thumbnailUrl),
       title,
       caption: optionalText(item.caption),
       postedAt: dateValue(item.postedAt),
@@ -555,6 +557,7 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
               jobRunId: job.id,
               platformVideoId: item.platformVideoId,
               url: item.url,
+              thumbnailUrl: item.thumbnailUrl,
               title: item.title,
               caption: item.caption,
               postedAt: item.postedAt,
@@ -584,6 +587,7 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
               jobRunId: job.id,
               platformVideoId: item.platformVideoId,
               url: item.url,
+              thumbnailUrl: item.thumbnailUrl,
               title: item.title,
               caption: item.caption,
               market: input.market,

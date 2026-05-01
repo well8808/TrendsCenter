@@ -998,6 +998,7 @@ model Video {
   jobRun              JobRun?         @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
   platformVideoId     String?
   url                 String?
+  thumbnailUrl        String?
   title               String
   caption             String?
   market              Market

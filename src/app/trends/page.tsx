@@ -9,6 +9,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
@@ -64,6 +65,7 @@ export default async function TrendsPage({
     id: video.id,
     title: video.title,
     caption: video.caption,
+    thumbnailUrl: video.thumbnailUrl,
     market: video.market,
     origin: video.source.origin,
     trendScore: video.trendScore,
@@ -93,6 +95,7 @@ export default async function TrendsPage({
       <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="min-w-0 space-y-7">
           <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-7">
+            <HeroOrb3D className="pointer-events-none absolute -right-10 -top-10 hidden opacity-55 sm:block sm:opacity-65 md:opacity-80 xl:-right-4 xl:-top-4 xl:opacity-90" />
             <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
                 <Link

@@ -57,6 +57,7 @@ export interface TrendVideoResult {
   title: string;
   caption?: string;
   url?: string;
+  thumbnailUrl?: string;
   market: string;
   origin: string;
   trendScore: number;
@@ -139,6 +140,7 @@ function mapVideo(video: TrendVideoPayload): TrendVideoResult {
     title: video.title,
     caption: video.caption ?? undefined,
     url: video.url ?? undefined,
+    thumbnailUrl: video.thumbnailUrl ?? undefined,
     market: video.market,
     origin: video.origin,
     trendScore: video.trendScore,

@@ -35,6 +35,7 @@ export interface BrightDataCollectedReels {
 export interface NormalizedProviderVideo {
   platformVideoId?: string;
   url?: string;
+  thumbnailUrl?: string;
   title: string;
   caption?: string;
   postedAt?: string;
@@ -206,6 +207,14 @@ function normalizeItem(raw: unknown, collectedAt: string): NormalizedProviderVid
   // Follower count: consistent name but guard against string values
   const followerCount = numberValue(item.followers) || numberValue(item.follower_count) || undefined;
 
+  // Thumbnail: CDN URLs from Bright Data expire in ~48h; stored for immediate display
+  const thumbnailUrl =
+    text(item.display_url) ||
+    text(item.thumbnail_url) ||
+    text(item.cover_url) ||
+    text(item.image_url) ||
+    undefined;
+
   if (!title || !reelUrl) {
     return null;
   }
@@ -213,6 +222,7 @@ function normalizeItem(raw: unknown, collectedAt: string): NormalizedProviderVid
   return {
     platformVideoId,
     url: reelUrl,
+    thumbnailUrl,
     title,
     caption: caption || undefined,
     postedAt,
