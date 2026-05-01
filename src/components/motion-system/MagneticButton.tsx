@@ -13,6 +13,7 @@ export function MagneticButton({
   children,
   className,
   strength = 0.18,
+  type = "button",
   onPointerMove,
   onPointerLeave,
   ...props
@@ -45,6 +46,7 @@ export function MagneticButton({
         x.set(0);
         y.set(0);
       }}
+      type={type}
       {...props}
     >
       {children}

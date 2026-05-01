@@ -146,7 +146,7 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
 
       if (!steps.length) return;
 
-      gsap.set(steps, { autoAlpha: 0.68, scale: 1, transformOrigin: "50% 50%" });
+      gsap.set(steps, { autoAlpha: 0.74, scale: 1, transformOrigin: "50% 50%" });
 
       if (prefersReducedMotion) {
         gsap.set(steps, { autoAlpha: 1 });
@@ -155,15 +155,15 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
 
       const timeline = gsap.timeline({
         repeat: -1,
-        repeatDelay: 0.2,
-        defaults: { duration: 0.36, ease: "power2.out" },
+        repeatDelay: 0.55,
+        defaults: { duration: 0.28, ease: "power2.out" },
       });
 
       steps.forEach((step, index) => {
-        const at = index * 0.78;
+        const at = index * 0.86;
         timeline
-          .to(step, { autoAlpha: 1, scale: 1.08 }, at)
-          .to(step, { autoAlpha: 0.66, scale: 1 }, at + 0.42);
+          .to(step, { autoAlpha: 1, scale: 1.04 }, at)
+          .to(step, { autoAlpha: 0.74, scale: 1 }, at + 0.36);
       });
 
       return () => timeline.kill();
@@ -181,7 +181,7 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
       alpha: true,
       antialias: true,
       powerPreference: "high-performance",
-      preserveDrawingBuffer: true,
+      preserveDrawingBuffer: false,
     });
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
@@ -199,7 +199,7 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     let visible = true;
 
     renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.65));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.4));
     renderer.domElement.style.position = "absolute";
     renderer.domElement.style.inset = "0";
     renderer.domElement.style.zIndex = "0";
@@ -301,7 +301,7 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     }
 
     const starGeometry = new THREE.BufferGeometry();
-    const starCount = isRadar ? 68 : 90;
+    const starCount = isRadar ? 48 : 64;
     const positions = new Float32Array(starCount * 3);
     const colorsArray = new Float32Array(starCount * 3);
 
@@ -324,10 +324,10 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     const stars = new THREE.Points(
       starGeometry,
       new THREE.PointsMaterial({
-        size: 0.022,
+        size: 0.019,
         vertexColors: true,
         transparent: true,
-        opacity: 0.48 * intensity,
+        opacity: 0.34 * intensity,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -349,13 +349,13 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
 
       root.rotation.y = isRadar ? 0 : elapsed * 0.13;
       root.rotation.x = isRadar ? -0.08 : Math.sin(elapsed * 0.34) * 0.08 - 0.08;
-      core.scale.setScalar(1 + Math.sin(elapsed * 2.1) * 0.18);
-      glow.scale.setScalar(1 + Math.sin(elapsed * 0.9) * 0.08);
+      core.scale.setScalar(1 + Math.sin(elapsed * 1.6) * 0.1);
+      glow.scale.setScalar(1 + Math.sin(elapsed * 0.7) * 0.04);
       stars.rotation.y = elapsed * 0.025;
 
       orbitItems.children.forEach((child, index) => {
         const phase = child.userData.phase as number;
-        const angle = elapsed * 0.35 + phase;
+        const angle = elapsed * 0.24 + phase;
         const radius = 1.18 + (index % 3) * 0.36;
 
         child.position.set(Math.cos(angle) * radius, Math.sin(angle * 1.15) * 0.38, Math.sin(angle) * 0.7);
@@ -364,23 +364,23 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
       });
 
       if (incomingCurve && decisionCurve && incomingPulse && decisionPulse) {
-        const incomingT = (elapsed * 0.18) % 1;
-        const decisionT = (elapsed * 0.18 + 0.52) % 1;
+        const incomingT = (elapsed * 0.14) % 1;
+        const decisionT = (elapsed * 0.14 + 0.52) % 1;
         const incomingWave = Math.sin(incomingT * Math.PI);
         const decisionWave = Math.sin(decisionT * Math.PI);
         const incomingMaterial = incomingPulse.material as THREE.MeshBasicMaterial;
         const decisionMaterial = decisionPulse.material as THREE.MeshBasicMaterial;
 
         incomingPulse.position.copy(incomingCurve.getPointAt(incomingT));
-        incomingPulse.scale.setScalar(0.8 + incomingWave * 1.15);
-        incomingMaterial.opacity = (0.18 + incomingWave * 0.78) * intensity;
+        incomingPulse.scale.setScalar(0.74 + incomingWave * 0.78);
+        incomingMaterial.opacity = (0.16 + incomingWave * 0.56) * intensity;
 
         decisionPulse.position.copy(decisionCurve.getPointAt(decisionT));
-        decisionPulse.scale.setScalar(0.7 + decisionWave * 1.0);
-        decisionMaterial.opacity = (0.16 + decisionWave * 0.64) * intensity;
+        decisionPulse.scale.setScalar(0.68 + decisionWave * 0.72);
+        decisionMaterial.opacity = (0.14 + decisionWave * 0.48) * intensity;
 
         if (actionNode) {
-          actionNode.scale.setScalar(1.04 + Math.max(0, Math.sin(decisionT * Math.PI)) * 0.2);
+          actionNode.scale.setScalar(1.04 + Math.max(0, Math.sin(decisionT * Math.PI)) * 0.12);
         }
       }
 

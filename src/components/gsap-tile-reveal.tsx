@@ -1,56 +1,58 @@
 "use client";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(useGSAP);
+import { useEffect, useRef } from "react";
 
 interface GSAPTileRevealProps {
   children: React.ReactNode;
   className?: string;
-  /** Index controls stagger delay */
   index?: number;
 }
 
-/**
- * Animates a metric tile on mount with a 3D flip-up entrance:
- * starts rotated back on X axis, slides up, fades in.
- * Wraps the tile container so GSAP targets the wrapper directly.
- */
+const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+// Legacy name kept to avoid touching callers; tile reveal now stays inside the motion budget.
 export function GSAPTileReveal({ children, className, index = 0 }: GSAPTileRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      if (!ref.current) return;
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
 
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion || !("animate" in HTMLElement.prototype)) {
+      element.style.opacity = "1";
+      element.style.transform = "translateY(0) rotateX(0)";
+      return;
+    }
 
-      if (prefersReducedMotion) {
-        gsap.set(ref.current, { autoAlpha: 1, y: 0, rotationX: 0 });
-        return;
-      }
+    element.style.willChange = "transform, opacity";
+    const animation = element.animate(
+      [
+        { opacity: 0, transform: "translateY(16px) rotateX(8deg)" },
+        { opacity: 1, transform: "translateY(0) rotateX(0)" },
+      ],
+      {
+        duration: 420,
+        delay: Math.min(140 + index * 45, 320),
+        easing: ease,
+        fill: "forwards",
+      },
+    );
 
-      gsap.fromTo(ref.current, {
-        y: 32,
-        autoAlpha: 0,
-        rotationX: 18,
-      }, {
-        y: 0,
-        autoAlpha: 1,
-        rotationX: 0,
-        transformOrigin: "50% 100%",
-        duration: 0.7,
-        ease: "power3.out",
-        delay: 0.22 + index * 0.08,
-      });
-    },
-    { scope: ref },
-  );
+    animation.onfinish = () => {
+      element.style.opacity = "1";
+      element.style.transform = "translateY(0) rotateX(0)";
+      element.style.willChange = "";
+    };
+
+    return () => {
+      animation.cancel();
+      element.style.willChange = "";
+    };
+  }, [index]);
 
   return (
-    <div ref={ref} className={className} style={{ perspective: 800, willChange: "transform, opacity" }}>
+    <div ref={ref} className={className} style={{ perspective: 800 }}>
       {children}
     </div>
   );

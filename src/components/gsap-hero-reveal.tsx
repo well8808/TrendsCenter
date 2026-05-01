@@ -1,10 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(useGSAP);
+import { useEffect, useRef } from "react";
 
 interface GSAPHeroRevealProps {
   children: React.ReactNode;
@@ -12,38 +8,58 @@ interface GSAPHeroRevealProps {
   delay?: number;
 }
 
-/**
- * Wraps children and animates each direct span.word child with a staggered
- * vertical reveal. Use GSAPWordSplit to render the text, then wrap in this.
- */
+const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+// Legacy name kept to avoid touching callers; word reveal no longer imports GSAP eagerly.
 export function GSAPHeroReveal({ children, className, delay = 0.05 }: GSAPHeroRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      const q = gsap.utils.selector(ref);
-      const words = q<HTMLElement>(".ghr-word");
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
 
-      if (!words.length) return;
+    const words = Array.from(root.querySelectorAll<HTMLElement>(".ghr-word"));
+    if (!words.length) return;
 
-      if (prefersReducedMotion) {
-        gsap.set(words, { y: 0 });
-        return;
-      }
-
-      gsap.fromTo(words, {
-        y: 32,
-      }, {
-        y: 0,
-        stagger: 0.07,
-        duration: 0.72,
-        ease: "power3.out",
-        delay,
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion || !("animate" in HTMLElement.prototype)) {
+      words.forEach((word) => {
+        word.style.transform = "translateY(0)";
       });
-    },
-    { scope: ref },
-  );
+      return;
+    }
+
+    const safeDelay = Math.min(Math.max(delay, 0), 0.16);
+    const animations = words.map((word, index) => {
+      word.style.willChange = "transform";
+      const animation = word.animate(
+        [
+          { transform: "translateY(18px)" },
+          { transform: "translateY(0)" },
+        ],
+        {
+          duration: 420,
+          delay: (safeDelay + index * 0.045) * 1000,
+          easing: ease,
+          fill: "forwards",
+        },
+      );
+
+      animation.onfinish = () => {
+        word.style.transform = "translateY(0)";
+        word.style.willChange = "";
+      };
+
+      return animation;
+    });
+
+    return () => {
+      animations.forEach((animation) => animation.cancel());
+      words.forEach((word) => {
+        word.style.willChange = "";
+      });
+    };
+  }, [delay]);
 
   return (
     <div ref={ref} className={className}>
@@ -52,10 +68,6 @@ export function GSAPHeroReveal({ children, className, delay = 0.05 }: GSAPHeroRe
   );
 }
 
-/**
- * Splits text into word spans for GSAPHeroReveal.
- * Preserves inline className on the outermost element.
- */
 export function GSAPWordSplit({
   text,
   className,
@@ -66,11 +78,11 @@ export function GSAPWordSplit({
   const words = text.split(" ");
   return (
     <span className={className}>
-      {words.map((word, i) => (
+      {words.map((word, index) => (
         <span
-          key={i}
+          key={`${word}-${index}`}
           className="ghr-word inline-block"
-          style={{ marginRight: i < words.length - 1 ? "0.28em" : undefined }}
+          style={{ marginRight: index < words.length - 1 ? "0.28em" : undefined }}
         >
           {word}
         </span>

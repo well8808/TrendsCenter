@@ -1,8 +1,8 @@
 "use client";
 
-import { ReactLenis, type LenisProps } from "lenis/react";
+import type { LenisProps } from "lenis/react";
 import { useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 
 type SmoothScrollProviderProps = {
   children: ReactNode;
@@ -11,6 +11,8 @@ type SmoothScrollProviderProps = {
   options?: LenisProps["options"];
 };
 
+type ReactLenisComponent = ComponentType<LenisProps & { children: ReactNode }>;
+
 export function SmoothScrollProvider({
   children,
   enabled = false,
@@ -18,8 +20,27 @@ export function SmoothScrollProvider({
   options,
 }: SmoothScrollProviderProps) {
   const prefersReducedMotion = useReducedMotion();
+  const [ReactLenis, setReactLenis] = useState<ReactLenisComponent | null>(null);
 
-  if (!enabled || prefersReducedMotion) {
+  useEffect(() => {
+    if (!enabled || prefersReducedMotion) {
+      return;
+    }
+
+    let mounted = true;
+
+    void import("lenis/react").then((mod) => {
+      if (mounted) {
+        setReactLenis(() => mod.ReactLenis as ReactLenisComponent);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [enabled, prefersReducedMotion]);
+
+  if (!enabled || prefersReducedMotion || !ReactLenis) {
     return <>{children}</>;
   }
 

@@ -1,11 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+import { animate, useInView, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef } from "react";
 
 interface GSAPCounterProps {
   value: number;
@@ -16,13 +12,12 @@ interface GSAPCounterProps {
   triggerOnScroll?: boolean;
 }
 
-/**
- * Counts up from 0 to `value` with GSAP precision.
- * Optionally triggers only when scrolled into view.
- */
+const ease = [0.22, 1, 0.36, 1] as const;
+
+// Legacy name kept to avoid touching callers; this now uses Motion for a lighter budget.
 export function GSAPCounter({
   value,
-  duration = 1.1,
+  duration = 0.75,
   delay = 0,
   pad,
   format,
@@ -30,58 +25,55 @@ export function GSAPCounter({
 }: GSAPCounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const lastTextRef = useRef("");
+  const prefersReducedMotion = useReducedMotion();
+  const isInView = useInView(ref, { once: true, amount: 0.35 });
 
-  function formatValue(input: number) {
-    const rounded = Math.round(input);
+  const formatValue = useCallback(
+    (input: number) => {
+      const rounded = Math.round(input);
 
-    return format
-      ? format(rounded)
-      : pad
-        ? String(rounded).padStart(pad, "0")
-        : String(rounded);
-  }
-
-  function writeValue(input: number) {
-    const next = formatValue(input);
-
-    if (ref.current && lastTextRef.current !== next) {
-      ref.current.textContent = next;
-      lastTextRef.current = next;
-    }
-  }
-
-  useGSAP(
-    () => {
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (prefersReducedMotion) {
-        writeValue(value);
-        return;
-      }
-
-      const obj = { val: 0 };
-      writeValue(0);
-
-      const tween = gsap.to(obj, {
-        val: value,
-        duration,
-        delay: triggerOnScroll ? 0 : delay,
-        ease: "power2.out",
-        onUpdate: () => writeValue(obj.val),
-        onComplete: () => writeValue(value),
-        scrollTrigger: triggerOnScroll
-          ? {
-              trigger: ref.current,
-              start: "top 90%",
-              once: true,
-            }
-          : undefined,
-      });
-
-      return () => tween.kill();
+      return format
+        ? format(rounded)
+        : pad
+          ? String(rounded).padStart(pad, "0")
+          : String(rounded);
     },
-    { scope: ref, dependencies: [value, duration, delay, pad, format, triggerOnScroll] },
+    [format, pad],
   );
+
+  const writeValue = useCallback(
+    (input: number) => {
+      const next = formatValue(input);
+
+      if (ref.current && lastTextRef.current !== next) {
+        ref.current.textContent = next;
+        lastTextRef.current = next;
+      }
+    },
+    [formatValue],
+  );
+
+  useEffect(() => {
+    if (triggerOnScroll && !isInView) {
+      return;
+    }
+
+    if (prefersReducedMotion) {
+      writeValue(value);
+      return;
+    }
+
+    writeValue(0);
+
+    const controls = animate(0, value, {
+      duration: Math.min(Math.max(duration, 0.18), 0.8),
+      delay: Math.min(Math.max(triggerOnScroll ? 0 : delay, 0), 0.24),
+      ease,
+      onUpdate: writeValue,
+    });
+
+    return () => controls.stop();
+  }, [delay, duration, isInView, prefersReducedMotion, triggerOnScroll, value, writeValue]);
 
   return <span ref={ref}>{formatValue(0)}</span>;
 }

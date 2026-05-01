@@ -1,7 +1,8 @@
 "use client";
 
-import { DotLottieReact, type DotLottieReactProps } from "@lottiefiles/dotlottie-react";
-import Lottie, { type LottieComponentProps } from "lottie-react";
+import dynamic from "next/dynamic";
+import type { DotLottieReactProps } from "@lottiefiles/dotlottie-react";
+import type { LottieComponentProps } from "lottie-react";
 import { useReducedMotion } from "motion/react";
 
 import { cn } from "@/lib/utils";
@@ -19,6 +20,16 @@ type DotLottieProps = {
 } & DotLottieReactProps;
 
 type LottiePlayerProps = JsonLottieProps | DotLottieProps;
+
+const DotLottieReact = dynamic<DotLottieReactProps>(
+  () => import("@lottiefiles/dotlottie-react").then((mod) => mod.DotLottieReact),
+  { ssr: false, loading: () => null },
+);
+
+const Lottie = dynamic<LottieComponentProps>(
+  () => import("lottie-react").then((mod) => mod.default),
+  { ssr: false, loading: () => null },
+);
 
 export function LottiePlayer(props: LottiePlayerProps) {
   const prefersReducedMotion = useReducedMotion();
