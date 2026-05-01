@@ -1,9 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion, animate, useMotionValue, type Variants } from "motion/react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import Link from "next/link";
 import { Play, ExternalLink, Eye, TrendingUp, Music, Hash, Flame, Radar } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+import { GSAPScrollEntrance } from "@/components/gsap-scroll-entrance";
+import { GSAPCounter } from "@/components/gsap-counter";
 
 /* ═══════════════════════════════════════════════════════════════
    TrendVideoGrid — biblioteca visual premium para reels virais
@@ -86,23 +89,7 @@ function fmt(n: number): string {
   return compactFmt.format(n);
 }
 
-/* ─── AnimatedNumber ───────────────────────────────────────── */
-
-function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number }) {
-  const count = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const controls = animate(count, value, { duration: 0.75, delay, ease });
-    const unsub = count.on("change", (v) => setDisplay(Math.round(v)));
-    return () => {
-      controls.stop();
-      unsub();
-    };
-  }, [count, value, delay]);
-
-  return <>{display}</>;
-}
+/* AnimatedNumber → delegated to GSAPCounter */
 
 /* ─── Score badge conic ────────────────────────────────────── */
 
@@ -162,7 +149,7 @@ function ScoreBadge({
             className="metric-number font-semibold leading-none"
             style={{ color, fontSize }}
           >
-            <AnimatedNumber value={score} delay={delay} />
+            <GSAPCounter value={score} delay={delay} duration={0.75} />
           </p>
         </div>
       </motion.div>
@@ -296,7 +283,7 @@ function MetricChip({
         className="metric-number text-[13px] font-semibold leading-none"
         style={color ? { color } : { color: "var(--foreground)" }}
       >
-        {animated ? <AnimatedNumber value={value} delay={delay ?? 0} /> : fmt(value)}
+        {animated ? <GSAPCounter value={value} delay={delay ?? 0} duration={0.75} /> : fmt(value)}
       </span>
     </div>
   );
@@ -829,11 +816,13 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-hot" className="mb-4">
               <SectionHeader tier="hot" count={hotCards.length} />
             </div>
-            <div className="grid gap-4">
+            <GSAPScrollEntrance className="grid gap-4" stagger={0.10} y={20}>
               {hotCards.map((video, idx) => (
-                <FeaturedReelCard key={video.id} video={video} index={idx} />
+                <div key={video.id} className="gse-item">
+                  <FeaturedReelCard video={video} index={idx} />
+                </div>
               ))}
-            </div>
+            </GSAPScrollEntrance>
           </section>
         )}
 
@@ -843,15 +832,16 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-warm" className="mb-4">
               <SectionHeader tier="gold" count={gridWarm.length} />
             </div>
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+            <GSAPScrollEntrance className="grid grid-cols-2 gap-4 lg:grid-cols-3" stagger={0.06} y={18}>
               {gridWarm.map((video, idx) => (
-                <PortraitReelCard
-                  key={video.id}
-                  video={video}
-                  index={hotCards.length + idx}
-                />
+                <div key={video.id} className="gse-item">
+                  <PortraitReelCard
+                    video={video}
+                    index={hotCards.length + idx}
+                  />
+                </div>
               ))}
-            </div>
+            </GSAPScrollEntrance>
           </section>
         )}
 
@@ -861,15 +851,16 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-cool" className="mb-4">
               <SectionHeader tier="aqua" count={coolCards.length} />
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            <GSAPScrollEntrance className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" stagger={0.045} y={14}>
               {coolCards.map((video, idx) => (
-                <PortraitReelCard
-                  key={video.id}
-                  video={video}
-                  index={hotCards.length + gridWarm.length + idx}
-                />
+                <div key={video.id} className="gse-item">
+                  <PortraitReelCard
+                    video={video}
+                    index={hotCards.length + gridWarm.length + idx}
+                  />
+                </div>
               ))}
-            </div>
+            </GSAPScrollEntrance>
           </section>
         )}
       </motion.div>

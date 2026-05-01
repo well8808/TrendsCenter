@@ -34,6 +34,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
+import { GSAPCounter } from "@/components/gsap-counter";
+import { GSAPHeroReveal, GSAPWordSplit } from "@/components/gsap-hero-reveal";
+import { GSAPScrollEntrance, GSAPSectionReveal } from "@/components/gsap-scroll-entrance";
+import { GSAPTileReveal } from "@/components/gsap-tile-reveal";
 import { HeroOrb3D } from "@/components/hero-orb-3d";
 import { IngestionLab } from "@/components/ingestion-lab";
 import { ParticleField } from "@/components/particle-field";
@@ -361,7 +365,7 @@ function MetricTile({
       </p>
       <p className="metric-value-hero mt-3" style={{ color: c.text }}>
         {isPlainNumber ? (
-          <AnimatedNumber value={rawValue} delay={0.28 + index * 0.06} pad={value.length} />
+          <GSAPCounter value={rawValue} delay={0.38 + index * 0.09} pad={value.length} />
         ) : (
           value
         )}
@@ -419,8 +423,8 @@ function MarketBridgeBR({ signal }: { signal?: TrendSignal }) {
             {signal.title}
           </h2>
           <div className="mt-3 flex items-baseline gap-2">
-            <p className="metric-value-xl text-[color:var(--foreground)]">
-              <AnimatedNumber value={signal.score.value} delay={0.4} />
+            <p className="metric-value-xl text-[color:var(--hot)]">
+              <GSAPCounter value={signal.score.value} delay={0.4} />
             </p>
             <span className="font-mono text-[11px] text-[color:var(--muted)]">/100</span>
           </div>
@@ -472,8 +476,8 @@ function MarketBridgeUS({ signal }: { signal?: TrendSignal }) {
             {signal.title}
           </h2>
           <div className="mt-3 flex items-baseline gap-2">
-            <p className="metric-value-xl text-[color:var(--foreground)]">
-              <AnimatedNumber value={signal.score.value} delay={0.5} />
+            <p className="metric-value-xl text-[color:var(--aqua)]">
+              <GSAPCounter value={signal.score.value} delay={0.5} />
             </p>
             <span className="font-mono text-[11px] text-[color:var(--muted)]">/100</span>
           </div>
@@ -511,8 +515,8 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
         </span>
       </div>
       <div className="mt-3 flex items-baseline gap-2">
-        <p className="metric-value-hero text-[color:var(--foreground)]">
-          <AnimatedNumber value={transfer} delay={0.6} />
+        <p className="metric-value-hero text-[color:var(--violet)]">
+          <GSAPCounter value={transfer} delay={0.6} />
         </p>
         <span className="font-mono text-sm text-[color:var(--muted)]">%</span>
       </div>
@@ -803,7 +807,7 @@ function SavedAndHistory({
                 <div className="flex items-center justify-between gap-2">
                   <p className="min-w-0 truncate text-sm font-medium leading-5">{signal.title}</p>
                   <span className="metric-number shrink-0 text-sm font-semibold text-[color:var(--acid)]">
-                    <AnimatedNumber value={signal.score.value} delay={0.1 * idx} duration={0.6} />
+                    <GSAPCounter value={signal.score.value} delay={0.1 * idx} duration={0.6} />
                   </span>
                 </div>
                 <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[color:var(--muted)]">{signal.nextAction}</p>
@@ -1245,13 +1249,14 @@ export function CommandCenter({
                   <Command className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <motion.h1
-                    variants={itemVariants}
+                  <GSAPHeroReveal
                     className="text-[28px] font-semibold leading-tight tracking-[-0.02em] md:text-[38px]"
+                    delay={0.15}
                   >
-                    Reels{" "}
-                    <span className="gradient-text-ig">Center</span>
-                  </motion.h1>
+                    <GSAPWordSplit text="Reels" />
+                    {" "}
+                    <GSAPWordSplit text="Center" className="gradient-text-ig" />
+                  </GSAPHeroReveal>
                   <motion.p
                     variants={itemVariants}
                     className="mt-1.5 flex items-center gap-2 text-[13px] leading-5 text-[color:var(--muted)]"
@@ -1321,18 +1326,17 @@ export function CommandCenter({
 
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 md:px-6">
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
-              {/* METRICS — t=0.20, stagger 0.06 × 4 */}
-              <motion.section
-                variants={tilesContainerVariants}
-                initial="hidden"
-                animate="show"
+              {/* METRICS */}
+              <section
                 className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
                 aria-label="Métricas operacionais"
               >
                 {metricTiles.map((metric, idx) => (
-                  <MetricTile key={metric.label} {...metric} index={idx} />
+                  <GSAPTileReveal key={metric.label} index={idx}>
+                    <MetricTile {...metric} index={idx} />
+                  </GSAPTileReveal>
                 ))}
-              </motion.section>
+              </section>
 
               {signals.length > 0 && signals.some((s) => s.market === "US") ? (
                 <MarketBridge signals={rankSignals(signals, "priority")} />
@@ -1346,10 +1350,7 @@ export function CommandCenter({
                 animate="show"
                 transition={{ delay: 0.3 }}
               >
-                <motion.div
-                  variants={sectionVariants}
-                  className="mb-4"
-                >
+                <GSAPSectionReveal className="mb-4">
                   <h2 className="text-xl font-semibold leading-tight tracking-[-0.015em] md:text-[26px]">
                     <span className="gradient-text-ig">Oportunidades</span>{" "}
                     priorizadas
@@ -1357,7 +1358,7 @@ export function CommandCenter({
                   <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
                     Veja o potencial, confira a origem e escolha a proxima acao.
                   </p>
-                </motion.div>
+                </GSAPSectionReveal>
 
                 <motion.div
                   id="signal-filters"
@@ -1445,7 +1446,7 @@ export function CommandCenter({
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--line)] pt-3 text-xs text-[color:var(--muted)]">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="metric-number text-[color:var(--foreground)]">
-                        <AnimatedNumber value={filteredSignals.length} delay={0.15} duration={0.6} />
+                        <GSAPCounter value={filteredSignals.length} delay={0.15} duration={0.6} />
                       </span>
                       <span>de {signals.length} sinais</span>
                     </span>
@@ -1466,15 +1467,7 @@ export function CommandCenter({
                   </div>
                 </motion.div>
 
-                <motion.div
-                  variants={{
-                    hidden: {},
-                    show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
-                  }}
-                  initial="hidden"
-                  animate="show"
-                  className="grid gap-3"
-                >
+                <GSAPScrollEntrance className="grid gap-3" stagger={0.07} y={24}>
                   <AnimatePresence mode="popLayout">
                     {workspaceState === "empty" ? (
                       <EmptyState
@@ -1513,19 +1506,20 @@ export function CommandCenter({
                       />
                     ) : (
                       filteredSignals.map((signal, index) => (
-                        <TrendCard
-                          key={signal.id}
-                          signal={signal}
-                          index={index}
-                          selected={selectedSignal?.id === signal.id}
-                          isSaved={savedIds.has(signal.id)}
-                          onSelect={() => setSelectedSignalId(signal.id)}
-                          onToggleSave={() => toggleSaved(signal.id)}
-                        />
+                        <div key={signal.id} className="gse-item">
+                          <TrendCard
+                            signal={signal}
+                            index={index}
+                            selected={selectedSignal?.id === signal.id}
+                            isSaved={savedIds.has(signal.id)}
+                            onSelect={() => setSelectedSignalId(signal.id)}
+                            onToggleSave={() => toggleSaved(signal.id)}
+                          />
+                        </div>
                       ))
                     )}
                   </AnimatePresence>
-                </motion.div>
+                </GSAPScrollEntrance>
               </motion.section>
 
               <motion.section

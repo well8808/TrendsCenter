@@ -1,7 +1,7 @@
 "use client";
 
-import { AnimatePresence, animate, motion, useMotionValue, type Variants } from "motion/react";
-import { useEffect, useState } from "react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
+import { useState } from "react";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { GSAPCounter } from "@/components/gsap-counter";
 import { MiniTrendLine } from "@/components/mini-trend-line";
 import { SourcePill } from "@/components/source-pill";
 import type { ScoreInput, TrendSignal } from "@/lib/types";
@@ -114,30 +115,6 @@ const pillVariants: Variants = {
   show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.28, ease } },
 };
 
-function AnimatedNumber({
-  value,
-  delay = 0,
-  duration = 0.9,
-}: {
-  value: number;
-  delay?: number;
-  duration?: number;
-}) {
-  const count = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const controls = animate(count, value, { duration, delay, ease });
-    const unsub = count.on("change", (v) => setDisplay(Math.round(v)));
-    return () => {
-      controls.stop();
-      unsub();
-    };
-  }, [count, value, delay, duration]);
-
-  return <>{display}</>;
-}
-
 function ScoreRing({
   score,
   color,
@@ -159,7 +136,7 @@ function ScoreRing({
     <motion.div variants={itemVariants} className="flex flex-col items-end gap-2">
       <div className="relative flex items-baseline justify-end gap-1.5">
         <p className="score-value" style={{ color: isNow ? color : "var(--foreground)" }}>
-          <AnimatedNumber value={score} delay={delay} />
+          <GSAPCounter value={score} delay={delay} duration={0.9} />
         </p>
         <span className="font-mono text-[11px] font-medium text-[color:var(--muted)]">
           /100
