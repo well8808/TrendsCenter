@@ -1164,7 +1164,7 @@ export function CommandCenter({
           >
             <HeroOrb3D
               size="md"
-              className="absolute -right-12 -top-12 hidden opacity-45 sm:block sm:opacity-50 md:opacity-60"
+              className="absolute right-0 top-0 hidden opacity-40 sm:block md:opacity-55"
             />
             <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <motion.div variants={itemVariants} className="flex items-center gap-3">

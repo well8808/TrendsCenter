@@ -95,7 +95,7 @@ export default async function TrendsPage({
       <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="min-w-0 space-y-7">
           <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-7">
-            <HeroOrb3D className="pointer-events-none absolute -right-10 -top-10 hidden opacity-55 sm:block sm:opacity-65 md:opacity-80 xl:-right-4 xl:-top-4 xl:opacity-90" />
+            <HeroOrb3D className="absolute right-0 top-0 hidden opacity-60 sm:block md:opacity-75 xl:opacity-90" />
             <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
                 <Link
