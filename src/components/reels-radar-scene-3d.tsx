@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import * as THREE from "three";
+
+gsap.registerPlugin(useGSAP);
 
 interface ReelsRadarScene3DProps {
   className?: string;
@@ -103,8 +107,69 @@ function makeOrbit(radius: number, color: THREE.Color, opacity: number, tilt: nu
   return line;
 }
 
+function makeCurveLine(curve: THREE.CubicBezierCurve3, color: THREE.Color, opacity: number) {
+  return new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(curve.getPoints(96)),
+    new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+}
+
+function makePulse(color: THREE.Color, radius: number, opacity: number) {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 24, 12),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+}
+
 export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }: ReelsRadarScene3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (mode !== "radar") return;
+
+      const q = gsap.utils.selector(mountRef);
+      const steps = q<HTMLElement>(".radar-story-step");
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (!steps.length) return;
+
+      gsap.set(steps, { autoAlpha: 0.68, scale: 1, transformOrigin: "50% 50%" });
+
+      if (prefersReducedMotion) {
+        gsap.set(steps, { autoAlpha: 1 });
+        return;
+      }
+
+      const timeline = gsap.timeline({
+        repeat: -1,
+        repeatDelay: 0.2,
+        defaults: { duration: 0.36, ease: "power2.out" },
+      });
+
+      steps.forEach((step, index) => {
+        const at = index * 0.78;
+        timeline
+          .to(step, { autoAlpha: 1, scale: 1.08 }, at)
+          .to(step, { autoAlpha: 0.66, scale: 1 }, at + 0.42);
+      });
+
+      return () => timeline.kill();
+    },
+    { scope: mountRef, dependencies: [mode] },
+  );
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -121,14 +186,25 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
     const root = new THREE.Group();
+    const flow = new THREE.Group();
     const orbitItems = new THREE.Group();
     const clock = new THREE.Clock();
     const isRadar = mode === "radar";
+    let incomingCurve: THREE.CubicBezierCurve3 | undefined;
+    let decisionCurve: THREE.CubicBezierCurve3 | undefined;
+    let incomingPulse: THREE.Mesh | undefined;
+    let decisionPulse: THREE.Mesh | undefined;
+    let actionNode: THREE.Group | undefined;
     let frameId = 0;
     let visible = true;
 
     renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.65));
+    renderer.domElement.style.position = "absolute";
+    renderer.domElement.style.inset = "0";
+    renderer.domElement.style.zIndex = "0";
+    renderer.domElement.style.width = "100%";
+    renderer.domElement.style.height = "100%";
     mountElement.appendChild(renderer.domElement);
 
     camera.position.set(0, 0.08, 5.25);
@@ -170,6 +246,59 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
       orbitItems.add(item);
     });
     root.add(orbitItems);
+
+    if (isRadar) {
+      incomingCurve = new THREE.CubicBezierCurve3(
+        new THREE.Vector3(2.18, 0.58, 0.02),
+        new THREE.Vector3(1.36, 0.82, 0.5),
+        new THREE.Vector3(0.58, 0.38, 0.16),
+        new THREE.Vector3(0.02, 0.04, 0.04),
+      );
+      decisionCurve = new THREE.CubicBezierCurve3(
+        new THREE.Vector3(0.02, -0.04, 0.05),
+        new THREE.Vector3(0.52, -0.48, 0.28),
+        new THREE.Vector3(1.36, -0.74, 0.16),
+        new THREE.Vector3(2.02, -0.78, 0.03),
+      );
+
+      const sourceNode = makeSignalNode(palette.aqua, 0);
+      sourceNode.position.set(2.18, 0.58, 0.02);
+      sourceNode.scale.setScalar(1.18);
+
+      actionNode = makeSignalNode(palette.gold, 2);
+      actionNode.position.set(2.02, -0.78, 0.03);
+      actionNode.scale.setScalar(1.08);
+
+      incomingPulse = makePulse(palette.aqua, 0.055, 0.86);
+      decisionPulse = makePulse(palette.gold, 0.048, 0.72);
+
+      [0.42, 0.62, 0.8].forEach((position, index) => {
+        const gate = new THREE.Mesh(
+          new THREE.RingGeometry(0.035, 0.052, 22),
+          new THREE.MeshBasicMaterial({
+            color: index === 2 ? palette.hot : palette.gold,
+            transparent: true,
+            opacity: 0.5 * intensity,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+          }),
+        );
+        gate.position.copy(incomingCurve!.getPointAt(position));
+        gate.rotation.z = index * 0.36;
+        flow.add(gate);
+      });
+
+      flow.add(
+        makeCurveLine(incomingCurve, palette.aqua, 0.28 * intensity),
+        makeCurveLine(decisionCurve, palette.gold, 0.3 * intensity),
+        sourceNode,
+        actionNode,
+        incomingPulse,
+        decisionPulse,
+      );
+      root.add(flow);
+    }
 
     const starGeometry = new THREE.BufferGeometry();
     const starCount = isRadar ? 68 : 90;
@@ -218,8 +347,8 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     function render() {
       const elapsed = clock.getElapsedTime();
 
-      root.rotation.y = elapsed * 0.13;
-      root.rotation.x = Math.sin(elapsed * 0.34) * 0.08 - 0.08;
+      root.rotation.y = isRadar ? 0 : elapsed * 0.13;
+      root.rotation.x = isRadar ? -0.08 : Math.sin(elapsed * 0.34) * 0.08 - 0.08;
       core.scale.setScalar(1 + Math.sin(elapsed * 2.1) * 0.18);
       glow.scale.setScalar(1 + Math.sin(elapsed * 0.9) * 0.08);
       stars.rotation.y = elapsed * 0.025;
@@ -233,6 +362,27 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
         child.rotation.y = isRadar ? angle * 0.18 : -angle + Math.PI / 2;
         child.rotation.z = Math.sin(angle * 0.8) * (isRadar ? 0.22 : 0.12);
       });
+
+      if (incomingCurve && decisionCurve && incomingPulse && decisionPulse) {
+        const incomingT = (elapsed * 0.18) % 1;
+        const decisionT = (elapsed * 0.18 + 0.52) % 1;
+        const incomingWave = Math.sin(incomingT * Math.PI);
+        const decisionWave = Math.sin(decisionT * Math.PI);
+        const incomingMaterial = incomingPulse.material as THREE.MeshBasicMaterial;
+        const decisionMaterial = decisionPulse.material as THREE.MeshBasicMaterial;
+
+        incomingPulse.position.copy(incomingCurve.getPointAt(incomingT));
+        incomingPulse.scale.setScalar(0.8 + incomingWave * 1.15);
+        incomingMaterial.opacity = (0.18 + incomingWave * 0.78) * intensity;
+
+        decisionPulse.position.copy(decisionCurve.getPointAt(decisionT));
+        decisionPulse.scale.setScalar(0.7 + decisionWave * 1.0);
+        decisionMaterial.opacity = (0.16 + decisionWave * 0.64) * intensity;
+
+        if (actionNode) {
+          actionNode.scale.setScalar(1.04 + Math.max(0, Math.sin(decisionT * Math.PI)) * 0.2);
+        }
+      }
 
       renderer.render(scene, camera);
     }
@@ -285,7 +435,23 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     <div
       ref={mountRef}
       aria-hidden="true"
-      className={`pointer-events-none${className ? ` ${className}` : ""}`}
-    />
+      className={`pointer-events-none relative overflow-hidden${className ? ` ${className}` : ""}`}
+    >
+      {mode === "radar" && (
+        <>
+          <span className="radar-story-step absolute right-[8%] top-[21%] z-10 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
+            <span className="h-px w-6 bg-gradient-to-r from-transparent to-[rgba(88,200,190,0.68)]" />
+            EUA
+          </span>
+          <span className="radar-story-step absolute left-[45%] top-[47%] z-10 -translate-x-1/2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
+            BR
+          </span>
+          <span className="radar-story-step absolute bottom-[17%] right-[4%] z-10 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
+            acao
+            <span className="h-px w-6 bg-gradient-to-r from-[rgba(230,183,101,0.68)] to-transparent" />
+          </span>
+        </>
+      )}
+    </div>
   );
 }

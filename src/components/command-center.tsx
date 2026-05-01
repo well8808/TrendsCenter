@@ -33,7 +33,6 @@ import { useMemo, useState, useTransition } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { toggleSavedSignalAction } from "@/app/actions";
 import { GSAPCounter } from "@/components/gsap-counter";
-import { GSAPHeroReveal, GSAPWordSplit } from "@/components/gsap-hero-reveal";
 import { GSAPScrollEntrance, GSAPSectionReveal } from "@/components/gsap-scroll-entrance";
 import { GSAPTileReveal } from "@/components/gsap-tile-reveal";
 import { IngestionLab } from "@/components/ingestion-lab";
@@ -1204,34 +1203,24 @@ export function CommandCenter({
             <ReelsRadarScene3D
               mode="radar"
               intensity={0.95}
-              className="absolute left-1 top-0 h-[230px] w-[320px] opacity-78 sm:left-6 sm:top-3 sm:h-[270px] sm:w-[390px] md:left-8 md:top-4 md:h-[305px] md:w-[440px] md:opacity-95"
+              className="absolute left-1 top-0 h-[230px] w-[320px] opacity-[0.78] sm:left-6 sm:top-3 sm:h-[270px] sm:w-[390px] md:left-8 md:top-4 md:h-[305px] md:w-[440px] md:opacity-95"
             />
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,rgba(7,7,6,0),rgba(7,7,6,0.76)_58%,rgba(7,7,6,0.92))]"
             />
-            <div className="pointer-events-none absolute left-[258px] top-[126px] hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)] sm:flex md:left-[364px] md:top-[154px]">
-              <span className="h-px w-8 bg-gradient-to-r from-transparent to-[rgba(88,200,190,0.65)]" />
-              US
-            </div>
-            <div className="pointer-events-none absolute left-8 top-[126px] hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)] sm:flex md:top-[150px]">
-              BR
-              <span className="h-px w-8 bg-gradient-to-r from-[rgba(237,73,86,0.65)] to-transparent" />
-            </div>
-            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-6 pt-[210px] md:min-h-[322px] md:pt-[236px] xl:flex-row xl:items-end xl:justify-between">
-              <motion.div variants={itemVariants} className="flex items-center gap-3">
+            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 md:min-h-[322px] xl:flex-row xl:items-end xl:justify-between">
+              <motion.div variants={itemVariants} className="flex items-center gap-3 xl:w-[240px] xl:shrink-0 2xl:w-auto">
                 <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
                   <Command className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <GSAPHeroReveal
+                  <motion.h1
+                    variants={itemVariants}
                     className="text-[28px] font-semibold leading-tight tracking-[-0.02em] md:text-[38px]"
-                    delay={0.15}
                   >
-                    <GSAPWordSplit text="Reels" />
-                    {" "}
-                    <GSAPWordSplit text="Center" className="gradient-text-ig" />
-                  </GSAPHeroReveal>
+                    Reels <span className="gradient-text-ig">Center</span>
+                  </motion.h1>
                   <motion.p
                     variants={itemVariants}
                     className="mt-1.5 flex items-center gap-2 text-[13px] leading-5 text-[color:var(--muted)]"
@@ -1251,10 +1240,10 @@ export function CommandCenter({
                 </div>
               </motion.div>
 
-              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:min-w-[560px] xl:justify-end">
+              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:justify-end">
                 <motion.label
                   variants={itemVariants}
-                  className="app-control flex min-h-[var(--control-height)] w-full min-w-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] sm:flex-1 xl:w-[360px] xl:flex-none"
+                  className="app-control flex min-h-[var(--control-height)] w-full min-w-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] sm:flex-1 xl:w-[260px] xl:min-w-0 xl:flex-none 2xl:w-[360px]"
                 >
                   <Search className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                   <input
