@@ -3,6 +3,7 @@ import type { JobStatus } from "@prisma/client";
 import { dispatchDueJobs } from "@/lib/jobs/dispatcher";
 import { listRecentJobRuns } from "@/lib/repositories/job-run-repository";
 import { processAuthOutbox } from "@/lib/services/outbox-service";
+import { processDueProviderReelsImports } from "@/lib/services/reels-provider-import-service";
 import type { ApiTenantContext } from "@/lib/services/auth-context-service";
 
 function parseStatuses(value: string | null) {
@@ -55,6 +56,9 @@ export async function dispatchOperationalCron(options: { requestId: string; limi
     requestId: options.requestId,
     limit: options.limit,
   });
+  const providerReels = await processDueProviderReelsImports({
+    limit: options.limit,
+  });
   const outbox = await processAuthOutbox({
     requestId: options.requestId,
     limit: options.outboxLimit,
@@ -62,6 +66,7 @@ export async function dispatchOperationalCron(options: { requestId: string; limi
 
   return {
     jobs,
+    providerReels,
     outbox,
   };
 }

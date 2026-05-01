@@ -215,6 +215,38 @@ export function getProviderReelsImportStatusApi(
   return apiGet<ProviderReelsImportDto>(`/api/v1/reels/provider-import/${encodeURIComponent(jobId)}`, options);
 }
 
+/* ---------- AI-assisted Reels Search ---------- */
+
+export interface ReelsSearchAssistantBody {
+  goal: string;
+  market?: "BR" | "US" | "ALL";
+}
+
+export interface ReelsSearchAssistantPlanDto {
+  provider: "openai" | "rules";
+  configured: boolean;
+  summary: string;
+  recommendedQuery: string;
+  market: "BR" | "US" | "ALL";
+  sort: "score" | "growth" | "recency";
+  collectionMode: "profile_reels" | "reel_urls";
+  suggestedProfiles: string[];
+  includeKeywords: string[];
+  excludeKeywords: string[];
+  scoringFocus: string[];
+  automationNotes: string[];
+  nextActions: string[];
+  riskNotes: string[];
+  confidence: "LOW" | "MEDIUM" | "HIGH";
+}
+
+export function requestReelsSearchAssistantApi(
+  body: ReelsSearchAssistantBody,
+  options: Pick<ApiRequestOptions, "signal"> = {},
+) {
+  return apiPost<ReelsSearchAssistantPlanDto>("/api/v1/reels/search-assistant", body, options);
+}
+
 /* ---------- Health ---------- */
 
 export interface HealthDto {

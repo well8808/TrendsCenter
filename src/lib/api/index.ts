@@ -33,6 +33,7 @@ export {
   submitIngestionRequestApi,
   submitProviderReelsImportApi,
   getProviderReelsImportStatusApi,
+  requestReelsSearchAssistantApi,
   getHealthApi,
   type WorkspaceDto,
   type TrendsSearchParams,
@@ -45,5 +46,7 @@ export {
   type ProviderReelsImportBody,
   type ProviderReelsImportDto,
   type ProviderReelsImportMode,
+  type ReelsSearchAssistantBody,
+  type ReelsSearchAssistantPlanDto,
   type HealthDto,
 } from "@/lib/api/endpoints";

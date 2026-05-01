@@ -6,6 +6,8 @@ import { ok } from "@/lib/http/responses";
 import { assertInternalRequest } from "@/lib/services/auth-context-service";
 import { dispatchOperationalCron } from "@/lib/services/jobs-service";
 
+export const maxDuration = 60;
+
 async function dispatch(request: NextRequest) {
   return withRouteHandler(request, async (routeContext) => {
     assertInternalRequest(request);

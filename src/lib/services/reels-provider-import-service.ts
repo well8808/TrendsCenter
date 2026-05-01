@@ -13,7 +13,7 @@ import {
 import { AppError, badRequest, notFound, serviceUnavailable } from "@/lib/http/errors";
 import { stableHash } from "@/lib/ingestion/dedupe";
 import { markJobRunSucceeded } from "@/lib/repositories/job-run-repository";
-import type { ApiTenantContext } from "@/lib/services/auth-context-service";
+import { buildSystemTenantContext, type ApiTenantContext } from "@/lib/services/auth-context-service";
 import { ingestTrendVideos } from "@/lib/trends/ingestion";
 
 interface ProviderImportInput {
@@ -330,7 +330,7 @@ async function claimProviderJob(job: JobRun) {
       id: job.id,
       workspaceId: job.workspaceId,
       handler: providerJobHandler,
-      status: { in: ["QUEUED", "RUNNING", "FAILED"] as JobStatus[] },
+      status: { in: ["QUEUED", "RUNNING"] as JobStatus[] },
       OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lt: now } }],
     },
     data: {
@@ -440,4 +440,45 @@ export async function getProviderReelsImportStatus(context: ApiTenantContext, jo
       message,
     );
   }
+}
+
+export async function processDueProviderReelsImports(options: { limit?: number } = {}) {
+  const limit = Math.min(Math.max(options.limit ?? 5, 1), 20);
+  const now = new Date();
+  const jobs = await getPrisma().jobRun.findMany({
+    where: {
+      handler: providerJobHandler,
+      status: { in: ["QUEUED", "RUNNING"] as JobStatus[] },
+      availableAt: { lte: now },
+    },
+    orderBy: [{ availableAt: "asc" }, { createdAt: "asc" }],
+    take: limit,
+  });
+  const summary = {
+    checked: 0,
+    imported: 0,
+    pending: 0,
+    failed: 0,
+  };
+
+  for (const job of jobs) {
+    try {
+      const context = await buildSystemTenantContext(job.workspaceId, "reels-provider-poller@internal");
+      const result = await getProviderReelsImportStatus(context, job.id);
+      summary.checked += 1;
+
+      if (result.collectionStatus === "imported") {
+        summary.imported += 1;
+      } else if (result.collectionStatus === "failed") {
+        summary.failed += 1;
+      } else {
+        summary.pending += 1;
+      }
+    } catch {
+      summary.checked += 1;
+      summary.failed += 1;
+    }
+  }
+
+  return summary;
 }

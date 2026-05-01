@@ -12,6 +12,7 @@ import {
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
+import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
 import { requireTenantContext } from "@/lib/auth/session";
@@ -189,6 +190,8 @@ export default async function TrendsPage({
 
         <aside className="min-w-0 opacity-95 lg:sticky lg:top-5 lg:h-[calc(100dvh-40px)]">
           <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-10 pr-1">
+            <ReelsSearchAssistant />
+
             <ProviderReelsImportForm />
 
             <IngestionRequestForm />
