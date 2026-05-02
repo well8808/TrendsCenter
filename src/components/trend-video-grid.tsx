@@ -895,10 +895,15 @@ function DecisionShelf({ results }: { results: TrendVideoView[] }) {
                       </p>
                       {idea ? (
                         <>
-                          <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-[color:var(--foreground)]">
-                            {idea.hook}
-                          </p>
-                          <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-[color:var(--hot)]">
+                          <div className="mt-2 grid gap-1.5 rounded-[var(--radius-sm)] border border-[rgba(237,73,86,0.14)] bg-[rgba(237,73,86,0.035)] p-2.5">
+                            <p className="line-clamp-2 text-[12px] leading-5 text-[color:var(--foreground)]">
+                              Gancho: {idea.hook}
+                            </p>
+                            <p className="line-clamp-1 text-[11px] leading-4 text-[color:var(--muted-strong)]">
+                              CTA: {idea.cta}
+                            </p>
+                          </div>
+                          <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-[color:var(--hot)] group-hover:text-[color:var(--foreground)]">
                             abrir pauta completa
                             <ExternalLink className="h-3 w-3" aria-hidden="true" />
                           </span>

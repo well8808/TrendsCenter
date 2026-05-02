@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { OpportunityDecisionView } from "@/lib/trends/opportunity-actions";
-import { buildContentIdeaBrief } from "@/lib/trends/content-idea-brief";
+import { buildContentIdeaBrief, formatContentIdeaBriefForCopy } from "@/lib/trends/content-idea-brief";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 
 const createdDecision: OpportunityDecisionView = {
@@ -211,5 +211,35 @@ describe("buildContentIdeaBrief", () => {
 
     expect(idea.evidence).not.toEqual(expect.arrayContaining([expect.stringContaining("Signal relacionado")]));
     expect(idea.formatToCopy).toContain("adaptada");
+  });
+
+  it("formats the ready brief as copyable production material", () => {
+    const idea = buildContentIdeaBrief({
+      reel: {
+        title: "Creator mostra bastidor de lancamento em tres cenas",
+        caption: "Gancho rapido, prova visual do processo e chamada para comentar qual cena prendeu mais atencao",
+        creator: "brandlab",
+        market: "BR",
+        origin: "BRIGHT_DATA",
+        trendScore: 86,
+        views: 1_600_000,
+        growthViews: 140_000,
+        evidenceCount: 2,
+        snapshotCount: 2,
+        hashtags: ["produto"],
+      },
+      opportunityBrief: buildBaseBrief(),
+      decision: createdDecision,
+    });
+
+    const copy = formatContentIdeaBriefForCopy(idea);
+
+    expect(copy).toContain("Ideia central:");
+    expect(copy).toContain("Gancho:");
+    expect(copy).toContain("Estrutura do conteudo:");
+    expect(copy).toContain("Legenda inicial:");
+    expect(copy).toContain("CTA:");
+    expect(copy).toContain("Evidencias usadas:");
+    expect(copy).toContain("Score real: 86/100");
   });
 });

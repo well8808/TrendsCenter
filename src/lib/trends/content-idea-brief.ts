@@ -211,3 +211,28 @@ export function buildContentIdeaBrief(input: ContentIdeaBriefInput): ContentIdea
     confidenceLabel: confidenceLabelFor(input),
   };
 }
+
+export function formatContentIdeaBriefForCopy(idea: ContentIdeaBrief) {
+  const structure = idea.suggestedStructure.map((step, index) => `${index + 1}. ${step}`).join("\n");
+  const evidence = idea.evidence.map((item) => `- ${item}`).join("\n");
+
+  return [
+    idea.title,
+    "",
+    `Ideia central: ${idea.angle}`,
+    `Gancho: ${idea.hook}`,
+    `Formato para adaptar: ${idea.formatToCopy}`,
+    "",
+    "Estrutura do conteudo:",
+    structure,
+    "",
+    `Legenda inicial: ${idea.captionStarter}`,
+    `CTA: ${idea.cta}`,
+    `Adaptacao: ${idea.adaptationNotes}`,
+    `Cuidados: ${idea.riskNotes}`,
+    `Confianca: ${idea.confidenceLabel}`,
+    "",
+    "Evidencias usadas:",
+    evidence,
+  ].join("\n");
+}
