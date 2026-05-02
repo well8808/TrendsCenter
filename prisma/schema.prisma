@@ -138,6 +138,14 @@ enum OpportunityDecisionAction {
   CREATE_CONTENT_IDEA
 }
 
+enum ContentDraftStatus {
+  DRAFT
+  READY
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
 enum AuditEventType {
   SIGNAL_CREATED
   SIGNAL_UPDATED
@@ -280,6 +288,7 @@ model User {
   actedAuthEvents         AuthEvent[]              @relation("AuthEventActor")
   searchQueryLogs         SearchQueryLog[]
   opportunityDecisions    OpportunityDecision[]
+  contentDrafts           ContentDraft[]
 }
 
 model Workspace {
@@ -319,6 +328,7 @@ model Workspace {
   trendSources             TrendSource[]
   externalOAuthConnections ExternalOAuthConnection[]
   opportunityDecisions     OpportunityDecision[]
+  contentDrafts            ContentDraft[]
 }
 
 model WorkspaceMember {
@@ -712,11 +722,47 @@ model OpportunityDecision {
   notes       String?
   createdAt   DateTime                  @default(now())
   updatedAt   DateTime                  @updatedAt
+  contentDrafts ContentDraft[]
 
   @@unique([workspaceId, userId, videoId])
   @@index([workspaceId, action, updatedAt])
   @@index([workspaceId, userId, action, updatedAt])
   @@index([workspaceId, signalId])
+}
+
+model ContentDraft {
+  id                    String               @id @default(cuid())
+  workspaceId           String
+  workspace             Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId               String
+  video                 Video                @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  opportunityDecisionId String?
+  opportunityDecision   OpportunityDecision? @relation(fields: [opportunityDecisionId], references: [id], onDelete: SetNull)
+  title                 String
+  centralIdea           String
+  hook                  String
+  scriptDraft           String
+  captionDraft          String
+  cta                   String
+  structureText         String
+  riskNotes             String
+  evidenceJson          Json?
+  status                ContentDraftStatus   @default(DRAFT)
+  scheduledFor          DateTime?
+  publishedAt           DateTime?
+  channel               String?
+  notes                 String?
+  source                String               @default("OPPORTUNITY_BRIEF")
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@unique([workspaceId, userId, videoId])
+  @@index([workspaceId, userId, status, updatedAt])
+  @@index([workspaceId, status, updatedAt])
+  @@index([workspaceId, videoId])
+  @@index([workspaceId, opportunityDecisionId])
 }
 
 model AuditEvent {
@@ -1061,6 +1107,7 @@ model Video {
   snapshots            TrendSnapshot[]
   evidence             TrendEvidence[]
   opportunityDecisions OpportunityDecision[]
+  contentDrafts        ContentDraft[]
 
   @@unique([workspaceId, dedupeKey])
   @@index([workspaceId, market, trendScore])

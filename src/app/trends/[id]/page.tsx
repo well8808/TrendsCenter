@@ -19,6 +19,7 @@ import {
 import { ContentIdeaBriefPanel } from "@/components/content-idea-brief-panel";
 import { OpportunityDecisionPanel } from "@/components/opportunity-decision-panel";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
+import { createOrOpenContentDraftAction } from "@/app/studio/actions";
 import { requireTenantContext } from "@/lib/auth/session";
 import { buildContentIdeaBrief } from "@/lib/trends/content-idea-brief";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
@@ -353,7 +354,12 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
           </section>
 
-          <ContentIdeaBriefPanel idea={contentIdea} />
+          <ContentIdeaBriefPanel
+            idea={contentIdea}
+            videoId={trend.id}
+            contentDraft={trend.contentDraft}
+            createDraftAction={createOrOpenContentDraftAction}
+          />
 
           {/* ── Quick metrics ── */}
           <section className="grid gap-3 sm:grid-cols-3" aria-label="Métricas rápidas">

@@ -114,6 +114,7 @@ const itemVariants: Variants = {
 const navItems = [
   { label: "Sala de Sinais", icon: LayoutDashboard, key: "cc" },
   { label: "Biblioteca Viral", icon: Inbox, key: "library" },
+  { label: "Estudio de Conteudo", icon: Bookmark, key: "studio" },
   { label: "Reels BR", icon: Clapperboard, key: "radar-br" },
   { label: "Sinais EUA", icon: Globe2, key: "us" },
   { label: "Fontes e coleta", icon: Database, key: "instagram-sources" },
@@ -1372,6 +1373,11 @@ export function CommandCenter({
       return;
     }
 
+    if (key === "studio") {
+      router.push("/studio");
+      return;
+    }
+
     if (key === "cc") {
       resetSignalFilters();
       scrollToSection("command-center-top");
@@ -1543,6 +1549,12 @@ export function CommandCenter({
                     >
                       Biblioteca Viral
                       <span className="metric-number text-[color:var(--hot)]">{reelStats.total}</span>
+                    </Link>
+                    <Link
+                      href="/studio"
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(247,119,55,0.22)] bg-[rgba(247,119,55,0.06)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted-strong)] transition hover:border-[rgba(247,119,55,0.38)] hover:text-[color:var(--foreground)]"
+                    >
+                      Estudio
                     </Link>
                     <button
                       type="button"

@@ -82,6 +82,7 @@ export default async function TrendsPage({
     sound: video.sound?.title,
     hashtags: video.hashtags,
     decision: video.decision,
+    contentDraft: video.contentDraft,
   }));
   const viralReels: ViralReelNode[] = videos.map((video) => ({
     id: video.id,
@@ -169,6 +170,12 @@ export default async function TrendsPage({
                     className="inline-flex items-center gap-2 rounded-full border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.34)] hover:text-[color:var(--foreground)]"
                   >
                     Sala de Sinais
+                  </Link>
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-2 rounded-full border border-[rgba(247,119,55,0.2)] bg-[rgba(247,119,55,0.055)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted-strong)] transition hover:border-[rgba(247,119,55,0.36)] hover:text-[color:var(--foreground)]"
+                  >
+                    Estudio de Conteudo
                   </Link>
                   <a
                     href="#coleta"

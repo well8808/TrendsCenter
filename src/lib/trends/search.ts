@@ -6,6 +6,8 @@ import {
   getOpportunityDecisionForVideo,
   getOpportunityDecisionMap,
 } from "@/lib/trends/decision-queue";
+import { getContentDraftForVideo, getContentDraftMap } from "@/lib/trends/content-draft-query";
+import type { ContentDraftSummary } from "@/lib/trends/content-draft";
 import type { OpportunityDecisionView } from "@/lib/trends/opportunity-actions";
 import { normalizeReelMedia, type NormalizedReelMedia } from "@/lib/trends/reel-media";
 
@@ -104,6 +106,7 @@ export interface TrendVideoResult {
   evidenceCount: number;
   snapshotCount: number;
   decision?: OpportunityDecisionView;
+  contentDraft?: ContentDraftSummary;
 }
 
 export interface TrendDetail extends TrendVideoResult {
@@ -163,7 +166,11 @@ function stringArray(value: Prisma.JsonValue | null | undefined) {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-function mapVideo(video: TrendVideoPayload, decision?: OpportunityDecisionView): TrendVideoResult {
+function mapVideo(
+  video: TrendVideoPayload,
+  decision?: OpportunityDecisionView,
+  contentDraft?: ContentDraftSummary,
+): TrendVideoResult {
   return {
     id: video.id,
     title: video.title,
@@ -214,6 +221,7 @@ function mapVideo(video: TrendVideoPayload, decision?: OpportunityDecisionView):
     evidenceCount: video.evidence.length,
     snapshotCount: video.snapshots.length,
     decision,
+    contentDraft,
   };
 }
 
@@ -277,8 +285,12 @@ export async function getTrendSearchData(
       select: { collectedAt: true },
     }),
   ]);
-  const decisions = await getOpportunityDecisionMap(context, results.map((video) => video.id));
-  const mapped = results.map((video) => mapVideo(video, decisions.get(video.id)));
+  const videoIds = results.map((video) => video.id);
+  const [decisions, drafts] = await Promise.all([
+    getOpportunityDecisionMap(context, videoIds),
+    getContentDraftMap(context, videoIds),
+  ]);
+  const mapped = results.map((video) => mapVideo(video, decisions.get(video.id), drafts.get(video.id)));
   const avgScore = mapped.length
     ? Math.round(mapped.reduce((totalScore, video) => totalScore + video.trendScore, 0) / mapped.length)
     : 0;
@@ -357,8 +369,11 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
     orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
     take: 3,
   });
-  const decision = await getOpportunityDecisionForVideo(context, video.id);
-  const mapped = mapVideo(video, decision);
+  const [decision, contentDraft] = await Promise.all([
+    getOpportunityDecisionForVideo(context, video.id),
+    getContentDraftForVideo(context, video.id),
+  ]);
+  const mapped = mapVideo(video, decision, contentDraft);
 
   return {
     ...mapped,

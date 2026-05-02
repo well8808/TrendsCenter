@@ -1,14 +1,19 @@
 "use client";
 
 import { Check, ClipboardCheck, Copy, Lightbulb, ListChecks, MessageSquareText, ShieldAlert, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import type { ContentDraftSummary } from "@/lib/trends/content-draft";
 import type { ContentIdeaBrief } from "@/lib/trends/content-idea-brief";
 import { formatContentIdeaBriefForCopy } from "@/lib/trends/content-idea-brief";
 import { cn } from "@/lib/utils";
 
 interface ContentIdeaBriefPanelProps {
   idea: ContentIdeaBrief;
+  videoId?: string;
+  contentDraft?: ContentDraftSummary;
+  createDraftAction?: (formData: FormData) => void | Promise<void>;
 }
 
 interface CopyButtonProps {
@@ -74,7 +79,12 @@ function CopyButton({ copyKey, label, text, activeKey, onCopy, variant = "ghost"
   );
 }
 
-export function ContentIdeaBriefPanel({ idea }: ContentIdeaBriefPanelProps) {
+export function ContentIdeaBriefPanel({
+  idea,
+  videoId,
+  contentDraft,
+  createDraftAction,
+}: ContentIdeaBriefPanelProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullBrief = useMemo(() => formatContentIdeaBriefForCopy(idea), [idea]);
@@ -137,7 +147,28 @@ export function ContentIdeaBriefPanel({ idea }: ContentIdeaBriefPanelProps) {
 
       {idea.isReady ? (
         <>
-          <div className="mt-5 flex flex-wrap gap-2" aria-label="Acoes de copia da pauta">
+          <div className="mt-5 flex flex-wrap gap-2" aria-label="Acoes da pauta">
+            {contentDraft ? (
+              <Link
+                href={`/studio/${contentDraft.id}`}
+                className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-[rgba(64,224,208,0.28)] bg-[rgba(64,224,208,0.08)] px-3 py-2 text-[11px] font-semibold text-[color:var(--aqua)] transition hover:bg-[rgba(64,224,208,0.14)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--aqua)]"
+              >
+                Continuar no Estudio
+                <span className="rounded-full border border-[rgba(255,255,255,0.1)] px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[color:var(--muted-strong)]">
+                  {contentDraft.statusLabel}
+                </span>
+              </Link>
+            ) : createDraftAction && videoId ? (
+              <form action={createDraftAction}>
+                <input type="hidden" name="videoId" value={videoId} />
+                <button
+                  type="submit"
+                  className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.16)] px-3 py-2 text-[11px] font-semibold text-[color:var(--hot)] transition hover:bg-[rgba(237,73,86,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--hot)]"
+                >
+                  Criar roteiro editavel
+                </button>
+              </form>
+            ) : null}
             <CopyButton copyKey="full" label="Copiar pauta completa" text={fullBrief} activeKey={copiedKey} onCopy={handleCopy} variant="primary" />
             <CopyButton copyKey="hook" label="Copiar gancho" text={idea.hook} activeKey={copiedKey} onCopy={handleCopy} />
             <CopyButton copyKey="structure" label="Copiar estrutura" text={structure} activeKey={copiedKey} onCopy={handleCopy} />

@@ -8,6 +8,7 @@ import type { ComponentType } from "react";
 import { GSAPCounter } from "@/components/gsap-counter";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { buildContentIdeaBrief } from "@/lib/trends/content-idea-brief";
+import type { ContentDraftSummary } from "@/lib/trends/content-draft";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import {
   getOpportunityDecisionQueueGroup,
@@ -54,6 +55,7 @@ export interface TrendVideoView {
   sound?: string;
   hashtags: string[];
   decision?: OpportunityDecisionView;
+  contentDraft?: ContentDraftSummary;
 }
 
 /* ─── Helpers ──────────────────────────────────────────────── */
@@ -877,18 +879,32 @@ function DecisionShelf({ results }: { results: TrendVideoView[] }) {
               {group.items.length > 0 ? (
                 group.items.slice(0, 3).map((video) => {
                   const idea = group.key === "ideas" ? contentIdeaForVideo(video) : null;
+                  const draft = video.contentDraft;
+                  const href = draft ? `/studio/${draft.id}` : `/trends/${video.id}`;
+                  const ctaLabel = draft
+                    ? "continuar no Estudio"
+                    : group.key === "ideas"
+                      ? "criar roteiro"
+                      : "abrir Opportunity Brief";
 
                   return (
                     <Link
                       key={video.id}
-                      href={`/trends/${video.id}`}
+                      href={href}
                       className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.018)] p-3 transition hover:border-[rgba(237,73,86,0.28)]"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="line-clamp-1 min-w-0 text-sm font-semibold text-[color:var(--foreground)] group-hover:text-[color:var(--hot)]">
                           {video.creator ? `@${video.creator}` : video.origin}
                         </p>
-                        <DecisionBadge decision={video.decision} />
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {draft ? (
+                            <span className="rounded-full border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-[color:var(--aqua)]">
+                              {draft.statusLabel}
+                            </span>
+                          ) : null}
+                          <DecisionBadge decision={video.decision} />
+                        </div>
                       </div>
                       <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">
                         {idea ? idea.title : video.title}
@@ -904,7 +920,7 @@ function DecisionShelf({ results }: { results: TrendVideoView[] }) {
                             </p>
                           </div>
                           <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-[color:var(--hot)] group-hover:text-[color:var(--foreground)]">
-                            abrir pauta completa
+                            {ctaLabel}
                             <ExternalLink className="h-3 w-3" aria-hidden="true" />
                           </span>
                         </>
