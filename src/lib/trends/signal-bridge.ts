@@ -27,6 +27,45 @@ const signalVideoInclude = {
 type Tx = Prisma.TransactionClient;
 type SignalVideo = Prisma.VideoGetPayload<{ include: typeof signalVideoInclude }>;
 
+const signalScoreModelVersion = "score-v0.2-signal-intelligence-v1";
+
+type OpportunityKind =
+  | "authority_news"
+  | "entertainment"
+  | "debate"
+  | "tutorial"
+  | "audio_trend"
+  | "public_creator"
+  | "replicable_format"
+  | "high_traction";
+
+interface SignalOpportunityInput {
+  title: string;
+  caption?: string | null;
+  creatorHandle?: string | null;
+  sourceTitle: string;
+  soundTitle?: string | null;
+  hashtags: string[];
+  viewCount: bigint;
+  score: number;
+  market: "BR" | "US";
+  hasSound: boolean;
+}
+
+interface SignalOpportunity {
+  kind: OpportunityKind;
+  label: string;
+  type: "AUDIO" | "FORMAT" | "HASHTAG" | "CREATOR" | "REVIVAL" | "US_TO_BR";
+  title: string;
+  reason: string;
+  decision: string;
+  nextAction: string;
+  evidenceTitle: string;
+  evidenceNote: string;
+  tags: string[];
+  scoreDrivers: string[];
+}
+
 function signalKey(video: SignalVideo) {
   return `reel-signal:${video.dedupeKey}`;
 }
@@ -59,20 +98,117 @@ function formatCompactCount(value: bigint) {
   return String(Math.round(number));
 }
 
-function signalType(video: SignalVideo) {
-  if (video.soundId) {
-    return "AUDIO" as const;
+function normalizeText(...values: Array<string | null | undefined>) {
+  return values
+    .filter(Boolean)
+    .join(" ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function hasAny(textValue: string, terms: string[]) {
+  return terms.some((term) => textValue.includes(term));
+}
+
+function compactHandle(input: SignalOpportunityInput) {
+  return input.creatorHandle ? `@${input.creatorHandle}` : input.sourceTitle;
+}
+
+export function classifySignalOpportunity(input: SignalOpportunityInput): SignalOpportunity {
+  const textValue = normalizeText(input.title, input.caption, input.hashtags.join(" "), input.soundTitle);
+  const views = formatCompactCount(input.viewCount);
+  const handle = compactHandle(input);
+  const traction = `${views} views, score ${input.score}, mercado ${input.market}`;
+
+  let kind: OpportunityKind = "replicable_format";
+  let label = "Formato replicavel";
+  let type: SignalOpportunity["type"] = "FORMAT";
+  let trigger = "estrutura do Reel pode ser quebrada em gancho, promessa, prova e fechamento";
+
+  if (hasAny(textValue, ["breaking", "news", "noticia", "report", "official", "anuncia", "confirmou", "alerta"])) {
+    kind = "authority_news";
+    label = "Autoridade/noticia";
+    type = "CREATOR";
+    trigger = "caption sugere noticia, autoridade ou acontecimento com valor de timing";
+  } else if (hasAny(textValue, ["controvers", "debate", "critic", "vs", "versus", "treta", "polemica", "respondeu"])) {
+    kind = "debate";
+    label = "Polemica/debate";
+    type = "FORMAT";
+    trigger = "texto indica conflito, comparacao ou discussao que pode puxar comentarios";
+  } else if (hasAny(textValue, ["how to", "tutorial", "passo", "dica", "aprenda", "guia", "como fazer", "hack", "tips"])) {
+    kind = "tutorial";
+    label = "Tutorial/educativo";
+    type = "FORMAT";
+    trigger = "conteudo parece ensinar ou demonstrar um processo reutilizavel";
+  } else if (hasAny(textValue, ["celebrity", "superstar", "creator", "influencer", "atleta", "artista", "famos", "omar", "wwe", "wrestlemania"])) {
+    kind = "public_creator";
+    label = "Creator/figura publica";
+    type = "CREATOR";
+    trigger = "Reel usa figura publica, fandom ou reconhecimento imediato como motor de atencao";
+  } else if (input.hasSound && hasAny(textValue, ["audio", "sound", "song", "musica", "trend", "remix", "viral"])) {
+    kind = "audio_trend";
+    label = "Tendencia de audio";
+    type = "AUDIO";
+    trigger = "ha sinal de audio/som conectado ao desempenho do Reel";
+  } else if (hasAny(textValue, ["fans", "surprise", "surprised", "meme", "funny", "comedy", "reaction", "react", "humor"])) {
+    kind = "entertainment";
+    label = "Entretenimento";
+    type = "FORMAT";
+    trigger = "caption aponta entretenimento, reacao ou momento de fandom facil de adaptar";
+  } else if (input.score >= 70 || input.viewCount >= BigInt(1_000_000)) {
+    kind = "high_traction";
+    label = "Alta tracao";
+    type = input.creatorHandle ? "CREATOR" : "FORMAT";
+    trigger = "metricas indicam tracao forte mesmo sem categoria textual dominante";
+  } else if (input.hasSound) {
+    kind = "audio_trend";
+    label = "Tendencia de audio";
+    type = "AUDIO";
+    trigger = "Reel tem audio associado e pode abrir teste de som/formato";
   }
 
-  if (video.creatorId) {
-    return "CREATOR" as const;
-  }
+  const title = `${label}: ${handle}`;
+  const reason = `${trigger}. Evidencia real: ${traction}.`;
+  const decision = input.score >= 70
+    ? `Priorizar leitura do gancho e adaptar o padrao de ${label.toLowerCase()} para um teste BR.`
+    : `Manter como sinal ${label.toLowerCase()} e comparar com mais Reels antes de virar aposta principal.`;
+  const nextAction = kind === "audio_trend"
+    ? "Verificar se o audio pode ser usado comercialmente; se sim, testar variacao curta com fonte registrada."
+    : kind === "tutorial"
+      ? "Quebrar o passo a passo em roteiro curto e validar se existe prova visual suficiente."
+      : "Abrir o Reel, mapear gancho/caption/estrutura e registrar uma hipotese criativa com fonte vinculada.";
+  const evidenceTitle = `${label}: ${compactText(input.title, "Reel importado", 72)}`;
+  const evidenceNote = `${reason} URL e metricas foram preservadas na coleta licenciada.`;
+  const tags = [
+    "reel-real",
+    input.market.toLowerCase(),
+    kind.replace("_", "-"),
+    `score-${input.score}`,
+    input.creatorHandle ? `@${input.creatorHandle}` : undefined,
+    ...input.hashtags.slice(0, 4).map((tag) => `#${tag}`),
+  ].filter((tag): tag is string => Boolean(tag));
+  const scoreDrivers = [
+    label,
+    `${views} views`,
+    `score ${input.score}`,
+    input.market,
+    input.hasSound ? "audio conectado" : "sem audio priorizado",
+  ];
 
-  if (video.hashtags.length > 0) {
-    return "HASHTAG" as const;
-  }
-
-  return "FORMAT" as const;
+  return {
+    kind,
+    label,
+    type,
+    title,
+    reason,
+    decision,
+    nextAction,
+    evidenceTitle,
+    evidenceNote,
+    tags,
+    scoreDrivers,
+  };
 }
 
 function priorityForScore(score: number) {
@@ -142,50 +278,52 @@ function scoreInputForVideo(video: SignalVideo) {
   };
 }
 
-function buildSignalCopy(video: SignalVideo) {
-  const handle = video.creator?.handle ? `@${video.creator.handle}` : video.source.title;
-  const views = formatCompactCount(video.currentViewCount);
-  const title = `Reel em alta: ${handle}`;
-  const summary = `Reel real importado com ${views} visualizacoes e score ${video.trendScore}. Use como sinal de formato, criador ou gancho antes de adaptar.`;
-  const decision = video.trendScore >= 70
-    ? "Priorizar analise do gancho, formato e promessa antes de adaptar para o radar BR."
-    : "Manter em observacao e comparar com outros Reels antes de transformar em acao.";
-  const nextAction = "Abrir o Reel, revisar caption/audio/estrutura e registrar a hipotese criativa com fonte vinculada.";
+function analyzeVideo(video: SignalVideo) {
+  const opportunity = classifySignalOpportunity({
+    title: video.title,
+    caption: video.caption,
+    creatorHandle: video.creator?.handle,
+    sourceTitle: video.source.title,
+    soundTitle: video.sound?.title,
+    hashtags: video.hashtags.map((item) => item.hashtag.tag),
+    viewCount: video.currentViewCount,
+    score: video.trendScore,
+    market: video.market,
+    hasSound: Boolean(video.soundId),
+  });
 
   return {
-    title,
-    summary,
+    ...opportunity,
+    summary: `${opportunity.reason} Use como sinal de decisao, nao como conclusao final.`,
     audience: video.market === "BR" ? "Radar Brasil" : "Early signal EUA",
     trendWindow: video.postedAt ? "validar nas proximas 24-48h" : "snapshot importado; validar recencia manualmente",
-    decision,
-    nextAction,
   };
-}
-
-function signalTags(video: SignalVideo) {
-  const tags = [
-    "reel-real",
-    video.market.toLowerCase(),
-    `score-${video.trendScore}`,
-    video.creator?.handle ? `@${video.creator.handle}` : undefined,
-    ...video.hashtags.slice(0, 4).map((item) => `#${item.hashtag.tag}`),
-  ];
-
-  return tags.filter((tag): tag is string => Boolean(tag));
 }
 
 async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: SignalVideo) {
   const dedupeKey = signalKey(video);
   const existing = await tx.signal.findUnique({
     where: { workspaceId_dedupeKey: { workspaceId: context.workspaceId, dedupeKey } },
-    select: { id: true, lastIngestedAt: true },
+    select: {
+      id: true,
+      lastIngestedAt: true,
+      scores: {
+        orderBy: { calculatedAt: "desc" },
+        select: { modelVersion: true },
+        take: 1,
+      },
+    },
   });
 
-  if (existing?.lastIngestedAt && existing.lastIngestedAt >= video.updatedAt) {
+  if (
+    existing?.lastIngestedAt &&
+    existing.lastIngestedAt >= video.updatedAt &&
+    existing.scores[0]?.modelVersion === signalScoreModelVersion
+  ) {
     return { signalId: existing.id, changed: false };
   }
 
-  const copy = buildSignalCopy(video);
+  const copy = analyzeVideo(video);
   const input = scoreInputForVideo(video);
   const confidence = confidenceForScore(video.trendScore);
   const now = new Date();
@@ -193,7 +331,7 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
   const createOrUpdate = {
     title: copy.title,
     summary: copy.summary,
-    type: signalType(video),
+    type: copy.type,
     market: video.market,
     audience: copy.audience,
     status: statusForScore(video.trendScore),
@@ -204,13 +342,8 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
     trendWindow: copy.trendWindow,
     decision: copy.decision,
     nextAction: copy.nextAction,
-    tags: signalTags(video),
-    scoreDrivers: [
-      "Reel importado",
-      `${formatCompactCount(video.currentViewCount)} views`,
-      `score ${video.trendScore}`,
-      video.market,
-    ],
+    tags: copy.tags,
+    scoreDrivers: copy.scoreDrivers,
     dedupeKey,
     importBatchId: video.importBatchId,
     lastIngestedAt: video.updatedAt,
@@ -249,8 +382,8 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
       revivalStrength: input.revivalStrength,
       evidenceQuality: input.evidenceQuality,
       riskPenalty: input.riskPenalty,
-      modelVersion: "score-v0.1-reel-bridge",
-      explanation: "Signal derivado de Reel real importado, usando metricas e score ja persistidos.",
+      modelVersion: signalScoreModelVersion,
+      explanation: copy.reason,
     },
   });
 
@@ -261,10 +394,10 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
       sourceId: video.sourceId,
       importBatchId: video.importBatchId,
       jobRunId: video.jobRunId,
-      title: latestEvidence?.title ?? compactText(video.title, "Reel importado"),
+      title: copy.evidenceTitle,
       url: latestEvidence?.url ?? video.url,
       excerpt: compactText(video.caption, video.title, 180),
-      note: latestEvidence?.note ?? `Reel real com ${formatCompactCount(video.currentViewCount)} visualizacoes no momento da coleta.`,
+      note: copy.evidenceNote,
       quality: confidence,
       capturedAt: video.collectedAt,
     },
@@ -275,10 +408,10 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
       importBatchId: video.importBatchId,
       jobRunId: video.jobRunId,
       dedupeKey: evidenceKey(video),
-      title: latestEvidence?.title ?? compactText(video.title, "Reel importado"),
+      title: copy.evidenceTitle,
       url: latestEvidence?.url ?? video.url,
       excerpt: compactText(video.caption, video.title, 180),
-      note: latestEvidence?.note ?? `Reel real com ${formatCompactCount(video.currentViewCount)} visualizacoes no momento da coleta.`,
+      note: copy.evidenceNote,
       quality: confidence,
       capturedAt: video.collectedAt,
       isDemo: video.isDemo,
@@ -332,6 +465,9 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
         videoId: video.id,
         url: video.url,
         trendScore: video.trendScore,
+        intelligenceVersion: signalScoreModelVersion,
+        opportunityKind: copy.kind,
+        reason: copy.reason,
       },
     },
   });

@@ -463,10 +463,10 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
     };
     let currentSignals = signals;
 
-    if (currentSignals.length === 0 && reelStats.total > 0) {
+    if (reelStats.total > 0) {
       const promotedCount = await promoteImportedReelsToSignals(context, 3);
 
-      if (promotedCount > 0) {
+      if (promotedCount > 0 || currentSignals.length === 0) {
         currentSignals = await prisma.signal.findMany({
           where: { workspaceId: context.workspaceId },
           include: signalInclude,
