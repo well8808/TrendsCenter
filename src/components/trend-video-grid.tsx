@@ -7,6 +7,7 @@ import type { ComponentType } from "react";
 
 import { GSAPCounter } from "@/components/gsap-counter";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
+import { buildContentIdeaBrief } from "@/lib/trends/content-idea-brief";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import {
   getOpportunityDecisionQueueGroup,
@@ -102,6 +103,29 @@ function briefForVideo(video: TrendVideoView) {
     views: video.views,
     sound: video.sound,
     hashtags: video.hashtags,
+  });
+}
+
+function contentIdeaForVideo(video: TrendVideoView) {
+  const opportunityBrief = briefForVideo(video);
+
+  return buildContentIdeaBrief({
+    reel: {
+      title: video.title,
+      caption: video.caption,
+      creator: video.creator,
+      market: video.market,
+      origin: video.origin,
+      trendScore: video.trendScore,
+      views: video.views,
+      growthViews: video.growthViews,
+      evidenceCount: video.evidenceCount,
+      snapshotCount: video.snapshotCount,
+      sound: video.sound,
+      hashtags: video.hashtags,
+    },
+    opportunityBrief,
+    decision: video.decision,
   });
 }
 
@@ -851,23 +875,38 @@ function DecisionShelf({ results }: { results: TrendVideoView[] }) {
             </div>
             <div className="mt-3 grid gap-2">
               {group.items.length > 0 ? (
-                group.items.slice(0, 3).map((video) => (
-                  <Link
-                    key={video.id}
-                    href={`/trends/${video.id}`}
-                    className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.018)] p-3 transition hover:border-[rgba(237,73,86,0.28)]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="line-clamp-1 min-w-0 text-sm font-semibold text-[color:var(--foreground)] group-hover:text-[color:var(--hot)]">
-                        {video.creator ? `@${video.creator}` : video.origin}
+                group.items.slice(0, 3).map((video) => {
+                  const idea = group.key === "ideas" ? contentIdeaForVideo(video) : null;
+
+                  return (
+                    <Link
+                      key={video.id}
+                      href={`/trends/${video.id}`}
+                      className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.018)] p-3 transition hover:border-[rgba(237,73,86,0.28)]"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="line-clamp-1 min-w-0 text-sm font-semibold text-[color:var(--foreground)] group-hover:text-[color:var(--hot)]">
+                          {video.creator ? `@${video.creator}` : video.origin}
+                        </p>
+                        <DecisionBadge decision={video.decision} />
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">
+                        {idea ? idea.title : video.title}
                       </p>
-                      <DecisionBadge decision={video.decision} />
-                    </div>
-                    <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">
-                      {video.title}
-                    </p>
-                  </Link>
-                ))
+                      {idea ? (
+                        <>
+                          <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-[color:var(--foreground)]">
+                            {idea.hook}
+                          </p>
+                          <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-[color:var(--hot)]">
+                            abrir pauta completa
+                            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          </span>
+                        </>
+                      ) : null}
+                    </Link>
+                  );
+                })
               ) : (
                 <p className="rounded-[var(--radius-md)] border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.012)] p-3 text-[12px] leading-5 text-[color:var(--muted)]">
                   {group.meta.empty}
