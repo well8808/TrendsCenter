@@ -8,6 +8,10 @@ import type { ComponentType } from "react";
 import { GSAPCounter } from "@/components/gsap-counter";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
+import {
+  shouldShowInActionNow,
+  type OpportunityDecisionView,
+} from "@/lib/trends/opportunity-actions";
 import type { NormalizedReelMedia } from "@/lib/trends/reel-media";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -45,6 +49,7 @@ export interface TrendVideoView {
   creator?: string;
   sound?: string;
   hashtags: string[];
+  decision?: OpportunityDecisionView;
 }
 
 /* ─── Helpers ──────────────────────────────────────────────── */
@@ -103,6 +108,25 @@ function statusToneClass(tone: "hot" | "gold" | "aqua" | "muted") {
   if (tone === "aqua") return "border-[rgba(88,200,190,0.26)] bg-[rgba(88,200,190,0.08)] text-[color:var(--aqua)]";
 
   return "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] text-[color:var(--muted-strong)]";
+}
+
+function decisionBadgeClass(decision: OpportunityDecisionView) {
+  return statusToneClass(decision.tone);
+}
+
+function DecisionBadge({ decision }: { decision?: OpportunityDecisionView }) {
+  if (!decision) {
+    return null;
+  }
+
+  return (
+    <span
+      className={`rounded-full border px-2.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] ${decisionBadgeClass(decision)}`}
+      title={`Status: ${decision.label}`}
+    >
+      {decision.shortLabel}
+    </span>
+  );
 }
 
 /* AnimatedNumber → delegated to GSAPCounter */
@@ -315,6 +339,8 @@ function FeaturedReelCard({
                   {video.market}
                 </span>
 
+                <DecisionBadge decision={video.decision} />
+
                 {/* creator */}
                 {video.creator && (
                   <span className="font-mono text-[11px] text-[color:var(--muted-strong)]">
@@ -342,6 +368,7 @@ function FeaturedReelCard({
                   >
                     {brief.status.label}
                   </span>
+                  <DecisionBadge decision={video.decision} />
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
                     {brief.opportunityType}
                   </span>
@@ -494,7 +521,7 @@ function PortraitReelCard({
           </div>
 
           {/* market tag — top left */}
-          <div className="absolute left-2.5 top-2.5 z-20">
+          <div className="absolute left-2.5 top-2.5 z-20 flex max-w-[calc(100%-5rem)] flex-wrap gap-1.5">
             <span
               className="rounded-full border px-2 py-0.5 font-mono text-[8px] font-bold uppercase tracking-[0.16em] backdrop-blur-sm"
               style={
@@ -513,6 +540,7 @@ function PortraitReelCard({
             >
               {video.market}
             </span>
+            <DecisionBadge decision={video.decision} />
           </div>
         </div>
 
@@ -545,6 +573,11 @@ function PortraitReelCard({
               >
                 {brief.status.label}
               </span>
+              {video.decision ? (
+                <span className="min-w-0 truncate text-[9px] text-[color:var(--aqua)]">
+                  {video.decision.label}
+                </span>
+              ) : null}
               <span className="shrink-0 text-[9px] text-[color:var(--muted)]">
                 {brief.action.label}
               </span>
@@ -630,6 +663,7 @@ function PortraitReelCard({
 
 function ActionStrip({ results }: { results: TrendVideoView[] }) {
   const top = [...results]
+    .filter((video) => shouldShowInActionNow(video.decision))
     .sort((a, b) => b.trendScore - a.trendScore || b.views - a.views)
     .slice(0, Math.min(3, results.length));
 
@@ -650,7 +684,7 @@ function ActionStrip({ results }: { results: TrendVideoView[] }) {
           </h2>
         </div>
         <p className="max-w-xl text-sm leading-6 text-[color:var(--muted)]">
-          Os cards abaixo explicam por que olhar primeiro e qual acao faz sentido sem criar dados novos.
+          Prioridade limpa: Reels descartados ou ja usados saem desta fila, sem apagar a evidencia real.
         </p>
       </div>
 
@@ -671,6 +705,7 @@ function ActionStrip({ results }: { results: TrendVideoView[] }) {
                 >
                   {brief.status.label}
                 </span>
+                <DecisionBadge decision={video.decision} />
                 <span className="metric-number text-sm font-semibold text-[color:var(--foreground)]">
                   {video.trendScore}
                 </span>
@@ -689,6 +724,88 @@ function ActionStrip({ results }: { results: TrendVideoView[] }) {
           );
         })}
       </div>
+    </section>
+  );
+}
+
+function DecisionShelf({ results }: { results: TrendVideoView[] }) {
+  const saved = results.filter((video) => video.decision?.section === "saved");
+  const observing = results.filter((video) => video.decision?.section === "observing");
+  const used = results.filter((video) => video.decision?.section === "used");
+  const hiddenCount = results.filter((video) => video.decision?.section === "hidden").length;
+  const groups = [
+    { key: "saved", title: "Salvos para pauta", items: saved, tone: "var(--gold)" },
+    { key: "observing", title: "Observando", items: observing, tone: "var(--aqua)" },
+    { key: "used", title: "Ja usados", items: used, tone: "var(--hot)" },
+  ].filter((group) => group.items.length > 0);
+
+  if (groups.length === 0 && hiddenCount === 0) {
+    return null;
+  }
+
+  return (
+    <section
+      className="rounded-[var(--radius-2xl)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.014)] p-4 md:p-5"
+      aria-labelledby="fila-de-decisao"
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)]">
+            fila persistente
+          </p>
+          <h2 id="fila-de-decisao" className="mt-1 text-xl font-semibold tracking-[-0.01em] text-[color:var(--foreground)]">
+            Pauta de acao
+          </h2>
+        </div>
+        <p className="max-w-xl text-sm leading-6 text-[color:var(--muted)]">
+          Suas decisoes ficam salvas por usuario e workspace. O Reel continua intacto na biblioteca.
+        </p>
+      </div>
+
+      {groups.length > 0 ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          {groups.map((group) => (
+            <div
+              key={group.key}
+              className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] p-3.5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: group.tone }}>
+                  {group.title}
+                </h3>
+                <span className="metric-number text-sm font-semibold text-[color:var(--foreground)]">
+                  {group.items.length}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2">
+                {group.items.slice(0, 3).map((video) => (
+                  <Link
+                    key={video.id}
+                    href={`/trends/${video.id}`}
+                    className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.018)] p-3 transition hover:border-[rgba(237,73,86,0.28)]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="line-clamp-1 min-w-0 text-sm font-semibold text-[color:var(--foreground)] group-hover:text-[color:var(--hot)]">
+                        {video.creator ? `@${video.creator}` : video.origin}
+                      </p>
+                      <DecisionBadge decision={video.decision} />
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">
+                      {video.title}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {hiddenCount > 0 ? (
+        <p className="mt-3 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] px-3 py-2 text-[11px] text-[color:var(--muted)]">
+          {hiddenCount} Reel{hiddenCount === 1 ? "" : "s"} descartado{hiddenCount === 1 ? "" : "s"} fora da fila ativa.
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -876,6 +993,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
           </div>
         </section>
         <ActionStrip results={results} />
+        <DecisionShelf results={results} />
         {/* ── EM CHAMAS — featured horizontal ── */}
         {featuredCards.length > 0 && (
           <section aria-labelledby="section-hot">

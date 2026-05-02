@@ -81,6 +81,7 @@ export default async function TrendsPage({
     creator: video.creator?.handle,
     sound: video.sound?.title,
     hashtags: video.hashtags,
+    decision: video.decision,
   }));
   const viralReels: ViralReelNode[] = videos.map((video) => ({
     id: video.id,

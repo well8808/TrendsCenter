@@ -2,6 +2,11 @@ import type { Prisma } from "@prisma/client";
 
 import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
+import {
+  getOpportunityDecisionForVideo,
+  getOpportunityDecisionMap,
+} from "@/lib/trends/decision-queue";
+import type { OpportunityDecisionView } from "@/lib/trends/opportunity-actions";
 import { normalizeReelMedia, type NormalizedReelMedia } from "@/lib/trends/reel-media";
 
 export type TrendSearchSort = "score" | "recency" | "growth";
@@ -98,6 +103,7 @@ export interface TrendVideoResult {
   hashtags: string[];
   evidenceCount: number;
   snapshotCount: number;
+  decision?: OpportunityDecisionView;
 }
 
 export interface TrendDetail extends TrendVideoResult {
@@ -157,7 +163,7 @@ function stringArray(value: Prisma.JsonValue | null | undefined) {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-function mapVideo(video: TrendVideoPayload): TrendVideoResult {
+function mapVideo(video: TrendVideoPayload, decision?: OpportunityDecisionView): TrendVideoResult {
   return {
     id: video.id,
     title: video.title,
@@ -207,6 +213,7 @@ function mapVideo(video: TrendVideoPayload): TrendVideoResult {
     hashtags: video.hashtags.map((item) => item.hashtag.displayTag),
     evidenceCount: video.evidence.length,
     snapshotCount: video.snapshots.length,
+    decision,
   };
 }
 
@@ -270,7 +277,8 @@ export async function getTrendSearchData(
       select: { collectedAt: true },
     }),
   ]);
-  const mapped = results.map(mapVideo);
+  const decisions = await getOpportunityDecisionMap(context, results.map((video) => video.id));
+  const mapped = results.map((video) => mapVideo(video, decisions.get(video.id)));
   const avgScore = mapped.length
     ? Math.round(mapped.reduce((totalScore, video) => totalScore + video.trendScore, 0) / mapped.length)
     : 0;
@@ -349,7 +357,8 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
     orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
     take: 3,
   });
-  const mapped = mapVideo(video);
+  const decision = await getOpportunityDecisionForVideo(context, video.id);
+  const mapped = mapVideo(video, decision);
 
   return {
     ...mapped,
@@ -385,7 +394,7 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
       sourceTitle: signal.source.title,
       scoreDrivers: stringArray(signal.scoreDrivers),
     })),
-    related: related.map(mapVideo),
+    related: related.map((item) => mapVideo(item)),
     scoreExplanation:
       "Score v0.1 combina crescimento de views, velocidade, aceleração, recência do post e consistência entre snapshots/evidências.",
   };

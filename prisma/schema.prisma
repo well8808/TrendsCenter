@@ -130,6 +130,14 @@ enum DecisionQueueStatus {
   REMOVED
 }
 
+enum OpportunityDecisionAction {
+  SAVE_FOR_BRIEF
+  OBSERVE_TREND
+  DISMISS
+  MARK_USED
+  CREATE_CONTENT_IDEA
+}
+
 enum AuditEventType {
   SIGNAL_CREATED
   SIGNAL_UPDATED
@@ -271,6 +279,7 @@ model User {
   authEvents              AuthEvent[]              @relation("AuthEventUser")
   actedAuthEvents         AuthEvent[]              @relation("AuthEventActor")
   searchQueryLogs         SearchQueryLog[]
+  opportunityDecisions    OpportunityDecision[]
 }
 
 model Workspace {
@@ -309,6 +318,7 @@ model Workspace {
   searchQueryLogs          SearchQueryLog[]
   trendSources             TrendSource[]
   externalOAuthConnections ExternalOAuthConnection[]
+  opportunityDecisions     OpportunityDecision[]
 }
 
 model WorkspaceMember {
@@ -544,44 +554,45 @@ model SourceSnapshot {
 }
 
 model Signal {
-  id                 String              @id @default(cuid())
-  workspaceId        String
-  workspace          Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  title              String
-  summary            String
-  type               SignalType
-  market             Market
-  audience           String
-  status             SignalStatus        @default(WATCH)
-  priority           SignalPriority      @default(WATCH)
-  riskLevel          RiskLevel           @default(LOW)
-  stage              TrendStage          @default(MONITOR)
-  strength           Int                 @default(0)
-  trendWindow        String?
-  decision           String?
-  nextAction         String?
-  tags               Json?
-  scoreDrivers       Json?
-  dedupeKey          String?
-  importBatchId      String?
-  importBatch        ImportBatch?        @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  lastIngestedAt     DateTime?
-  processedAt        DateTime?
-  origin             DataOrigin
-  sourceId           String
-  source             Source              @relation(fields: [sourceId], references: [id])
-  confidence         ConfidenceBand      @default(LOW)
-  evidenceCount      Int                 @default(0)
-  isDemo             Boolean             @default(false)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  observations       SignalObservation[]
-  scores             SignalScore[]
-  evidence           Evidence[]
-  compliance         ComplianceFlag[]
-  decisionQueueItems DecisionQueueItem[]
-  auditEvents        AuditEvent[]
-  ingestRequests     IngestRequest[]
+  id                   String                @id @default(cuid())
+  workspaceId          String
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title                String
+  summary              String
+  type                 SignalType
+  market               Market
+  audience             String
+  status               SignalStatus          @default(WATCH)
+  priority             SignalPriority        @default(WATCH)
+  riskLevel            RiskLevel             @default(LOW)
+  stage                TrendStage            @default(MONITOR)
+  strength             Int                   @default(0)
+  trendWindow          String?
+  decision             String?
+  nextAction           String?
+  tags                 Json?
+  scoreDrivers         Json?
+  dedupeKey            String?
+  importBatchId        String?
+  importBatch          ImportBatch?          @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  lastIngestedAt       DateTime?
+  processedAt          DateTime?
+  origin               DataOrigin
+  sourceId             String
+  source               Source                @relation(fields: [sourceId], references: [id])
+  confidence           ConfidenceBand        @default(LOW)
+  evidenceCount        Int                   @default(0)
+  isDemo               Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  observations         SignalObservation[]
+  scores               SignalScore[]
+  evidence             Evidence[]
+  compliance           ComplianceFlag[]
+  decisionQueueItems   DecisionQueueItem[]
+  opportunityDecisions OpportunityDecision[]
+  auditEvents          AuditEvent[]
+  ingestRequests       IngestRequest[]
 
   @@unique([workspaceId, dedupeKey])
   @@index([market, type, status])
@@ -684,6 +695,28 @@ model DecisionQueueItem {
   @@unique([workspaceId, signalId])
   @@index([status, createdAt])
   @@index([workspaceId, status, createdAt])
+}
+
+model OpportunityDecision {
+  id          String                    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId     String
+  video       Video                     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  signalId    String?
+  signal      Signal?                   @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  action      OpportunityDecisionAction
+  label       String
+  notes       String?
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  @@unique([workspaceId, userId, videoId])
+  @@index([workspaceId, action, updatedAt])
+  @@index([workspaceId, userId, action, updatedAt])
+  @@index([workspaceId, signalId])
 }
 
 model AuditEvent {
@@ -983,50 +1016,51 @@ model Hashtag {
 }
 
 model Video {
-  id                  String          @id @default(cuid())
-  workspaceId         String
-  workspace           Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  sourceId            String
-  source              Source          @relation(fields: [sourceId], references: [id], onDelete: Restrict)
-  creatorId           String?
-  creator             Creator?        @relation(fields: [creatorId], references: [id], onDelete: SetNull)
-  soundId             String?
-  sound               Sound?          @relation(fields: [soundId], references: [id], onDelete: SetNull)
-  importBatchId       String?
-  importBatch         ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  jobRunId            String?
-  jobRun              JobRun?         @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
-  platformVideoId     String?
-  url                 String?
-  thumbnailUrl        String?
-  title               String
-  caption             String?
-  market              Market
-  origin              DataOrigin
-  postedAt            DateTime?
-  collectedAt         DateTime
-  firstSeenAt         DateTime        @default(now())
-  lastSeenAt          DateTime        @default(now())
-  currentViewCount    BigInt          @default(0)
-  currentLikeCount    BigInt          @default(0)
-  currentCommentCount BigInt          @default(0)
-  currentShareCount   BigInt          @default(0)
-  currentSaveCount    BigInt          @default(0)
-  growthViews         BigInt          @default(0)
-  velocityScore       Int             @default(0)
-  accelerationScore   Int             @default(0)
-  recencyScore        Int             @default(0)
-  consistencyScore    Int             @default(0)
-  trendScore          Int             @default(0)
-  scoreVersion        String          @default("video-score-v0.1")
-  confidence          ConfidenceBand  @default(LOW)
-  dedupeKey           String
-  isDemo              Boolean         @default(false)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  hashtags            VideoHashtag[]
-  snapshots           TrendSnapshot[]
-  evidence            TrendEvidence[]
+  id                   String                @id @default(cuid())
+  workspaceId          String
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId             String
+  source               Source                @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  creatorId            String?
+  creator              Creator?              @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  soundId              String?
+  sound                Sound?                @relation(fields: [soundId], references: [id], onDelete: SetNull)
+  importBatchId        String?
+  importBatch          ImportBatch?          @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  jobRunId             String?
+  jobRun               JobRun?               @relation(fields: [jobRunId], references: [id], onDelete: SetNull)
+  platformVideoId      String?
+  url                  String?
+  thumbnailUrl         String?
+  title                String
+  caption              String?
+  market               Market
+  origin               DataOrigin
+  postedAt             DateTime?
+  collectedAt          DateTime
+  firstSeenAt          DateTime              @default(now())
+  lastSeenAt           DateTime              @default(now())
+  currentViewCount     BigInt                @default(0)
+  currentLikeCount     BigInt                @default(0)
+  currentCommentCount  BigInt                @default(0)
+  currentShareCount    BigInt                @default(0)
+  currentSaveCount     BigInt                @default(0)
+  growthViews          BigInt                @default(0)
+  velocityScore        Int                   @default(0)
+  accelerationScore    Int                   @default(0)
+  recencyScore         Int                   @default(0)
+  consistencyScore     Int                   @default(0)
+  trendScore           Int                   @default(0)
+  scoreVersion         String                @default("video-score-v0.1")
+  confidence           ConfidenceBand        @default(LOW)
+  dedupeKey            String
+  isDemo               Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  hashtags             VideoHashtag[]
+  snapshots            TrendSnapshot[]
+  evidence             TrendEvidence[]
+  opportunityDecisions OpportunityDecision[]
 
   @@unique([workspaceId, dedupeKey])
   @@index([workspaceId, market, trendScore])

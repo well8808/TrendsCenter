@@ -5,7 +5,6 @@ import {
   AudioLines,
   BarChart3,
   BookOpen,
-  CheckCircle2,
   ClipboardCheck,
   ExternalLink,
   Gauge,
@@ -17,6 +16,7 @@ import {
   UserRoundCheck,
 } from "lucide-react";
 
+import { OpportunityDecisionPanel } from "@/components/opportunity-decision-panel";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { requireTenantContext } from "@/lib/auth/session";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
@@ -129,29 +129,6 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
     sound: trend.sound?.title,
     hashtags: trend.hashtags,
   };
-  const actionOptions = [
-    {
-      key: "act_now",
-      label: "Fazer agora",
-      body: "Abrir o Reel, mapear gancho e transformar em pauta curta com asset proprio/licenciado.",
-    },
-    {
-      key: "save_agenda",
-      label: "Salvar para pauta",
-      body: "Fila persistente vem depois; nesta fase a acao e apenas leitura visual.",
-    },
-    {
-      key: "watch_trend",
-      label: "Observar evolucao",
-      body: "Use quando o sinal ainda depende de nova coleta ou prova adicional.",
-    },
-    {
-      key: "discard_now",
-      label: "Descartar por enquanto",
-      body: "Nao transformar em pauta agora; dados ainda nao sustentam prioridade.",
-    },
-  ];
-
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
       <div className="noise-overlay" aria-hidden="true" />
@@ -332,39 +309,11 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                       <ClipboardCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
                       proxima acao
                     </div>
-                    <div className="mt-3 grid gap-2">
-                      {actionOptions.map((action) => (
-                        <button
-                          key={action.label}
-                          type="button"
-                          disabled
-                          className={cn(
-                            "rounded-[var(--radius-md)] border p-3 text-left opacity-100 disabled:cursor-not-allowed",
-                            brief.action.key === action.key
-                              ? "border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)]"
-                              : "border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)]",
-                          )}
-                        >
-                          <span className="flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
-                            {brief.action.key === action.key ? <CheckCircle2 className="h-4 w-4 text-[color:var(--aqua)]" aria-hidden="true" /> : null}
-                            {action.label}
-                          </span>
-                          <span className="mt-1.5 block text-[12px] leading-5 text-[color:var(--muted-strong)]">
-                            {action.body}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-3 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] px-3 py-2 text-[11px] text-[color:var(--muted)]">
-                      Acoes read-only nesta fase: ainda nao gravam pauta, descarte ou status no banco.
-                    </p>
-                    <button
-                      type="button"
-                      disabled
-                      className="mt-3 inline-flex min-h-[42px] w-full items-center justify-center rounded-full border border-[rgba(237,73,86,0.28)] bg-[rgba(237,73,86,0.09)] px-4 text-sm font-semibold text-[color:var(--foreground)] opacity-100 disabled:cursor-not-allowed"
-                    >
-                      {brief.action.cta} (visual)
-                    </button>
+                    <OpportunityDecisionPanel
+                      videoId={trend.id}
+                      recommendedBriefAction={brief.action.key}
+                      currentDecision={trend.decision}
+                    />
                   </div>
                 </div>
               </div>
