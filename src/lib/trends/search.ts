@@ -120,6 +120,19 @@ export interface TrendDetail extends TrendVideoResult {
     capturedAt: string;
     sourceTitle: string;
   }>;
+  relatedSignals: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    decision: string;
+    nextAction: string;
+    priority: string;
+    confidence: string;
+    evidenceCount: number;
+    score: number;
+    sourceTitle: string;
+    scoreDrivers: string[];
+  }>;
   related: TrendVideoResult[];
   scoreExplanation: string;
 }
@@ -134,6 +147,14 @@ export interface TrendSearchData {
     avgScore: number;
     latestIndexedAt?: string;
   };
+}
+
+function stringArray(value: Prisma.JsonValue | null | undefined) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
 }
 
 function mapVideo(video: TrendVideoPayload): TrendVideoResult {
@@ -284,7 +305,8 @@ export async function getTrendSearchData(
 }
 
 export async function getTrendDetail(context: TenantContext, videoId: string): Promise<TrendDetail | null> {
-  const video = await getPrisma().video.findFirst({
+  const prisma = getPrisma();
+  const video = await prisma.video.findFirst({
     where: { id: videoId, workspaceId: context.workspaceId },
     include: videoInclude,
   });
@@ -300,7 +322,7 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
     hashtagIds.length ? { hashtags: { some: { hashtagId: { in: hashtagIds } } } } : undefined,
   ].filter((item) => item !== undefined);
   const related = relatedClauses.length
-    ? await getPrisma().video.findMany({
+    ? await prisma.video.findMany({
         where: {
           workspaceId: context.workspaceId,
           id: { not: video.id },
@@ -311,6 +333,22 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
         take: 4,
       })
     : [];
+  const relatedSignals = await prisma.signal.findMany({
+    where: {
+      workspaceId: context.workspaceId,
+      dedupeKey: `reel-signal:${video.dedupeKey}`,
+    },
+    include: {
+      source: true,
+      scores: {
+        orderBy: { calculatedAt: "desc" },
+        select: { score: true },
+        take: 1,
+      },
+    },
+    orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
+    take: 3,
+  });
   const mapped = mapVideo(video);
 
   return {
@@ -333,6 +371,19 @@ export async function getTrendDetail(context: TenantContext, videoId: string): P
       confidence: item.confidence,
       capturedAt: item.capturedAt.toISOString(),
       sourceTitle: item.source.title,
+    })),
+    relatedSignals: relatedSignals.map((signal) => ({
+      id: signal.id,
+      title: signal.title,
+      summary: signal.summary,
+      decision: signal.decision ?? "Aguardar evidencia adicional antes de acionar.",
+      nextAction: signal.nextAction ?? "Registrar proxima acao manual.",
+      priority: signal.priority.toLowerCase(),
+      confidence: signal.confidence.toLowerCase(),
+      evidenceCount: signal.evidenceCount,
+      score: signal.scores[0]?.score ?? signal.strength,
+      sourceTitle: signal.source.title,
+      scoreDrivers: stringArray(signal.scoreDrivers),
     })),
     related: related.map(mapVideo),
     scoreExplanation:

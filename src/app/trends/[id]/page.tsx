@@ -4,15 +4,22 @@ import {
   ArrowLeft,
   AudioLines,
   BarChart3,
+  BookOpen,
+  CheckCircle2,
+  ClipboardCheck,
   ExternalLink,
   Gauge,
   Hash,
+  Lightbulb,
   LineChart,
   ShieldCheck,
+  Target,
   UserRoundCheck,
 } from "lucide-react";
 
+import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { requireTenantContext } from "@/lib/auth/session";
+import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import { getTrendDetail } from "@/lib/trends/search";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +68,22 @@ function confidenceTone(confidence: string) {
   return "badge-low";
 }
 
+function briefTone(tone: "hot" | "gold" | "aqua" | "muted") {
+  if (tone === "hot") {
+    return "border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.1)] text-[color:var(--hot)]";
+  }
+
+  if (tone === "gold") {
+    return "border-[rgba(243,201,105,0.3)] bg-[rgba(243,201,105,0.09)] text-[color:var(--gold)]";
+  }
+
+  if (tone === "aqua") {
+    return "border-[rgba(64,224,208,0.28)] bg-[rgba(64,224,208,0.08)] text-[color:var(--aqua)]";
+  }
+
+  return "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.035)] text-[color:var(--muted-strong)]";
+}
+
 export default async function TrendDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const context = await requireTenantContext();
   const { id } = await params;
@@ -71,6 +94,63 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
   }
 
   const tone = scoreTone(trend.trendScore);
+  const brief = buildOpportunityBrief({
+    title: trend.title,
+    caption: trend.caption,
+    creator: trend.creator?.handle,
+    market: trend.market,
+    origin: trend.origin,
+    trendScore: trend.trendScore,
+    growthViews: trend.growthViews,
+    velocityScore: trend.velocityScore,
+    accelerationScore: trend.accelerationScore,
+    evidenceCount: trend.evidenceCount,
+    snapshotCount: trend.snapshotCount,
+    views: trend.metrics.views,
+    likes: trend.metrics.likes,
+    comments: trend.metrics.comments,
+    shares: trend.metrics.shares,
+    saves: trend.metrics.saves,
+    sound: trend.sound?.title,
+    hashtags: trend.hashtags,
+    collectedAt: trend.collectedAt,
+    postedAt: trend.postedAt,
+  });
+  const posterVideo = {
+    title: trend.title,
+    thumbnailUrl: trend.thumbnailUrl,
+    media: trend.media,
+    market: trend.market,
+    trendScore: trend.trendScore,
+    growthViews: trend.growthViews,
+    views: trend.metrics.views,
+    creator: trend.creator?.handle,
+    origin: trend.origin,
+    sound: trend.sound?.title,
+    hashtags: trend.hashtags,
+  };
+  const actionOptions = [
+    {
+      key: "act_now",
+      label: "Fazer agora",
+      body: "Abrir o Reel, mapear gancho e transformar em pauta curta com asset proprio/licenciado.",
+    },
+    {
+      key: "save_agenda",
+      label: "Salvar para pauta",
+      body: "Fila persistente vem depois; nesta fase a acao e apenas leitura visual.",
+    },
+    {
+      key: "watch_trend",
+      label: "Observar evolucao",
+      body: "Use quando o sinal ainda depende de nova coleta ou prova adicional.",
+    },
+    {
+      key: "discard_now",
+      label: "Descartar por enquanto",
+      body: "Nao transformar em pauta agora; dados ainda nao sustentam prioridade.",
+    },
+  ];
 
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
@@ -92,7 +172,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               href="/trends"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              voltar para busca
+              voltar para Biblioteca Viral
             </Link>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -129,7 +209,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                     target="_blank"
                     rel="noreferrer"
                   >
-                    abrir fonte do vídeo
+                    abrir Reel original
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
                 )}
@@ -162,6 +242,135 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
           </header>
 
+          <section className="app-panel overflow-hidden rounded-[var(--radius-lg)] p-4 md:p-5" aria-labelledby="opportunity-brief">
+            <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className="relative">
+                <ReelArtifactPoster video={posterVideo} featured />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={cn("rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em]", briefTone(brief.status.tone))}>
+                    {brief.status.label}
+                  </span>
+                  <span className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted-strong)]">
+                    {brief.opportunityType}
+                  </span>
+                  <span className="rounded-full border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--aqua)]">
+                    confianca {brief.provenance.confidence}
+                  </span>
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
+                      Reel detectado -&gt; oportunidade
+                    </p>
+                    <h2 id="opportunity-brief" className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.02em] md:text-[32px]">
+                      Opportunity Brief
+                    </h2>
+                  </div>
+                  <p className="max-w-md text-sm leading-6 text-[color:var(--muted)]">
+                    Leitura acionavel usando somente fonte, metricas, caption, creator e provas reais ja salvas.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] p-4 md:col-span-2">
+                    <div className="section-head text-[color:var(--aqua)]">
+                      <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      resumo estrategico
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-[color:var(--foreground)]">
+                      {brief.strategicSummary}
+                    </p>
+                    <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
+                      {brief.whyItMatters}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[var(--radius-lg)] border border-[rgba(237,73,86,0.2)] bg-[rgba(237,73,86,0.055)] p-4">
+                    <div className="section-head text-[color:var(--hot)]">
+                      <Target className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      decisao
+                    </div>
+                    <p className="mt-3 text-lg font-semibold leading-snug text-[color:var(--foreground)]">
+                      {brief.action.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[color:var(--muted-strong)]">
+                      {brief.action.body}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-[var(--radius-lg)] border border-[rgba(243,201,105,0.16)] bg-[rgba(243,201,105,0.035)] p-4">
+                    <div className="section-head text-[color:var(--gold)]">
+                      <Lightbulb className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      formato replicavel
+                    </div>
+                    <dl className="mt-3 grid gap-3 text-sm">
+                      {[
+                        ["Gancho provavel", brief.replicableFormat.hook],
+                        ["Estrutura", brief.replicableFormat.structure],
+                        ["Elemento copiavel", brief.replicableFormat.copyableElement],
+                        ["Adaptacao", brief.replicableFormat.adaptation],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(0,0,0,0.16)] p-3">
+                          <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">{label}</dt>
+                          <dd className="mt-1.5 leading-5 text-[color:var(--foreground)]">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="mt-3 text-[12px] leading-5 text-[color:var(--muted)]">
+                      {brief.replicableFormat.confidenceNote}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[var(--radius-lg)] border border-[rgba(64,224,208,0.16)] bg-[rgba(64,224,208,0.035)] p-4">
+                    <div className="section-head text-[color:var(--aqua)]">
+                      <ClipboardCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      proxima acao
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      {actionOptions.map((action) => (
+                        <button
+                          key={action.label}
+                          type="button"
+                          disabled
+                          className={cn(
+                            "rounded-[var(--radius-md)] border p-3 text-left opacity-100 disabled:cursor-not-allowed",
+                            brief.action.key === action.key
+                              ? "border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.08)]"
+                              : "border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)]",
+                          )}
+                        >
+                          <span className="flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
+                            {brief.action.key === action.key ? <CheckCircle2 className="h-4 w-4 text-[color:var(--aqua)]" aria-hidden="true" /> : null}
+                            {action.label}
+                          </span>
+                          <span className="mt-1.5 block text-[12px] leading-5 text-[color:var(--muted-strong)]">
+                            {action.body}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-3 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] px-3 py-2 text-[11px] text-[color:var(--muted)]">
+                      Acoes read-only nesta fase: ainda nao gravam pauta, descarte ou status no banco.
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-3 inline-flex min-h-[42px] w-full items-center justify-center rounded-full border border-[rgba(237,73,86,0.28)] bg-[rgba(237,73,86,0.09)] px-4 text-sm font-semibold text-[color:var(--foreground)] opacity-100 disabled:cursor-not-allowed"
+                    >
+                      {brief.action.cta} (visual)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* ── Quick metrics ── */}
           <section className="grid gap-3 sm:grid-cols-3" aria-label="Métricas rápidas">
             {[
@@ -175,6 +384,71 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
                 <p className={cn("metric-number mt-3 text-3xl font-semibold leading-none", t)}>{value}</p>
               </div>
             ))}
+          </section>
+
+          <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
+            <div className="section-head text-[color:var(--hot)]">
+              <Target className="h-4 w-4 shrink-0" aria-hidden="true" />
+              sinais relacionados
+              <span className="ml-auto rounded-full border border-[rgba(237,73,86,0.28)] bg-[rgba(237,73,86,0.08)] px-2 py-0.5 font-mono text-[10px] text-[color:var(--hot)]">
+                {trend.relatedSignals.length}
+              </span>
+            </div>
+
+            {trend.relatedSignals.length === 0 ? (
+              <p className="mt-5 text-sm leading-6 text-[color:var(--muted-strong)]">
+                Ainda nao ha Signal vinculado a este Reel. O brief acima usa os dados reais do proprio artefato para orientar a leitura.
+              </p>
+            ) : (
+              <div className="mt-5 grid gap-3">
+                {trend.relatedSignals.map((signal) => (
+                  <article
+                    key={signal.id}
+                    className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                          oportunidade detectada / {signal.sourceTitle}
+                        </p>
+                        <h3 className="mt-1 break-words text-lg font-semibold leading-snug text-[color:var(--foreground)]">
+                          {signal.title}
+                        </h3>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="metric-number text-xl font-semibold text-[color:var(--hot)]">{signal.score}</span>
+                        <span className="rounded-full border border-[rgba(64,224,208,0.22)] bg-[rgba(64,224,208,0.07)] px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-[color:var(--aqua)]">
+                          {signal.confidence}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.018)] p-3">
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">motivo do sinal</p>
+                        <p className="mt-1.5 text-sm leading-5 text-[color:var(--muted-strong)]">{signal.summary}</p>
+                      </div>
+                      <div className="rounded-[var(--radius-md)] border border-[rgba(64,224,208,0.16)] bg-[rgba(64,224,208,0.04)] p-3">
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--aqua)]">acao sugerida</p>
+                        <p className="mt-1.5 text-sm leading-5 text-[color:var(--foreground)]">{signal.nextAction}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)]">
+                      <span>prioridade: {signal.priority}</span>
+                      <span aria-hidden="true">/</span>
+                      <span>{signal.evidenceCount} provas</span>
+                      {signal.scoreDrivers.slice(0, 3).map((driver) => (
+                        <span
+                          key={driver}
+                          className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] px-2 py-1 text-[color:var(--muted-strong)]"
+                        >
+                          {driver}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* ── Timeline ── */}

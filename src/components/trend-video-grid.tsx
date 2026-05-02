@@ -5,9 +5,9 @@ import Link from "next/link";
 import { Archive, ExternalLink, Eye, TrendingUp, Music, Hash, Flame } from "lucide-react";
 import type { ComponentType } from "react";
 
-import { GSAPScrollEntrance } from "@/components/gsap-scroll-entrance";
 import { GSAPCounter } from "@/components/gsap-counter";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
+import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import type { NormalizedReelMedia } from "@/lib/trends/reel-media";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -76,6 +76,33 @@ const compactFmt = new Intl.NumberFormat("pt-BR", {
 
 function fmt(n: number): string {
   return compactFmt.format(n);
+}
+
+function briefForVideo(video: TrendVideoView) {
+  return buildOpportunityBrief({
+    title: video.title,
+    caption: video.caption,
+    creator: video.creator,
+    market: video.market,
+    origin: video.origin,
+    trendScore: video.trendScore,
+    growthViews: video.growthViews,
+    velocityScore: video.velocityScore,
+    accelerationScore: video.accelerationScore,
+    evidenceCount: video.evidenceCount,
+    snapshotCount: video.snapshotCount,
+    views: video.views,
+    sound: video.sound,
+    hashtags: video.hashtags,
+  });
+}
+
+function statusToneClass(tone: "hot" | "gold" | "aqua" | "muted") {
+  if (tone === "hot") return "border-[rgba(237,73,86,0.32)] bg-[rgba(237,73,86,0.1)] text-[color:var(--hot)]";
+  if (tone === "gold") return "border-[rgba(230,183,101,0.28)] bg-[rgba(230,183,101,0.09)] text-[color:var(--gold)]";
+  if (tone === "aqua") return "border-[rgba(88,200,190,0.26)] bg-[rgba(88,200,190,0.08)] text-[color:var(--aqua)]";
+
+  return "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] text-[color:var(--muted-strong)]";
 }
 
 /* AnimatedNumber → delegated to GSAPCounter */
@@ -179,6 +206,7 @@ function FeaturedReelCard({
 }) {
   const color = scoreColor(video.trendScore);
   const baseDelay = 0.08 + index * 0.07;
+  const brief = briefForVideo(video);
 
   return (
     <motion.article
@@ -306,6 +334,25 @@ function FeaturedReelCard({
                   {video.caption}
                 </p>
               )}
+
+              <div className="mt-4 grid gap-2 rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.22)] p-3.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] ${statusToneClass(brief.status.tone)}`}
+                  >
+                    {brief.status.label}
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                    {brief.opportunityType}
+                  </span>
+                </div>
+                <p className="text-sm leading-6 text-[color:var(--foreground)]">
+                  {brief.cardReason}
+                </p>
+                <p className="text-[12px] leading-5 text-[color:var(--muted-strong)]">
+                  Proxima acao: {brief.action.label}. {brief.action.body}
+                </p>
+              </div>
             </div>
 
             {/* metrics grid */}
@@ -356,7 +403,7 @@ function FeaturedReelCard({
 
               {/* open reel CTA */}
               <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-[color:var(--muted)] transition-all duration-200 group-hover:gap-2.5 group-hover:text-[color:var(--hot)]">
-                abrir reel
+                abrir brief
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
             </div>
@@ -389,6 +436,7 @@ function PortraitReelCard({
   const tier = scoreTier(video.trendScore);
   const color = scoreColor(video.trendScore);
   const baseDelay = 0.12 + index * 0.055;
+  const brief = briefForVideo(video);
 
   const borderColor =
     tier === "hot"
@@ -490,6 +538,22 @@ function PortraitReelCard({
             {video.title}
           </p>
 
+          <div className="mt-2 rounded-[var(--radius-md)] border border-white/[0.07] bg-black/20 px-2.5 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className={`truncate rounded-full border px-2 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] ${statusToneClass(brief.status.tone)}`}
+              >
+                {brief.status.label}
+              </span>
+              <span className="shrink-0 text-[9px] text-[color:var(--muted)]">
+                {brief.action.label}
+              </span>
+            </div>
+            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[color:var(--muted-strong)]">
+              {brief.cardReason}
+            </p>
+          </div>
+
           {/* metrics row */}
           <motion.div
             className="mt-2.5 grid grid-cols-2 gap-1.5"
@@ -543,7 +607,7 @@ function PortraitReelCard({
           {/* CTA row */}
           <div className="mt-2.5 flex items-center justify-between">
             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[color:var(--muted)] transition-all duration-200 group-hover:gap-1.5 group-hover:text-[color:var(--foreground)]">
-              ver detalhe
+              abrir brief
               <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
             </span>
             {video.snapshotCount > 1 && (
@@ -561,6 +625,71 @@ function PortraitReelCard({
         </div>
       </Link>
     </motion.article>
+  );
+}
+
+function ActionStrip({ results }: { results: TrendVideoView[] }) {
+  const top = [...results]
+    .sort((a, b) => b.trendScore - a.trendScore || b.views - a.views)
+    .slice(0, Math.min(3, results.length));
+
+  if (top.length === 0) return null;
+
+  return (
+    <section
+      className="rounded-[var(--radius-2xl)] border border-[rgba(237,73,86,0.16)] bg-[linear-gradient(135deg,rgba(237,73,86,0.075),rgba(255,255,255,0.018)_48%,rgba(247,119,55,0.045))] p-4 md:p-5"
+      aria-labelledby="reels-para-agir"
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
+            decisao rapida
+          </p>
+          <h2 id="reels-para-agir" className="mt-1 text-xl font-semibold tracking-[-0.01em] text-[color:var(--foreground)]">
+            Reels para agir agora
+          </h2>
+        </div>
+        <p className="max-w-xl text-sm leading-6 text-[color:var(--muted)]">
+          Os cards abaixo explicam por que olhar primeiro e qual acao faz sentido sem criar dados novos.
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        {top.map((video) => {
+          const brief = briefForVideo(video);
+          const creator = video.creator ? `@${video.creator}` : video.origin;
+
+          return (
+            <Link
+              key={video.id}
+              href={`/trends/${video.id}`}
+              className="group min-w-0 rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.22)] p-3.5 transition hover:border-[rgba(237,73,86,0.32)] hover:bg-[rgba(237,73,86,0.045)]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span
+                  className={`rounded-full border px-2.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] ${statusToneClass(brief.status.tone)}`}
+                >
+                  {brief.status.label}
+                </span>
+                <span className="metric-number text-sm font-semibold text-[color:var(--foreground)]">
+                  {video.trendScore}
+                </span>
+              </div>
+              <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-[color:var(--foreground)] group-hover:text-[color:var(--hot)]">
+                {creator} / {video.title}
+              </p>
+              <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">
+                {brief.action.label}: {brief.replicableFormat.copyableElement}
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-[color:var(--muted)] group-hover:text-[color:var(--foreground)]">
+                abrir Opportunity Brief
+                <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -746,6 +875,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             </div>
           </div>
         </section>
+        <ActionStrip results={results} />
         {/* ── EM CHAMAS — featured horizontal ── */}
         {featuredCards.length > 0 && (
           <section aria-labelledby="section-hot">
@@ -756,13 +886,11 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                 label={results.length === 1 ? "ARTEFATO EM FOCO" : "EM CHAMAS"}
               />
             </div>
-            <GSAPScrollEntrance className="grid gap-4" stagger={0.10} y={20}>
+            <div className="grid gap-4">
               {featuredCards.map((video, idx) => (
-                <div key={video.id} className="gse-item">
-                  <FeaturedReelCard video={video} index={idx} />
-                </div>
+                <FeaturedReelCard key={video.id} video={video} index={idx} />
               ))}
-            </GSAPScrollEntrance>
+            </div>
           </section>
         )}
 
@@ -772,16 +900,15 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-warm" className="mb-4">
               <SectionHeader tier="gold" count={gridWarm.length} />
             </div>
-            <GSAPScrollEntrance className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06} y={18}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {gridWarm.map((video, idx) => (
-                <div key={video.id} className="gse-item">
-                  <PortraitReelCard
-                    video={video}
-                    index={featuredCards.length + idx}
-                  />
-                </div>
+                <PortraitReelCard
+                  key={video.id}
+                  video={video}
+                  index={featuredCards.length + idx}
+                />
               ))}
-            </GSAPScrollEntrance>
+            </div>
           </section>
         )}
 
@@ -791,16 +918,15 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-cool" className="mb-4">
               <SectionHeader tier="aqua" count={coolCards.length} />
             </div>
-            <GSAPScrollEntrance className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" stagger={0.045} y={14}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {coolCards.map((video, idx) => (
-                <div key={video.id} className="gse-item">
-                  <PortraitReelCard
-                    video={video}
-                    index={featuredCards.length + gridWarm.length + idx}
-                  />
-                </div>
+                <PortraitReelCard
+                  key={video.id}
+                  video={video}
+                  index={featuredCards.length + gridWarm.length + idx}
+                />
               ))}
-            </GSAPScrollEntrance>
+            </div>
           </section>
         )}
       </motion.div>
