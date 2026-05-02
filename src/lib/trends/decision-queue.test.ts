@@ -4,8 +4,10 @@ import {
   mapOpportunityDecisionRecord,
 } from "@/lib/trends/decision-queue";
 import {
+  getOpportunityDecisionQueueGroup,
   getOpportunityDecisionMeta,
   normalizeOpportunityDecisionAction,
+  opportunityDecisionGroupMeta,
   recommendedDecisionFromBriefAction,
   shouldShowInActionNow,
 } from "@/lib/trends/opportunity-actions";
@@ -30,6 +32,15 @@ describe("opportunity decision actions", () => {
     expect(shouldShowInActionNow({ section: "saved" })).toBe(true);
     expect(shouldShowInActionNow({ section: "hidden" })).toBe(false);
     expect(shouldShowInActionNow({ section: "used" })).toBe(false);
+  });
+
+  it("separates saved references from created content ideas in the queue", () => {
+    expect(getOpportunityDecisionQueueGroup()).toBe("none");
+    expect(getOpportunityDecisionQueueGroup({ action: "save_for_brief", section: "saved" })).toBe("saved");
+    expect(getOpportunityDecisionQueueGroup({ action: "create_content_idea", section: "saved" })).toBe("ideas");
+    expect(getOpportunityDecisionQueueGroup({ action: "observe_trend", section: "observing" })).toBe("observing");
+    expect(getOpportunityDecisionQueueGroup({ action: "dismiss", section: "hidden" })).toBe("hidden");
+    expect(opportunityDecisionGroupMeta.ideas.title).toBe("Pautas criadas");
   });
 
   it("maps persisted records to user-facing labels without leaking enum names", () => {

@@ -9,7 +9,10 @@ import { GSAPCounter } from "@/components/gsap-counter";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import {
+  getOpportunityDecisionQueueGroup,
+  opportunityDecisionGroupMeta,
   shouldShowInActionNow,
+  type OpportunityDecisionQueueGroup,
   type OpportunityDecisionView,
 } from "@/lib/trends/opportunity-actions";
 import type { NormalizedReelMedia } from "@/lib/trends/reel-media";
@@ -110,6 +113,14 @@ function statusToneClass(tone: "hot" | "gold" | "aqua" | "muted") {
   return "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] text-[color:var(--muted-strong)]";
 }
 
+function toneTextClass(tone: "hot" | "gold" | "aqua" | "muted") {
+  if (tone === "hot") return "text-[color:var(--hot)]";
+  if (tone === "gold") return "text-[color:var(--gold)]";
+  if (tone === "aqua") return "text-[color:var(--aqua)]";
+
+  return "text-[color:var(--muted-strong)]";
+}
+
 function decisionBadgeClass(decision: OpportunityDecisionView) {
   return statusToneClass(decision.tone);
 }
@@ -123,6 +134,7 @@ function DecisionBadge({ decision }: { decision?: OpportunityDecisionView }) {
     <span
       className={`rounded-full border px-2.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] ${decisionBadgeClass(decision)}`}
       title={`Status: ${decision.label}`}
+      aria-label={`Status de decisao: ${decision.label}`}
     >
       {decision.shortLabel}
     </span>
@@ -368,7 +380,6 @@ function FeaturedReelCard({
                   >
                     {brief.status.label}
                   </span>
-                  <DecisionBadge decision={video.decision} />
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
                     {brief.opportunityType}
                   </span>
@@ -662,12 +673,35 @@ function PortraitReelCard({
 }
 
 function ActionStrip({ results }: { results: TrendVideoView[] }) {
-  const top = [...results]
+  const actionable = results.filter((video) => shouldShowInActionNow(video.decision));
+  const removedFromAction = results.length - actionable.length;
+  const top = [...actionable]
     .filter((video) => shouldShowInActionNow(video.decision))
     .sort((a, b) => b.trendScore - a.trendScore || b.views - a.views)
     .slice(0, Math.min(3, results.length));
 
-  if (top.length === 0) return null;
+  if (top.length === 0) {
+    return (
+      <section
+        className="rounded-[var(--radius-2xl)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.014)] p-4 md:p-5"
+        aria-labelledby="reels-para-agir"
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)]">
+              fila limpa
+            </p>
+            <h2 id="reels-para-agir" className="mt-1 text-xl font-semibold tracking-[-0.01em] text-[color:var(--foreground)]">
+              Nenhum Reel pedindo acao agora
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-[color:var(--muted)]">
+            Tudo que estava ativo foi descartado ou marcado como usado. A biblioteca continua preservada para consulta.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -684,7 +718,8 @@ function ActionStrip({ results }: { results: TrendVideoView[] }) {
           </h2>
         </div>
         <p className="max-w-xl text-sm leading-6 text-[color:var(--muted)]">
-          Prioridade limpa: Reels descartados ou ja usados saem desta fila, sem apagar a evidencia real.
+          Prioridade limpa: {removedFromAction > 0 ? `${removedFromAction} ja saiu da fila ativa. ` : ""}
+          Clique em um Reel para salvar, observar, descartar, usar ou transformar em pauta.
         </p>
       </div>
 
@@ -729,56 +764,94 @@ function ActionStrip({ results }: { results: TrendVideoView[] }) {
 }
 
 function DecisionShelf({ results }: { results: TrendVideoView[] }) {
-  const saved = results.filter((video) => video.decision?.section === "saved");
-  const observing = results.filter((video) => video.decision?.section === "observing");
-  const used = results.filter((video) => video.decision?.section === "used");
-  const hiddenCount = results.filter((video) => video.decision?.section === "hidden").length;
-  const groups = [
-    { key: "saved", title: "Salvos para pauta", items: saved, tone: "var(--gold)" },
-    { key: "observing", title: "Observando", items: observing, tone: "var(--aqua)" },
-    { key: "used", title: "Ja usados", items: used, tone: "var(--hot)" },
-  ].filter((group) => group.items.length > 0);
+  const groupOrder: OpportunityDecisionQueueGroup[] = ["ideas", "saved", "observing", "used"];
+  const hiddenCount = results.filter((video) => getOpportunityDecisionQueueGroup(video.decision) === "hidden").length;
+  const undecidedCount = results.filter((video) => getOpportunityDecisionQueueGroup(video.decision) === "none").length;
+  const decidedCount = results.length - undecidedCount;
+  const activeQueueCount = results.filter((video) => {
+    const group = getOpportunityDecisionQueueGroup(video.decision);
 
-  if (groups.length === 0 && hiddenCount === 0) {
-    return null;
-  }
+    return group === "ideas" || group === "saved" || group === "observing";
+  }).length;
+  const groups = groupOrder.map((key) => ({
+    key,
+    meta: opportunityDecisionGroupMeta[key],
+    items: results.filter((video) => getOpportunityDecisionQueueGroup(video.decision) === key),
+  }));
 
   return (
     <section
-      className="rounded-[var(--radius-2xl)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.014)] p-4 md:p-5"
+      className="rounded-[var(--radius-2xl)] border border-[rgba(255,255,255,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.012))] p-4 md:p-5"
       aria-labelledby="fila-de-decisao"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--aqua)]">
-            fila persistente
+            fila de trabalho
           </p>
           <h2 id="fila-de-decisao" className="mt-1 text-xl font-semibold tracking-[-0.01em] text-[color:var(--foreground)]">
             Pauta de acao
           </h2>
         </div>
         <p className="max-w-xl text-sm leading-6 text-[color:var(--muted)]">
-          Suas decisoes ficam salvas por usuario e workspace. O Reel continua intacto na biblioteca.
+          Decida o destino de cada oportunidade. A biblioteca preserva o Reel; esta fila mostra o que virou trabalho.
         </p>
       </div>
 
-      {groups.length > 0 ? (
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          {groups.map((group) => (
-            <div
-              key={group.key}
-              className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] p-3.5"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: group.tone }}>
-                  {group.title}
+      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+        {[
+          { label: "decididos", value: decidedCount },
+          { label: "na pauta", value: activeQueueCount },
+          { label: "sem decisao", value: undecidedCount },
+          { label: "descartados", value: hiddenCount },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] p-3"
+          >
+            <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+              {item.label}
+            </p>
+            <p className="metric-number mt-1 text-xl font-semibold text-[color:var(--foreground)]">
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {decidedCount === 0 ? (
+        <div className="mt-4 rounded-[var(--radius-lg)] border border-[rgba(237,73,86,0.16)] bg-[rgba(237,73,86,0.045)] p-4">
+          <p className="text-sm font-semibold text-[color:var(--foreground)]">
+            Nenhuma decisao salva ainda.
+          </p>
+          <p className="mt-1 text-[12px] leading-5 text-[color:var(--muted-strong)]">
+            Abra um Reel em destaque e escolha se ele vira pauta, observacao, descarte ou referencia usada.
+          </p>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-4">
+        {groups.map((group) => (
+          <div
+            key={group.key}
+            className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] p-3.5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className={`font-mono text-[10px] font-semibold uppercase tracking-[0.16em] ${toneTextClass(group.meta.tone)}`}>
+                  {group.meta.title}
                 </h3>
-                <span className="metric-number text-sm font-semibold text-[color:var(--foreground)]">
-                  {group.items.length}
-                </span>
+                <p className="mt-1 text-[11px] leading-4 text-[color:var(--muted)]">
+                  {group.meta.body}
+                </p>
               </div>
-              <div className="mt-3 grid gap-2">
-                {group.items.slice(0, 3).map((video) => (
+              <span className="metric-number shrink-0 text-sm font-semibold text-[color:var(--foreground)]">
+                {group.items.length}
+              </span>
+            </div>
+            <div className="mt-3 grid gap-2">
+              {group.items.length > 0 ? (
+                group.items.slice(0, 3).map((video) => (
                   <Link
                     key={video.id}
                     href={`/trends/${video.id}`}
@@ -794,16 +867,25 @@ function DecisionShelf({ results }: { results: TrendVideoView[] }) {
                       {video.title}
                     </p>
                   </Link>
-                ))}
-              </div>
+                ))
+              ) : (
+                <p className="rounded-[var(--radius-md)] border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.012)] p-3 text-[12px] leading-5 text-[color:var(--muted)]">
+                  {group.meta.empty}
+                </p>
+              )}
+              {group.items.length > 3 ? (
+                <p className="text-[11px] text-[color:var(--muted)]">
+                  +{group.items.length - 3} nesta coluna.
+                </p>
+              ) : null}
             </div>
-          ))}
-        </div>
-      ) : null}
+          </div>
+        ))}
+      </div>
 
       {hiddenCount > 0 ? (
-        <p className="mt-3 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] px-3 py-2 text-[11px] text-[color:var(--muted)]">
-          {hiddenCount} Reel{hiddenCount === 1 ? "" : "s"} descartado{hiddenCount === 1 ? "" : "s"} fora da fila ativa.
+        <p className="mt-3 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] px-3 py-2 text-[11px] leading-5 text-[color:var(--muted)]">
+          {hiddenCount} Reel{hiddenCount === 1 ? "" : "s"} descartado{hiddenCount === 1 ? "" : "s"} fora da fila ativa. O conteudo nao foi apagado.
         </p>
       ) : null}
     </section>
