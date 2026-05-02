@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useReducedMotion } from "motion/react";
 
 interface Particle {
   x: number;
@@ -21,6 +22,12 @@ const COLORS = [
 ];
 
 const FOV = 320;
+
+const subscribe = () => () => {};
+
+function useClientReady() {
+  return useSyncExternalStore(subscribe, () => true, () => false);
+}
 
 function project(x: number, y: number, z: number, cx: number, cy: number) {
   const scale = FOV / (z + FOV);
@@ -55,8 +62,12 @@ export function ParticleField({ className, count = 64, opacity = 0.38 }: Particl
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
+  const prefersReducedMotion = useReducedMotion();
+  const clientReady = useClientReady();
 
   useEffect(() => {
+    if (!clientReady || prefersReducedMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -148,7 +159,26 @@ export function ParticleField({ className, count = 64, opacity = 0.38 }: Particl
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", resize);
     };
-  }, [count]);
+  }, [count, clientReady, prefersReducedMotion]);
+
+  if (!clientReady || prefersReducedMotion) {
+    return (
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none${className ? ` ${className}` : ""}`}
+        style={{
+          opacity: Math.min(opacity, 0.18),
+          position: "fixed",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 0,
+          background:
+            "radial-gradient(circle at 18% 20%, rgba(157,131,236,0.10), transparent 30%), radial-gradient(circle at 78% 12%, rgba(88,200,190,0.08), transparent 28%)",
+        }}
+      />
+    );
+  }
 
   return (
     <canvas

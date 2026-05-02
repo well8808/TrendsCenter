@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "motion/react";
+import { useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,6 +11,12 @@ type LazyReelsRadarScene3DProps = {
   intensity?: number;
   mode?: "library" | "radar";
 };
+
+const subscribe = () => () => {};
+
+function useClientReady() {
+  return useSyncExternalStore(subscribe, () => true, () => false);
+}
 
 function RadarSceneFallback({
   className,
@@ -64,13 +71,14 @@ export function LazyReelsRadarScene3D({
   mode = "library",
 }: LazyReelsRadarScene3DProps) {
   const prefersReducedMotion = useReducedMotion();
+  const clientReady = useClientReady();
 
   return (
     <div
       aria-hidden="true"
       className={cn("pointer-events-none relative overflow-hidden", className)}
     >
-      {prefersReducedMotion ? (
+      {!clientReady || prefersReducedMotion ? (
         <RadarSceneFallback className="absolute inset-0" mode={mode} />
       ) : (
         <ReelsRadarScene3D className="absolute inset-0" intensity={intensity} mode={mode} />

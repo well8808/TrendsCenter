@@ -23,6 +23,10 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function shouldRevealImmediately() {
+  return prefersReducedMotion() || window.matchMedia("(max-width: 640px)").matches;
+}
+
 function settleElement(element: HTMLElement) {
   element.style.opacity = "1";
   element.style.transform = "translateY(0)";
@@ -50,7 +54,7 @@ export function GSAPScrollEntrance({
     const items = Array.from(root.querySelectorAll<HTMLElement>(itemSelector));
     if (!items.length) return;
 
-    if (!canAnimateInBrowser() || prefersReducedMotion()) {
+    if (!canAnimateInBrowser() || shouldRevealImmediately()) {
       items.forEach(settleElement);
       return;
     }
@@ -127,7 +131,7 @@ export function GSAPSectionReveal({
     const element = ref.current;
     if (!element) return;
 
-    if (!canAnimateInBrowser() || prefersReducedMotion()) {
+    if (!canAnimateInBrowser() || shouldRevealImmediately()) {
       settleElement(element);
       return;
     }
