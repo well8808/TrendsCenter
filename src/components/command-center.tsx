@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AnimatePresence,
   LayoutGroup,
@@ -40,9 +41,10 @@ import { IngestionLab } from "@/components/ingestion-lab";
 import { AnimatedNumber } from "@/components/motion-system/AnimatedNumber";
 import { MotionCard } from "@/components/motion-system/MotionCard";
 import { ParticleField } from "@/components/particle-field";
-import { LazyReelsRadarScene3D } from "@/components/lazy-reels-radar-scene-3d";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
+import { ViralUniverseStage } from "@/components/viral-universe/viral-universe-stage";
+import type { ViralSignalNode, ViralUniverseStats } from "@/components/viral-universe/viral-scene-quality";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
 import {
   filterSignals,
@@ -111,10 +113,11 @@ const itemVariants: Variants = {
 };
 
 const navItems = [
-  { label: "Reels Center", icon: LayoutDashboard, key: "cc" },
+  { label: "Sala de Sinais", icon: LayoutDashboard, key: "cc" },
+  { label: "Biblioteca Viral", icon: Inbox, key: "library" },
   { label: "Radar BR", icon: Radar, key: "radar-br" },
-  { label: "Sinais EUA", icon: Globe2, key: "us" },
-  { label: "Fontes", icon: Database, key: "instagram-sources" },
+  { label: "Early EUA", icon: Globe2, key: "us" },
+  { label: "Fontes e coleta", icon: Database, key: "instagram-sources" },
 ];
 
 const navCategoryItems = [
@@ -124,7 +127,7 @@ const navCategoryItems = [
 ];
 
 const navOpsItems = [
-  { label: "Adicionar dados", icon: DatabaseZap, key: "ingestion" },
+  { label: "Coletar Reels", icon: DatabaseZap, key: "ingestion" },
 ];
 
 const marketOptions: { value: MarketFilter; label: string }[] = [
@@ -1239,6 +1242,7 @@ export function CommandCenter({
   reelStats = fallbackReelStats,
   tenant,
 }: CommandCenterData) {
+  const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(signals.length > 0 ? "ready" : "empty");
   const [query, setQuery] = useState("");
@@ -1267,6 +1271,31 @@ export function CommandCenter({
   const focusSignal = filteredSignals[0] ?? topSignal;
   const selectedSignal =
     signals.find((signal) => signal.id === selectedSignalId) ?? filteredSignals[0] ?? signals[0];
+  const universeSignals = useMemo<ViralSignalNode[]>(
+    () =>
+      signals.map((signal) => ({
+        id: signal.id,
+        title: signal.title,
+        market: signal.market,
+        score: signal.score.value,
+        priority: signal.priority,
+        confidence: signal.score.band,
+        evidenceCount: Math.max(signal.evidence.length, signal.source.evidenceCount),
+        sourceLabel: signal.source.title,
+        decision: signal.decision,
+      })),
+    [signals],
+  );
+  const universeStats = useMemo<ViralUniverseStats>(
+    () => ({
+      reels: reelStats.total,
+      signals: signals.length,
+      sources: sources.length,
+      evidence: reelStats.evidenceCount || signals.reduce((total, signal) => total + signal.evidence.length, 0),
+      avgScore: reelStats.avgScore || Math.round(signals.reduce((total, signal) => total + signal.score.value, 0) / Math.max(signals.length, 1)),
+    }),
+    [reelStats.avgScore, reelStats.evidenceCount, reelStats.total, signals, sources.length],
+  );
   const savedSignals = useMemo(
     () => rankSignals(signals.filter((signal) => savedIds.has(signal.id)), "priority"),
     [savedIds, signals],
@@ -1338,6 +1367,11 @@ export function CommandCenter({
   function navigateDashboard(key: string) {
     setActiveNavKey(key);
     setWorkspaceState("ready");
+
+    if (key === "library") {
+      router.push("/trends");
+      return;
+    }
 
     if (key === "cc") {
       resetSignalFilters();
@@ -1454,10 +1488,13 @@ export function CommandCenter({
                 `,
               }}
             />
-            <LazyReelsRadarScene3D
-              mode="radar"
-              intensity={0.95}
-              className="absolute left-1 top-0 h-[230px] w-[320px] opacity-[0.78] sm:left-6 sm:top-3 sm:h-[270px] sm:w-[390px] md:left-8 md:top-4 md:h-[305px] md:w-[440px] md:opacity-95"
+            <ViralUniverseStage
+              mode="signal-room"
+              reels={[]}
+              signals={universeSignals}
+              stats={universeStats}
+              label="Reel -> Sinal"
+              className="absolute left-1 top-0 h-[235px] w-[330px] opacity-[0.82] sm:left-6 sm:top-3 sm:h-[280px] sm:w-[430px] md:left-8 md:top-4 md:h-[320px] md:w-[500px] md:opacity-95"
             />
             <div
               aria-hidden="true"
@@ -1473,7 +1510,7 @@ export function CommandCenter({
                     variants={itemVariants}
                     className="text-[28px] font-semibold leading-tight tracking-[-0.02em] md:text-[38px]"
                   >
-                    Reels <span className="gradient-text-ig">Center</span>
+                    Sala de <span className="gradient-text-ig">Sinais</span>
                   </motion.h1>
                   <motion.p
                     variants={itemVariants}
@@ -1491,6 +1528,34 @@ export function CommandCenter({
                       )}
                     </span>
                   </motion.p>
+                  <motion.div
+                    variants={itemVariants}
+                    className="mt-4 flex flex-wrap items-center gap-2"
+                    aria-label="Areas principais do produto"
+                  >
+                    <Link
+                      href="/trends"
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(237,73,86,0.26)] bg-[rgba(237,73,86,0.08)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--foreground)] transition hover:border-[rgba(237,73,86,0.42)]"
+                    >
+                      Biblioteca Viral
+                      <span className="metric-number text-[color:var(--hot)]">{reelStats.total}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("signal-desk")}
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.34)] hover:text-[color:var(--foreground)]"
+                    >
+                      Sala de Sinais
+                      <span className="metric-number text-[color:var(--aqua)]">{signals.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("ingestion-lab")}
+                      className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.025)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted)] transition hover:text-[color:var(--foreground)]"
+                    >
+                      Fontes e Coleta
+                    </button>
+                  </motion.div>
                 </div>
               </motion.div>
 
@@ -1578,11 +1643,11 @@ export function CommandCenter({
               >
                 <GSAPSectionReveal className="mb-4">
                   <h2 className="text-xl font-semibold leading-tight tracking-[-0.015em] md:text-[26px]">
-                    <span className="gradient-text-ig">Oportunidades</span>{" "}
-                    priorizadas
+                    <span className="gradient-text-ig">Sala de Sinais</span>{" "}
+                    criativos
                   </h2>
                   <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                    Veja o potencial, confira a origem e escolha a proxima acao.
+                    Transforme Reels reais em decisao: entenda o motivo, confira a prova e escolha a proxima acao.
                   </p>
                 </GSAPSectionReveal>
 

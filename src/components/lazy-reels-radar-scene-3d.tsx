@@ -27,7 +27,7 @@ function RadarSceneFallback({
   return (
     <div
       aria-hidden="true"
-      className={cn("pointer-events-none relative overflow-hidden", className)}
+      className={cn("pointer-events-none overflow-hidden", className)}
     >
       <div className="absolute left-[14%] top-[16%] h-[58%] w-[58%] rounded-full border border-[rgba(88,200,190,0.22)]" />
       <div className="absolute left-[20%] top-[22%] h-[44%] w-[44%] rounded-full border border-[rgba(237,73,86,0.18)]" />
@@ -39,14 +39,28 @@ function RadarSceneFallback({
         <>
           <span className="absolute right-[8%] top-[21%] flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
             <span className="h-px w-6 bg-gradient-to-r from-transparent to-[rgba(88,200,190,0.52)]" />
-            EUA
+            reel
           </span>
           <span className="absolute left-[45%] top-[47%] -translate-x-1/2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
-            BR
+            sinal
           </span>
           <span className="absolute bottom-[17%] right-[4%] flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
             acao
             <span className="h-px w-6 bg-gradient-to-r from-[rgba(230,183,101,0.52)] to-transparent" />
+          </span>
+        </>
+      )}
+      {!isRadar && (
+        <>
+          <span className="absolute right-[9%] top-[21%] flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--hot)]">
+            reels
+          </span>
+          <span className="absolute left-[8%] top-[53%] flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
+            cresce
+            <span className="h-px w-6 bg-gradient-to-r from-[rgba(88,200,190,0.52)] to-transparent" />
+          </span>
+          <span className="absolute bottom-[18%] right-[8%] text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
+            sinal
           </span>
         </>
       )}

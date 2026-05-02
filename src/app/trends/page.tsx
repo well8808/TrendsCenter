@@ -12,11 +12,12 @@ import {
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
 import { ParticleField } from "@/components/particle-field";
 import { JobRunsFeed } from "@/components/job-runs-feed";
-import { LazyReelsRadarScene3D } from "@/components/lazy-reels-radar-scene-3d";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
+import { ViralUniverseStage } from "@/components/viral-universe/viral-universe-stage";
+import type { ViralReelNode, ViralUniverseStats } from "@/components/viral-universe/viral-scene-quality";
 import { requireTenantContext } from "@/lib/auth/session";
 import type { JobRunsListDto } from "@/lib/api";
 import { listWorkspaceJobRuns } from "@/lib/services/jobs-service";
@@ -80,6 +81,26 @@ export default async function TrendsPage({
     sound: video.sound?.title,
     hashtags: video.hashtags,
   }));
+  const viralReels: ViralReelNode[] = videos.map((video) => ({
+    id: video.id,
+    title: video.title,
+    market: video.market,
+    score: video.trendScore,
+    views: video.views,
+    growth: video.growthViews,
+    velocity: video.velocityScore,
+    evidenceCount: Math.max(video.evidenceCount, video.snapshotCount),
+    creator: video.creator,
+    sourceLabel: video.origin,
+    tags: video.hashtags,
+  }));
+  const universeStats: ViralUniverseStats = {
+    reels: data.stats.total,
+    signals: 0,
+    sources: new Set(videos.map((video) => video.origin)).size,
+    evidence: viralReels.reduce((total, reel) => total + reel.evidenceCount, 0),
+    avgScore: data.stats.avgScore,
+  };
 
   const stats = [
     { label: "Reels", value: data.stats.total, tone: "acid" as const },
@@ -109,9 +130,16 @@ export default async function TrendsPage({
                 `,
               }}
             />
-            <LazyReelsRadarScene3D className="absolute right-4 top-5 hidden h-[210px] w-[360px] opacity-55 lg:block 2xl:h-[240px] 2xl:w-[420px] 2xl:opacity-72" />
+            <ViralUniverseStage
+              mode="library"
+              reels={viralReels}
+              signals={[]}
+              stats={universeStats}
+              label="Arquivo vivo"
+              className="absolute right-4 top-5 z-[1] hidden h-[250px] w-[430px] opacity-95 lg:block 2xl:h-[280px] 2xl:w-[500px]"
+            />
             <div
-              className="pointer-events-none absolute right-0 top-0 hidden h-[260px] w-[470px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.18)_45%,rgba(12,12,10,0.92)_100%)] lg:block"
+              className="pointer-events-none absolute right-0 top-0 z-0 hidden h-[260px] w-[470px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.04)_52%,rgba(12,12,10,0.22)_100%)] lg:block"
               aria-hidden="true"
             />
             <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -135,13 +163,40 @@ export default async function TrendsPage({
                   </span>
                 </div>
 
+                <nav className="mt-5 flex flex-wrap items-center gap-2" aria-label="Areas principais">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.1)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--foreground)]">
+                    Biblioteca
+                    <span className="metric-number text-[color:var(--hot)]">{data.stats.total}</span>
+                  </span>
+                  <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 rounded-full border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted-strong)] transition hover:border-[rgba(64,224,208,0.34)] hover:text-[color:var(--foreground)]"
+                  >
+                    Sala de Sinais
+                  </Link>
+                  <a
+                    href="#coleta"
+                    className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[rgba(255,255,255,0.025)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--muted)] transition hover:text-[color:var(--foreground)]"
+                  >
+                    Fontes e Coleta
+                  </a>
+                </nav>
+
                 <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">
-                  Biblioteca de{" "}
+                  Biblioteca viva de{" "}
                   <span className="gradient-text-ig">Reels Virais</span>
                 </h1>
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-[color:var(--muted)] md:text-[15px]">
-                  Descubra quais reels estao viralizando agora. Pesquise por creator, som, hashtag ou formato — e replique na sua operacao de conteudo.
+                  Descubra quais reels estao viralizando agora. Pesquise por creator, som, hashtag ou formato e replique na sua operacao de conteudo.
                 </p>
+                <ViralUniverseStage
+                  mode="library"
+                  reels={viralReels}
+                  signals={[]}
+                  stats={universeStats}
+                  label="Arquivo vivo"
+                  className="mt-5 h-[174px] w-full lg:hidden"
+                />
               </div>
 
               <TrendStatsDeck stats={stats} />
@@ -209,7 +264,7 @@ export default async function TrendsPage({
           <TrendVideoGrid results={videos} />
         </div>
 
-        <aside className="min-w-0 opacity-95 lg:sticky lg:top-5 lg:h-[calc(100dvh-40px)]">
+        <aside id="coleta" className="min-w-0 scroll-mt-6 opacity-95 lg:sticky lg:top-5 lg:h-[calc(100dvh-40px)]">
           <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-10 pr-1">
             <ReelsSearchAssistant />
 

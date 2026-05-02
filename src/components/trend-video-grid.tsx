@@ -781,6 +781,10 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
     return <EmptyLibrary />;
   }
 
+  const brCount = results.filter((video) => video.market === "BR").length;
+  const sourceCount = results.reduce((total, video) => total + Math.max(video.evidenceCount, video.snapshotCount), 0);
+  const topScore = results.reduce((max, video) => Math.max(max, video.trendScore), 0);
+
   // Separa por tier, mantendo ordem original dentro de cada tier
   const hotCards = results.filter((v) => v.trendScore >= 78).slice(0, 2);
   const hotIds = new Set(hotCards.map((v) => v.id));
@@ -810,6 +814,43 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
         role="feed"
         aria-label="Biblioteca de reels virais"
       >
+        <section className="relative overflow-hidden rounded-[var(--radius-2xl)] border border-[rgba(239,233,220,0.1)] bg-[rgba(255,255,255,0.018)] p-4 md:p-5">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(237,73,86,0.12),transparent_28rem),radial-gradient(circle_at_90%_80%,rgba(247,119,55,0.08),transparent_24rem)]"
+            aria-hidden="true"
+          />
+          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
+                biblioteca em movimento
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[color:var(--foreground)] md:text-[32px]">
+                Reels coletados virando repertorio estrategico
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
+                Cada card preserva origem, score e metricas reais. A Sala de Sinais transforma os melhores achados em decisao.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 sm:w-[360px]">
+              {[
+                { label: "Reels", value: results.length },
+                { label: "BR", value: brCount },
+                { label: "Top score", value: topScore },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.2)] p-3"
+                >
+                  <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[color:var(--muted)]">{item.label}</p>
+                  <p className="metric-number mt-1 text-xl font-semibold text-[color:var(--foreground)]">{item.value}</p>
+                </div>
+              ))}
+              <div className="col-span-3 rounded-[var(--radius-md)] border border-[rgba(237,73,86,0.18)] bg-[rgba(237,73,86,0.055)] px-3 py-2 text-[11px] text-[color:var(--muted-strong)]">
+                {sourceCount} registro{sourceCount === 1 ? "" : "s"} de prova/leitura conectado{sourceCount === 1 ? "" : "s"} a dados reais.
+              </div>
+            </div>
+          </div>
+        </section>
         {/* ── EM CHAMAS — featured horizontal ── */}
         {hotCards.length > 0 && (
           <section aria-labelledby="section-hot">
@@ -832,7 +873,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-warm" className="mb-4">
               <SectionHeader tier="gold" count={gridWarm.length} />
             </div>
-            <GSAPScrollEntrance className="grid grid-cols-2 gap-4 lg:grid-cols-3" stagger={0.06} y={18}>
+            <GSAPScrollEntrance className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06} y={18}>
               {gridWarm.map((video, idx) => (
                 <div key={video.id} className="gse-item">
                   <PortraitReelCard
@@ -851,7 +892,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             <div id="section-cool" className="mb-4">
               <SectionHeader tier="aqua" count={coolCards.length} />
             </div>
-            <GSAPScrollEntrance className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" stagger={0.045} y={14}>
+            <GSAPScrollEntrance className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" stagger={0.045} y={14}>
               {coolCards.map((video, idx) => (
                 <div key={video.id} className="gse-item">
                   <PortraitReelCard

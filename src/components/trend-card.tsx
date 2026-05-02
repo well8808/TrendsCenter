@@ -50,6 +50,12 @@ const riskLabel = {
   high: "risco alto",
 };
 
+const confidenceLabel = {
+  low: "baixa confianca",
+  medium: "confianca media",
+  high: "alta confianca",
+};
+
 const stageLabel = {
   emerging: "emergindo",
   accelerating: "acelerando",
@@ -81,6 +87,16 @@ function priorityTone(priority: keyof typeof priorityLabel) {
     return "border-[rgba(64,224,208,0.3)] bg-[rgba(64,224,208,0.09)] text-[color:var(--aqua)]";
   }
   return "border-[rgba(169,140,255,0.3)] bg-[rgba(169,140,255,0.09)] text-[color:var(--violet)]";
+}
+
+function evidenceSummary(signal: TrendSignal) {
+  const count = Math.max(signal.evidence.length, signal.source.evidenceCount);
+
+  if (count > 0) {
+    return `${count} evidencia${count === 1 ? "" : "s"} real${count === 1 ? "" : "is"}`;
+  }
+
+  return signal.origin === "DEMO" ? "dado demo sinalizado" : "fonte real registrada";
 }
 
 const factorConfig: Array<{ key: keyof ScoreInput; label: string }> = [
@@ -173,6 +189,39 @@ function SignalPulse() {
   );
 }
 
+function SignalInfoBlock({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "decision";
+}) {
+  return (
+    <div
+      className={cn(
+        "min-w-0 rounded-[var(--radius-md)] border p-3",
+        tone === "decision"
+          ? "border-[rgba(64,224,208,0.2)] bg-[rgba(64,224,208,0.045)]"
+          : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.018)]",
+      )}
+    >
+      <p
+        className={cn(
+          "font-mono text-[10px] uppercase tracking-[0.14em]",
+          tone === "decision" ? "text-[color:var(--aqua)]" : "text-[color:var(--muted)]",
+        )}
+      >
+        {label}
+      </p>
+      <p className="mt-1.5 break-words text-[13px] leading-5 text-[color:var(--foreground)]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
 export function TrendCard({
   signal,
   index,
@@ -197,6 +246,8 @@ export function TrendCard({
   const scoreDelay = baseDelay + 0.14;
   const [showDetails, setShowDetails] = useState(false);
   const scoreTierInfo = scoreTier(signal.score.value);
+  const evidenceLabel = evidenceSummary(signal);
+  const driverPreview = signal.scoreDrivers.slice(0, 3);
 
   return (
     <motion.article
@@ -259,31 +310,47 @@ export function TrendCard({
             {signal.title}
           </motion.h3>
 
-          <motion.p
+          <motion.div
             variants={itemVariants}
-            className="mt-2 max-w-3xl break-words text-[14px] leading-6 text-[color:var(--muted-strong)]"
+            className="mt-3 grid gap-2 md:grid-cols-2"
           >
-            {signal.summary}
-          </motion.p>
+            <SignalInfoBlock label="por que importa" value={signal.summary} />
+            <SignalInfoBlock label="decisao recomendada" value={signal.decision} tone="decision" />
+          </motion.div>
 
           <motion.div
             variants={itemVariants}
-            className="mt-3 rounded-[var(--radius-md)] border border-[rgba(64,224,208,0.18)] bg-[rgba(64,224,208,0.045)] p-3"
+            className="mt-2 rounded-[var(--radius-md)] border border-[rgba(243,201,105,0.16)] bg-[rgba(243,201,105,0.035)] p-3"
           >
-            <div className="flex items-start gap-2.5">
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--aqua)]" aria-hidden="true" />
-              <div className="min-w-0">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--aqua)]">
-                  decisao
-                </p>
-                <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[color:var(--foreground)]">
-                  {signal.decision}
-                </p>
-                <p className="mt-1 line-clamp-2 break-words text-[12px] leading-5 text-[color:var(--muted)]">
-                  proxima acao: {signal.nextAction}
-                </p>
-              </div>
-            </div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--gold)]">
+              proxima acao
+            </p>
+            <p className="mt-1.5 break-words text-[13px] font-medium leading-5 text-[color:var(--foreground)]">
+              {signal.nextAction}
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            className="mt-3 flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.14)] px-3 py-2.5"
+          >
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--muted-strong)]">
+              <Layers3 className="h-3.5 w-3.5 text-[color:var(--aqua)]" aria-hidden="true" />
+              prova: {evidenceLabel}
+            </span>
+            <span aria-hidden="true" className="hidden text-[color:var(--muted)] sm:inline">/</span>
+            <span className="text-[11px] text-[color:var(--muted)]">
+              {signal.source.title} / {confidenceLabel[signal.source.confidence]}
+            </span>
+            {driverPreview.map((driver) => (
+              <span
+                key={driver}
+                className="inline-flex items-center gap-1 rounded-full bg-[rgba(255,255,255,0.035)] px-2 py-1 text-[11px] text-[color:var(--muted-strong)]"
+              >
+                <CheckCircle2 className="h-3 w-3 text-[color:var(--success)]" aria-hidden="true" />
+                {driver}
+              </span>
+            ))}
           </motion.div>
 
           <motion.div

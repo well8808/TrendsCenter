@@ -435,20 +435,34 @@ export function ReelsRadarScene3D({ className, intensity = 1, mode = "library" }
     <div
       ref={mountRef}
       aria-hidden="true"
-      className={`pointer-events-none relative overflow-hidden${className ? ` ${className}` : ""}`}
+      className={`pointer-events-none overflow-hidden${className ? ` ${className}` : ""}`}
     >
       {mode === "radar" && (
         <>
           <span className="radar-story-step absolute right-[8%] top-[21%] z-10 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
             <span className="h-px w-6 bg-gradient-to-r from-transparent to-[rgba(88,200,190,0.68)]" />
-            EUA
+            reel
           </span>
           <span className="radar-story-step absolute left-[45%] top-[47%] z-10 -translate-x-1/2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--acid)]">
-            BR
+            sinal
           </span>
           <span className="radar-story-step absolute bottom-[17%] right-[4%] z-10 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
             acao
             <span className="h-px w-6 bg-gradient-to-r from-[rgba(230,183,101,0.68)] to-transparent" />
+          </span>
+        </>
+      )}
+      {mode === "library" && (
+        <>
+          <span className="absolute right-[9%] top-[21%] z-10 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--hot)]">
+            reels
+          </span>
+          <span className="absolute left-[8%] top-[53%] z-10 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--aqua)]">
+            cresce
+            <span className="h-px w-6 bg-gradient-to-r from-[rgba(88,200,190,0.68)] to-transparent" />
+          </span>
+          <span className="absolute bottom-[18%] right-[8%] z-10 text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--gold)]">
+            sinal
           </span>
         </>
       )}
