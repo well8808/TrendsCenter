@@ -27,7 +27,7 @@ const signalVideoInclude = {
 type Tx = Prisma.TransactionClient;
 type SignalVideo = Prisma.VideoGetPayload<{ include: typeof signalVideoInclude }>;
 
-const signalScoreModelVersion = "score-v0.2-signal-intelligence-v1";
+const signalScoreModelVersion = "score-v0.4-signal-intelligence-v1";
 
 type OpportunityKind =
   | "authority_news"
@@ -37,7 +37,11 @@ type OpportunityKind =
   | "audio_trend"
   | "public_creator"
   | "replicable_format"
-  | "high_traction";
+  | "high_traction"
+  | "brand_product"
+  | "visual_trend"
+  | "quick_content"
+  | "regional_br";
 
 interface SignalOpportunityInput {
   title: string;
@@ -47,6 +51,10 @@ interface SignalOpportunityInput {
   soundTitle?: string | null;
   hashtags: string[];
   viewCount: bigint;
+  likeCount?: bigint;
+  commentCount?: bigint;
+  shareCount?: bigint;
+  saveCount?: bigint;
   score: number;
   market: "BR" | "US";
   hasSound: boolean;
@@ -64,6 +72,7 @@ interface SignalOpportunity {
   evidenceNote: string;
   tags: string[];
   scoreDrivers: string[];
+  priority: "NOW" | "NEXT" | "WATCH" | "HOLD";
 }
 
 function signalKey(video: SignalVideo) {
@@ -115,37 +124,112 @@ function compactHandle(input: SignalOpportunityInput) {
   return input.creatorHandle ? `@${input.creatorHandle}` : input.sourceTitle;
 }
 
+function ratio(numerator: bigint | undefined, denominator: bigint) {
+  const base = Number(denominator);
+
+  if (!Number.isFinite(base) || base <= 0) {
+    return 0;
+  }
+
+  return Number(numerator ?? BigInt(0)) / base;
+}
+
+function formatPercent(value: number) {
+  if (value <= 0) {
+    return "0%";
+  }
+
+  if (value < 0.01) {
+    return `${(value * 100).toFixed(1)}%`;
+  }
+
+  return `${Math.round(value * 100)}%`;
+}
+
+function compactHook(input: SignalOpportunityInput) {
+  const text = compactText(input.caption || input.title, "Reel importado", 46);
+
+  return text.replace(/^@[\w.]+\s*/i, "").trim();
+}
+
+function priorityForOpportunity(input: SignalOpportunityInput, kind: OpportunityKind, engagementRate: number) {
+  if (input.score >= 78 || (input.viewCount >= BigInt(3_000_000) && input.market === "BR")) {
+    return "NOW" as const;
+  }
+
+  if (input.score >= 60 || input.viewCount >= BigInt(1_000_000) || engagementRate >= 0.06) {
+    return "NEXT" as const;
+  }
+
+  if (kind === "debate" || kind === "authority_news" || kind === "brand_product") {
+    return "WATCH" as const;
+  }
+
+  return input.score >= 42 ? "WATCH" as const : "HOLD" as const;
+}
+
 export function classifySignalOpportunity(input: SignalOpportunityInput): SignalOpportunity {
   const textValue = normalizeText(input.title, input.caption, input.hashtags.join(" "), input.soundTitle);
   const views = formatCompactCount(input.viewCount);
   const handle = compactHandle(input);
-  const traction = `${views} views, score ${input.score}, mercado ${input.market}`;
+  const hook = compactHook(input);
+  const engagementRate =
+    ratio(input.likeCount, input.viewCount) +
+    ratio(input.commentCount, input.viewCount) +
+    ratio(input.shareCount, input.viewCount) +
+    ratio(input.saveCount, input.viewCount);
+  const commentRate = ratio(input.commentCount, input.viewCount);
+  const shareRate = ratio(input.shareCount, input.viewCount);
+  const tractionParts = [`${views} views`, `score ${input.score}`, `mercado ${input.market}`];
+
+  if (engagementRate > 0) {
+    tractionParts.push(`engaj. ${formatPercent(engagementRate)}`);
+  }
+
+  const traction = tractionParts.join(", ");
 
   let kind: OpportunityKind = "replicable_format";
   let label = "Formato replicavel";
   let type: SignalOpportunity["type"] = "FORMAT";
   let trigger = "estrutura do Reel pode ser quebrada em gancho, promessa, prova e fechamento";
 
-  if (hasAny(textValue, ["breaking", "news", "noticia", "report", "official", "anuncia", "confirmou", "alerta"])) {
+  if (hasAny(textValue, ["celebrity", "superstar", "creator", "influencer", "atleta", "artista", "famos", "omar", "wwe", "wrestlemania"])) {
+    kind = "public_creator";
+    label = "Creator/figura publica";
+    type = "CREATOR";
+    trigger = "Reel usa figura publica, fandom ou reconhecimento imediato como motor de atencao";
+  } else if (input.market === "BR" && hasAny(textValue, ["brasil", "brasileir", "rio de janeiro", "sao paulo", "funk", "carnaval", "nordeste", "mineir", "belo horizonte"])) {
+    kind = "regional_br";
+    label = "Oportunidade regional BR";
+    type = "FORMAT";
+    trigger = "texto/hashtags indicam recorte cultural brasileiro que pode gerar adaptacao local";
+  } else if (hasAny(textValue, ["launch", "drop", "produto", "marca", "brand", "collab", "cupom", "colecao", "shop", "loja", "review", "unboxing"])) {
+    kind = "brand_product";
+    label = "Produto/marca";
+    type = "FORMAT";
+    trigger = "Reel parece conectar produto, marca ou oferta a uma narrativa de atencao";
+  } else if (hasAny(textValue, ["breaking", "news", "noticia", "report", "official", "anuncia", "confirmou", "alerta", "evento"])) {
     kind = "authority_news";
-    label = "Autoridade/noticia";
+    label = "Evento/noticia";
     type = "CREATOR";
     trigger = "caption sugere noticia, autoridade ou acontecimento com valor de timing";
-  } else if (hasAny(textValue, ["controvers", "debate", "critic", "vs", "versus", "treta", "polemica", "respondeu"])) {
+  } else if (hasAny(textValue, ["controvers", "debate", "critic", "vs", "versus", "treta", "polemica", "respondeu"]) || commentRate >= 0.01) {
     kind = "debate";
     label = "Polemica/debate";
     type = "FORMAT";
-    trigger = "texto indica conflito, comparacao ou discussao que pode puxar comentarios";
+    trigger = commentRate >= 0.01
+      ? "comentarios em proporcao relevante sugerem conversa, disputa ou debate"
+      : "texto indica conflito, comparacao ou discussao que pode puxar comentarios";
   } else if (hasAny(textValue, ["how to", "tutorial", "passo", "dica", "aprenda", "guia", "como fazer", "hack", "tips"])) {
     kind = "tutorial";
     label = "Tutorial/educativo";
     type = "FORMAT";
     trigger = "conteudo parece ensinar ou demonstrar um processo reutilizavel";
-  } else if (hasAny(textValue, ["celebrity", "superstar", "creator", "influencer", "atleta", "artista", "famos", "omar", "wwe", "wrestlemania"])) {
-    kind = "public_creator";
-    label = "Creator/figura publica";
-    type = "CREATOR";
-    trigger = "Reel usa figura publica, fandom ou reconhecimento imediato como motor de atencao";
+  } else if (hasAny(textValue, ["pov", "transition", "transicao", "antes e depois", "before after", "visual", "look", "aesthetic", "estetica", "template", "edit"])) {
+    kind = "visual_trend";
+    label = "Trend visual";
+    type = "FORMAT";
+    trigger = "caption indica padrao visual, transicao ou estetica que pode virar template";
   } else if (input.hasSound && hasAny(textValue, ["audio", "sound", "song", "musica", "trend", "remix", "viral"])) {
     kind = "audio_trend";
     label = "Tendencia de audio";
@@ -156,6 +240,13 @@ export function classifySignalOpportunity(input: SignalOpportunityInput): Signal
     label = "Entretenimento";
     type = "FORMAT";
     trigger = "caption aponta entretenimento, reacao ou momento de fandom facil de adaptar";
+  } else if (hasAny(textValue, ["rapido", "quick", "fast", "em 30", "em 60", "minuto", "curto", "short"]) || shareRate >= 0.01) {
+    kind = "quick_content";
+    label = "Conteudo rapido";
+    type = "FORMAT";
+    trigger = shareRate >= 0.01
+      ? "compartilhamentos sugerem conteudo simples de repassar e testar rapido"
+      : "texto sugere formato curto, rapido e facil de adaptar";
   } else if (input.score >= 70 || input.viewCount >= BigInt(1_000_000)) {
     kind = "high_traction";
     label = "Alta tracao";
@@ -168,16 +259,41 @@ export function classifySignalOpportunity(input: SignalOpportunityInput): Signal
     trigger = "Reel tem audio associado e pode abrir teste de som/formato";
   }
 
-  const title = `${label}: ${handle}`;
+  const priority = priorityForOpportunity(input, kind, engagementRate);
+  const title = `${label}: ${handle}${hook ? ` | ${hook}` : ""}`;
   const reason = `${trigger}. Evidencia real: ${traction}.`;
-  const decision = input.score >= 70
+  const decision = priority === "NOW"
     ? `Priorizar leitura do gancho e adaptar o padrao de ${label.toLowerCase()} para um teste BR.`
-    : `Manter como sinal ${label.toLowerCase()} e comparar com mais Reels antes de virar aposta principal.`;
-  const nextAction = kind === "audio_trend"
-    ? "Verificar se o audio pode ser usado comercialmente; se sim, testar variacao curta com fonte registrada."
-    : kind === "tutorial"
-      ? "Quebrar o passo a passo em roteiro curto e validar se existe prova visual suficiente."
-      : "Abrir o Reel, mapear gancho/caption/estrutura e registrar uma hipotese criativa com fonte vinculada.";
+    : priority === "NEXT"
+      ? `Separar este sinal ${label.toLowerCase()} para comparacao com 2-3 Reels similares antes de produzir.`
+      : `Manter como sinal ${label.toLowerCase()} e observar se novas coletas confirmam o padrao.`;
+  const nextAction = (() => {
+    if (kind === "audio_trend") {
+      return "Verificar se o audio pode ser usado comercialmente; se sim, testar variacao curta com fonte registrada.";
+    }
+
+    if (kind === "tutorial") {
+      return "Quebrar o passo a passo em roteiro curto e validar se existe prova visual suficiente.";
+    }
+
+    if (kind === "brand_product") {
+      return "Mapear qual promessa do produto/marca aparece no gancho e adaptar sem copiar criativo de terceiros.";
+    }
+
+    if (kind === "visual_trend") {
+      return "Extrair o padrao visual em 3 cenas e testar com asset proprio ou licenciado.";
+    }
+
+    if (kind === "regional_br") {
+      return "Checar se a linguagem e referencia local cabem no publico BR antes de transformar em pauta.";
+    }
+
+    if (kind === "quick_content") {
+      return "Criar uma versao curta com uma unica promessa e medir retencao/compartilhamento.";
+    }
+
+    return "Abrir o Reel, mapear gancho/caption/estrutura e registrar uma hipotese criativa com fonte vinculada.";
+  })();
   const evidenceTitle = `${label}: ${compactText(input.title, "Reel importado", 72)}`;
   const evidenceNote = `${reason} URL e metricas foram preservadas na coleta licenciada.`;
   const tags = [
@@ -208,6 +324,7 @@ export function classifySignalOpportunity(input: SignalOpportunityInput): Signal
     evidenceNote,
     tags,
     scoreDrivers,
+    priority,
   };
 }
 
@@ -287,6 +404,10 @@ function analyzeVideo(video: SignalVideo) {
     soundTitle: video.sound?.title,
     hashtags: video.hashtags.map((item) => item.hashtag.tag),
     viewCount: video.currentViewCount,
+    likeCount: video.currentLikeCount,
+    commentCount: video.currentCommentCount,
+    shareCount: video.currentShareCount,
+    saveCount: video.currentSaveCount,
     score: video.trendScore,
     market: video.market,
     hasSound: Boolean(video.soundId),
@@ -335,7 +456,7 @@ async function upsertSignalForVideo(tx: Tx, context: TenantContext, video: Signa
     market: video.market,
     audience: copy.audience,
     status: statusForScore(video.trendScore),
-    priority: priorityForScore(video.trendScore),
+    priority: copy.priority ?? priorityForScore(video.trendScore),
     riskLevel: "LOW" as const,
     stage: stageForScore(video.trendScore),
     strength: video.trendScore,
