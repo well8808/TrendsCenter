@@ -272,7 +272,7 @@ export function ProviderReelsImportForm() {
       </div>
       <h2 className="mt-3 text-lg font-semibold">Coletar de fonte licenciada</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-        Use Bright Data configurado no servidor. O radar salva metadados, metricas e evidencia; nao baixa midia nem cria insight sem origem.
+        Use Bright Data configurado no servidor. O arquivo salva metadados, metricas e evidencia; nao baixa midia nem cria insight sem origem.
       </p>
 
       <form ref={formRef} onSubmit={handleSubmit} className="mt-4 grid gap-3">
@@ -474,7 +474,7 @@ function ProgressMeter({
 
       <ol className="mt-4 grid gap-2 text-[11px] text-[color:var(--muted)]">
         {[
-          { label: "job criado no radar", done: state.kind === "pending" },
+          { label: "job criado no arquivo", done: state.kind === "pending" },
           { label: "snapshot Bright Data em preparo", done: state.kind === "pending" && state.pollCount > 0 },
           { label: "normalizacao e score entram quando o snapshot fica pronto", done: false },
         ].map((item, index) => (

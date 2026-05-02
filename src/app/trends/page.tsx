@@ -10,12 +10,12 @@ import {
 } from "lucide-react";
 
 import { IngestionRequestForm } from "@/components/ingestion-request-form";
-import { ParticleField } from "@/components/particle-field";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
+import { TrendEnergyField } from "@/components/viral-library/trend-energy-field";
 import { ViralUniverseStage } from "@/components/viral-universe/viral-universe-stage";
 import type { ViralReelNode, ViralUniverseStats } from "@/components/viral-universe/viral-scene-quality";
 import { requireTenantContext } from "@/lib/auth/session";
@@ -68,6 +68,7 @@ export default async function TrendsPage({
     title: video.title,
     caption: video.caption,
     thumbnailUrl: video.thumbnailUrl,
+    media: video.media,
     market: video.market,
     origin: video.source.origin,
     trendScore: video.trendScore,
@@ -92,6 +93,8 @@ export default async function TrendsPage({
     evidenceCount: Math.max(video.evidenceCount, video.snapshotCount),
     creator: video.creator,
     sourceLabel: video.origin,
+    thumbnailUrl: video.thumbnailUrl,
+    media: video.media,
     tags: video.hashtags,
   }));
   const universeStats: ViralUniverseStats = {
@@ -111,7 +114,7 @@ export default async function TrendsPage({
 
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
-      <ParticleField opacity={0.25} count={50} />
+      <TrendEnergyField mode="library" reels={data.stats.total} evidence={universeStats.evidence} />
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
@@ -130,14 +133,6 @@ export default async function TrendsPage({
                 `,
               }}
             />
-            <ViralUniverseStage
-              mode="library"
-              reels={viralReels}
-              signals={[]}
-              stats={universeStats}
-              label="Arquivo vivo"
-              className="absolute right-4 top-5 z-[1] hidden h-[250px] w-[430px] opacity-95 lg:block 2xl:h-[280px] 2xl:w-[500px]"
-            />
             <div
               className="pointer-events-none absolute right-0 top-0 z-0 hidden h-[260px] w-[470px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.04)_52%,rgba(12,12,10,0.22)_100%)] lg:block"
               aria-hidden="true"
@@ -149,13 +144,13 @@ export default async function TrendsPage({
                   href="/"
                 >
                   <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                  command center
+                  sala de sinais
                 </Link>
 
                 <div className="mt-5 flex flex-wrap items-center gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-[color:var(--muted)]">
                   <span className="inline-flex items-center gap-2 text-[color:var(--hot)]">
                     <span className="live-dot" aria-hidden="true" />
-                    biblioteca viral
+                    arquivo vivo
                   </span>
                   <span aria-hidden="true" className="text-[color:var(--line-strong)]">/</span>
                   <span className="font-mono text-[color:var(--muted-strong)]">
@@ -165,7 +160,7 @@ export default async function TrendsPage({
 
                 <nav className="mt-5 flex flex-wrap items-center gap-2" aria-label="Areas principais">
                   <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.1)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--foreground)]">
-                    Biblioteca
+                    Biblioteca Viral
                     <span className="metric-number text-[color:var(--hot)]">{data.stats.total}</span>
                   </span>
                   <Link
@@ -183,11 +178,11 @@ export default async function TrendsPage({
                 </nav>
 
                 <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">
-                  Biblioteca viva de{" "}
-                  <span className="gradient-text-ig">Reels Virais</span>
+                  Arquivo vivo de{" "}
+                  <span className="gradient-text-ig">cultura viral</span>
                 </h1>
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-[color:var(--muted)] md:text-[15px]">
-                  Descubra quais reels estao viralizando agora. Pesquise por creator, som, hashtag ou formato e replique na sua operacao de conteudo.
+                  Reels reais entram como artefatos: creator, som, metricas e provas preservadas. Os melhores achados alimentam a Sala de Sinais para virar decisao.
                 </p>
                 <ViralUniverseStage
                   mode="library"
@@ -195,7 +190,7 @@ export default async function TrendsPage({
                   signals={[]}
                   stats={universeStats}
                   label="Arquivo vivo"
-                  className="mt-5 h-[174px] w-full lg:hidden"
+                  className="mt-5 h-[174px] w-full lg:absolute lg:right-4 lg:top-5 lg:z-[1] lg:mt-0 lg:h-[250px] lg:w-[430px] lg:opacity-95 2xl:h-[280px] 2xl:w-[500px]"
                 />
               </div>
 
@@ -227,7 +222,7 @@ export default async function TrendsPage({
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted)]"
                     name="q"
                     defaultValue={data.params.query}
-                    placeholder="Reel, @creator, #hashtag, audio..."
+                    placeholder="Buscar artefato, @creator, #hashtag, audio..."
                   />
                   <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)] sm:inline">
                     ⌘ K
@@ -282,7 +277,7 @@ export default async function TrendsPage({
             <section className="app-rail-card rounded-[var(--radius-lg)] p-5 backdrop-blur-2xl">
               <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
                 <Gauge className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                como o potencial e calculado
+                como o arquivo ganha energia
               </div>
               <ol className="mt-5 grid gap-4">
                 {[

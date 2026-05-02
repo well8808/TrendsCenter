@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const stateCopy = {
   ready: {
     icon: Sparkles,
-    title: "Radar ao vivo",
+    title: "Arquivo ao vivo",
     body: "Sinais, evidencias e proximas acoes atualizados a partir das fontes conectadas.",
     action: "Dados reais",
   },

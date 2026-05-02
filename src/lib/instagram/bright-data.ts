@@ -36,6 +36,15 @@ export interface NormalizedProviderVideo {
   platformVideoId?: string;
   url?: string;
   thumbnailUrl?: string;
+  providerMedia?: {
+    thumbnailUrl?: string;
+    videoUrl?: string;
+    selectedUrl?: string;
+    mediaKind?: "image" | "video";
+    mediaConfidence?: "high" | "medium" | "low";
+    sourceField?: string;
+    availableFields: string[];
+  };
   title: string;
   caption?: string;
   postedAt?: string;
@@ -138,6 +147,211 @@ function record(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
+const providerPosterFields = [
+  "thumbnail",
+  "thumbnail_url",
+  "thumbnailUrl",
+  "cover",
+  "cover_url",
+  "coverUrl",
+  "display",
+  "display_url",
+  "displayUrl",
+  "image",
+  "image_url",
+  "imageUrl",
+  "poster",
+  "poster_url",
+  "posterUrl",
+  "preview",
+  "preview_url",
+  "previewUrl",
+  "picture",
+  "photo",
+  "reel_cover",
+  "reelCover",
+  "thumbnail_src",
+  "thumbnailSrc",
+  "display_src",
+  "displaySrc",
+  "image_versions2",
+  "display_resources",
+  "thumbnail_resources",
+];
+
+const providerVideoFields = [
+  "video_url",
+  "videoUrl",
+  "video_versions",
+  "media_url",
+  "mediaUrl",
+  "playback_url",
+  "playbackUrl",
+  "video_preview",
+  "videoPreview",
+  "video_src",
+  "videoSrc",
+];
+
+const providerMediaAuditPattern = /thumbnail|thumb|cover|display|image|poster|preview|video|media/i;
+const providerProfileMediaPattern = /profile|avatar|owner|user_profile|profile_pic|author/i;
+
+function isInstagramPostPageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const isInstagram = url.hostname === "instagram.com" || url.hostname.endsWith(".instagram.com");
+
+    return isInstagram && (/\/(reel|p|tv)\//.test(url.pathname) || url.pathname.split("/").filter(Boolean).length <= 1);
+  } catch {
+    return false;
+  }
+}
+
+function mediaUrl(value: unknown) {
+  const item = text(value);
+
+  if (!item) return undefined;
+
+  try {
+    const url = new URL(item);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
+    if (isInstagramPostPageUrl(url.toString())) return undefined;
+
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function readNestedMediaUrl(value: unknown): string | undefined {
+  const direct = mediaUrl(value);
+
+  if (direct) return direct;
+
+  if (Array.isArray(value)) {
+    for (const item of value.slice(0, 8)) {
+      const nested = readNestedMediaUrl(item);
+
+      if (nested) return nested;
+    }
+  }
+
+  const item = record(value);
+
+  if (Object.keys(item).length === 0) return undefined;
+
+  const directEntry = mediaUrl(item.url) ?? mediaUrl(item.src) ?? mediaUrl(item.href) ?? mediaUrl(item.uri);
+
+  if (directEntry) return directEntry;
+
+  for (const entry of Object.values(item).slice(0, 8)) {
+    const nested = readNestedMediaUrl(entry);
+
+    if (nested) return nested;
+  }
+
+  return undefined;
+}
+
+function findProviderMediaField(
+  value: unknown,
+  fields: Set<string>,
+  path = "",
+): { url?: string; path: string } | undefined {
+  const item = record(value);
+
+  if (Object.keys(item).length === 0 || providerProfileMediaPattern.test(path)) {
+    return undefined;
+  }
+
+  let invalidCandidate: { url?: string; path: string } | undefined;
+
+  for (const [key, entry] of Object.entries(item)) {
+    const nextPath = path ? `${path}.${key}` : key;
+
+    if (!fields.has(key)) continue;
+
+    const candidate = {
+      url: readNestedMediaUrl(entry),
+      path: nextPath,
+    };
+
+    if (candidate.url) return candidate;
+
+    invalidCandidate ??= candidate;
+  }
+
+  for (const [key, entry] of Object.entries(item)) {
+    const nextPath = path ? `${path}.${key}` : key;
+
+    if (providerProfileMediaPattern.test(nextPath)) continue;
+
+    if (Array.isArray(entry)) {
+      for (let index = 0; index < Math.min(entry.length, 6); index += 1) {
+        const found = findProviderMediaField(entry[index], fields, `${nextPath}[${index}]`);
+
+        if (found?.url) return found;
+        invalidCandidate ??= found;
+      }
+    } else if (typeof entry === "object" && entry !== null) {
+      const found = findProviderMediaField(entry, fields, nextPath);
+
+      if (found?.url) return found;
+      invalidCandidate ??= found;
+    }
+  }
+
+  return invalidCandidate;
+}
+
+function collectProviderMediaFields(value: unknown, path = "", found: string[] = []) {
+  const item = record(value);
+
+  if (Object.keys(item).length === 0 || providerProfileMediaPattern.test(path)) {
+    return found;
+  }
+
+  for (const [key, entry] of Object.entries(item)) {
+    const nextPath = path ? `${path}.${key}` : key;
+
+    if (providerMediaAuditPattern.test(key) && !providerProfileMediaPattern.test(nextPath)) {
+      found.push(nextPath);
+    }
+
+    if (Array.isArray(entry)) {
+      entry.slice(0, 4).forEach((nested, index) => collectProviderMediaFields(nested, `${nextPath}[${index}]`, found));
+    } else if (typeof entry === "object" && entry !== null) {
+      collectProviderMediaFields(entry, nextPath, found);
+    }
+  }
+
+  return found;
+}
+
+function normalizeProviderMedia(item: Record<string, unknown>) {
+  const poster = findProviderMediaField(item, new Set(providerPosterFields));
+  const video = findProviderMediaField(item, new Set(providerVideoFields));
+  const availableFields = Array.from(new Set(collectProviderMediaFields(item))).slice(0, 30);
+  const selectedUrl = poster?.url ?? video?.url;
+  const mediaKind: "image" | "video" | undefined = poster?.url ? "image" : video?.url ? "video" : undefined;
+  const mediaConfidence: "high" | "medium" | undefined = poster?.url ? "high" : video?.url ? "medium" : undefined;
+  const sourceField = poster?.url ? poster.path : video?.url ? video.path : poster?.path ?? video?.path;
+  const audit = {
+    thumbnailUrl: poster?.url,
+    videoUrl: video?.url,
+    selectedUrl,
+    mediaKind,
+    mediaConfidence,
+    sourceField,
+    availableFields,
+  };
+
+  return audit.thumbnailUrl || audit.videoUrl || audit.sourceField || audit.availableFields.length > 0
+    ? audit
+    : undefined;
+}
+
 function hashtagsFrom(value: unknown, caption: string) {
   const fromArray = Array.isArray(value)
     ? value.map((item) => text(item).replace(/^#/, "")).filter(Boolean)
@@ -207,13 +421,9 @@ function normalizeItem(raw: unknown, collectedAt: string): NormalizedProviderVid
   // Follower count: consistent name but guard against string values
   const followerCount = numberValue(item.followers) || numberValue(item.follower_count) || undefined;
 
-  // Thumbnail: CDN URLs from Bright Data expire in ~48h; stored for immediate display
-  const thumbnailUrl =
-    text(item.display_url) ||
-    text(item.thumbnail_url) ||
-    text(item.cover_url) ||
-    text(item.image_url) ||
-    undefined;
+  // Provider media URLs can be temporary CDN URLs; store the selected poster and a safe field audit.
+  const providerMedia = normalizeProviderMedia(item);
+  const thumbnailUrl = providerMedia?.thumbnailUrl;
 
   if (!title || !reelUrl) {
     return null;
@@ -223,6 +433,7 @@ function normalizeItem(raw: unknown, collectedAt: string): NormalizedProviderVid
     platformVideoId,
     url: reelUrl,
     thumbnailUrl,
+    providerMedia,
     title,
     caption: caption || undefined,
     postedAt,

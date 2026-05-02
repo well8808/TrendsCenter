@@ -4,9 +4,9 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Instagram Reels Command Center",
+  title: "Trends Center",
   description:
-    "Premium Instagram Reels intelligence command center for Brazil and US early signals.",
+    "Premium Instagram Reels viral library and signal intelligence for Brazil and US early signals.",
 };
 
 export default function RootLayout({

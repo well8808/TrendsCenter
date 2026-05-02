@@ -14,8 +14,8 @@ import type {
 } from "@/components/viral-universe/viral-scene-quality";
 import { cn } from "@/lib/utils";
 
-const ViralOrbitScene = dynamic(
-  () => import("@/components/viral-universe/viral-orbit-scene").then((mod) => mod.ViralOrbitScene),
+const ViralArchiveScene3D = dynamic(
+  () => import("@/components/viral-universe/viral-archive-scene-3d").then((mod) => mod.ViralArchiveScene3D),
   {
     ssr: false,
     loading: () => <ViralUniverseFallback />,
@@ -57,29 +57,56 @@ function StageMetric({
   );
 }
 
-function ViralUniverseFallback() {
+function ViralUniverseFallback({
+  mode = "library",
+  stats,
+}: {
+  mode?: ViralUniverseMode;
+  stats?: ViralUniverseStats;
+}) {
+  const shelves = mode === "library" ? 4 : 3;
+  const artifactCount = Math.min(stats?.reels ?? 4, 7);
+  const signalCount = Math.min(stats?.signals ?? (mode === "signal-room" ? 3 : 1), 4);
+
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="absolute left-1/2 top-1/2 h-[62%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[rgba(237,73,86,0.2)]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute left-[18%] top-[26%] h-[44%] w-[58%] rotate-[-10deg] rounded-full border border-[rgba(88,200,190,0.18)]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute right-[22%] top-[18%] h-16 w-10 rotate-[8deg] rounded-[10px] border border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.06)] shadow-[0_0_28px_rgba(237,73,86,0.14)]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute right-[34%] top-[30%] h-20 w-12 rotate-[-7deg] rounded-[10px] border border-[rgba(230,183,101,0.32)] bg-[rgba(230,183,101,0.055)]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute right-[13%] top-[33%] h-16 w-10 rotate-[13deg] rounded-[10px] border border-[rgba(88,200,190,0.32)] bg-[rgba(88,200,190,0.055)]"
-      />
+      <div aria-hidden="true" className="archive-stage-fallback absolute inset-0" />
+      {Array.from({ length: shelves }).map((_, index) => (
+        <span
+          key={`shelf-${index}`}
+          aria-hidden="true"
+          className="absolute left-[10%] h-px w-[72%] bg-gradient-to-r from-transparent via-[rgba(239,233,220,0.18)] to-transparent"
+          style={{ top: `${28 + index * 15}%` }}
+        />
+      ))}
+      {Array.from({ length: artifactCount }).map((_, index) => (
+        <span
+          key={`artifact-${index}`}
+          aria-hidden="true"
+          className="absolute rounded-[10px] border bg-[rgba(237,73,86,0.06)] shadow-[0_0_26px_rgba(237,73,86,0.12)]"
+          style={{
+            left: artifactCount <= 1 ? "38%" : `${24 + (index % 5) * 10}%`,
+            top: artifactCount <= 1 ? "22%" : `${24 + Math.floor(index / 5) * 24 + (index % 2) * 3}%`,
+            width: artifactCount <= 1 ? "56px" : `${28 + (index % 3) * 4}px`,
+            height: artifactCount <= 1 ? "100px" : `${54 + (index % 4) * 6}px`,
+            rotate: `${-8 + index * 3}deg`,
+            borderColor: index % 3 === 1 ? "rgba(230,183,101,0.28)" : index % 3 === 2 ? "rgba(88,200,190,0.28)" : "rgba(237,73,86,0.34)",
+          }}
+        />
+      ))}
+      {Array.from({ length: signalCount }).map((_, index) => (
+        <span
+          key={`signal-${index}`}
+          aria-hidden="true"
+          className="absolute rounded-[8px] border border-[rgba(88,200,190,0.24)] bg-[rgba(88,200,190,0.055)]"
+          style={{
+            right: `${18 + index * 8}%`,
+            top: `${34 + index * 10}%`,
+            width: `${54 - index * 4}px`,
+            height: `${24 - index}px`,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -103,7 +130,7 @@ export function ViralUniverseStage({
   const quality = useViralMotionQuality(prefersReducedMotion);
   const { ref, visible } = useInViewport();
   const renderCanvas = clientReady && !prefersReducedMotion && quality.canRender3d;
-  const currentLabel = label ?? (mode === "library" ? "Viral Universe" : "Signal Constellation");
+  const currentLabel = label ?? (mode === "library" ? "Arquivo vivo" : "Leitura estrategica");
   const sortedReels = useMemo(() => reels.slice().sort((a, b) => b.score - a.score), [reels]);
   const sortedSignals = useMemo(() => signals.slice().sort((a, b) => b.score - a.score), [signals]);
 
@@ -112,7 +139,7 @@ export function ViralUniverseStage({
       ref={ref}
       className={cn(
         "pointer-events-none relative overflow-hidden rounded-[28px]",
-        "bg-[radial-gradient(circle_at_70%_32%,rgba(237,73,86,0.14),transparent_34%),radial-gradient(circle_at_38%_72%,rgba(88,200,190,0.1),transparent_30%)]",
+        "bg-[linear-gradient(135deg,rgba(237,73,86,0.12),rgba(247,119,55,0.055)_36%,rgba(0,0,0,0.2)),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.08))]",
         className,
       )}
       initial={{ opacity: 0, scale: 0.985 }}
@@ -120,11 +147,11 @@ export function ViralUniverseStage({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       aria-hidden="true"
     >
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_42%,rgba(0,0,0,0.24))]" />
-      <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_42%,rgba(0,0,0,0.26))]" />
+      <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:34px_34px]" />
 
       {renderCanvas ? (
-        <ViralOrbitScene
+        <ViralArchiveScene3D
           mode={mode}
           reels={sortedReels}
           signals={sortedSignals}
@@ -133,7 +160,7 @@ export function ViralUniverseStage({
           active={visible}
         />
       ) : (
-        <ViralUniverseFallback />
+        <ViralUniverseFallback mode={mode} stats={stats} />
       )}
 
       <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 backdrop-blur-md">

@@ -98,7 +98,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
         <DatabaseZap className="h-4 w-4" aria-hidden="true" />
         entrada de dados
       </div>
-      <h2 className="mt-3 text-lg font-semibold">Adicionar dados ao radar</h2>
+      <h2 className="mt-3 text-lg font-semibold">Adicionar dados ao arquivo</h2>
       <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
         Cole dados de uma fonte oficial, propria ou licenciada para transformar em sinais acompanhaveis.
       </p>
@@ -165,7 +165,7 @@ export function IngestionRequestForm({ onAck }: ResultFeedback) {
           ) : (
             <>
               <FileInput className="h-4 w-4" aria-hidden="true" />
-              adicionar ao radar
+              adicionar ao arquivo
             </>
           )}
         </button>
@@ -224,7 +224,7 @@ function SuccessCard({ state }: { state: Extract<FormState, { kind: "success" }>
         </div>
       </dl>
       <p className="mt-3 text-xs leading-5 text-[color:var(--muted-strong)]">
-        Acompanhe o processamento em <strong>Atualizacoes do radar</strong>.
+        Acompanhe o processamento em <strong>Atualizacoes do arquivo</strong>.
       </p>
     </motion.div>
   );

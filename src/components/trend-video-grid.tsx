@@ -2,11 +2,13 @@
 
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import Link from "next/link";
-import { Play, ExternalLink, Eye, TrendingUp, Music, Hash, Flame, Radar } from "lucide-react";
-import { useState } from "react";
+import { Archive, ExternalLink, Eye, TrendingUp, Music, Hash, Flame } from "lucide-react";
+import type { ComponentType } from "react";
 
 import { GSAPScrollEntrance } from "@/components/gsap-scroll-entrance";
 import { GSAPCounter } from "@/components/gsap-counter";
+import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
+import type { NormalizedReelMedia } from "@/lib/trends/reel-media";
 
 /* ═══════════════════════════════════════════════════════════════
    TrendVideoGrid — biblioteca visual premium para reels virais
@@ -30,6 +32,7 @@ export interface TrendVideoView {
   title: string;
   caption?: string;
   thumbnailUrl?: string;
+  media: NormalizedReelMedia;
   market: string;
   origin: string;
   trendScore: number;
@@ -66,20 +69,6 @@ function tierLabel(tier: ScoreTier): string {
   return "MONITOR";
 }
 
-function placeholderGradient(score: number, creator?: string): string {
-  const tier = scoreTier(score);
-  const initial = (creator ?? "R").charAt(0).toUpperCase().charCodeAt(0);
-  const offset = ((initial * 17) % 30) - 15;
-
-  if (tier === "hot") {
-    return `radial-gradient(circle at ${30 + offset}% 30%, rgba(237,73,86,0.6), rgba(7,7,6,0.9))`;
-  }
-  if (tier === "gold") {
-    return `radial-gradient(circle at ${30 + offset}% 30%, rgba(230,183,101,0.5), rgba(7,7,6,0.9))`;
-  }
-  return `radial-gradient(circle at ${30 + offset}% 30%, rgba(88,200,190,0.5), rgba(7,7,6,0.9))`;
-}
-
 const compactFmt = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -104,60 +93,28 @@ function ScoreBadge({
 }) {
   const color = scoreColor(score);
   const tier = scoreTier(score);
-  const isHot = tier === "hot";
-
-  const dims = size === "lg" ? 80 : size === "sm" ? 52 : 64;
-  const inner = size === "lg" ? 64 : size === "sm" ? 40 : 50;
-  const fontSize = size === "lg" ? 20 : size === "sm" ? 13 : 17;
+  const compact = size === "sm";
 
   return (
-    <div className="relative flex flex-col items-center gap-1.5">
-      {/* pulse ring for hot */}
-      {isHot && (
-        <motion.div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            inset: -4,
-            border: `1px solid ${color}`,
-          }}
-          animate={{ opacity: [0.7, 0.15, 0.7], scale: [1, 1.1, 1] }}
-          transition={{ duration: 2.2, ease: "easeInOut", repeat: Infinity }}
-        />
-      )}
-
-      {/* conic ring */}
-      <motion.div
-        className="relative grid place-items-center rounded-full"
-        style={{
-          width: dims,
-          height: dims,
-          background: `conic-gradient(${color} ${score * 3.6}deg, rgba(255,255,255,0.05) 0deg)`,
-          rotate: -90,
-        }}
-        aria-label={`Score ${score}`}
+    <div
+      className="relative flex min-w-0 flex-col items-end gap-1 rounded-[14px] border bg-black/55 px-2.5 py-2 text-right shadow-[0_12px_32px_rgba(0,0,0,0.28)] backdrop-blur-md"
+      style={{ borderColor: `${color}66` }}
+      aria-label={`Score ${score}`}
+    >
+      <span className="font-mono text-[8px] font-semibold uppercase tracking-[0.16em] text-white/54">
+        score
+      </span>
+      <p
+        className={compact ? "metric-number text-[16px] font-semibold leading-none" : "metric-number text-[22px] font-semibold leading-none"}
+        style={{ color }}
       >
-        <div
-          className="grid place-items-center rounded-full"
-          style={{
-            width: inner,
-            height: inner,
-            background: "rgba(7,7,6,0.96)",
-          }}
-        >
-          <p
-            className="metric-number font-semibold leading-none"
-            style={{ color, fontSize }}
-          >
-            <GSAPCounter value={score} delay={delay} duration={0.75} />
-          </p>
-        </div>
-      </motion.div>
+        <GSAPCounter value={score} delay={delay} duration={0.75} />
+      </p>
 
       {/* hot label */}
-      {isHot && size !== "sm" && (
+      {tier === "hot" && size !== "sm" && (
         <span
-          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] font-bold uppercase tracking-[0.2em]"
+          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] font-bold uppercase tracking-[0.18em]"
           style={{
             borderColor: "rgba(237,73,86,0.42)",
             background: "rgba(237,73,86,0.12)",
@@ -174,84 +131,6 @@ function ScoreBadge({
 
 /* ─── Thumbnail com fallback ────────────────────────────────── */
 
-function ThumbnailImage({
-  thumbnailUrl,
-  score,
-  creator,
-  aspectRatio = "4 / 5",
-  shimmer = false,
-}: {
-  thumbnailUrl?: string;
-  score: number;
-  creator?: string;
-  aspectRatio?: string;
-  shimmer?: boolean;
-}) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const showPlaceholder = !thumbnailUrl || imgFailed;
-
-  return (
-    <div
-      className="relative w-full overflow-hidden"
-      style={{ aspectRatio }}
-    >
-      {showPlaceholder ? (
-        <div
-          className="absolute inset-0"
-          style={{ background: placeholderGradient(score, creator) }}
-          aria-hidden="true"
-        />
-      ) : (
-        <motion.img
-          src={thumbnailUrl}
-          alt=""
-          onError={() => setImgFailed(true)}
-          className="absolute inset-0 h-full w-full object-cover"
-          initial={{ scale: 1.04 }}
-          whileHover={{ scale: 1.08 }}
-          transition={{ duration: 0.55, ease }}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* shimmer overlay no featured card */}
-      {shimmer && (
-        <div
-          className="lib-shimmer pointer-events-none absolute inset-0 z-10"
-          aria-hidden="true"
-        />
-      )}
-
-      {/* gradient overlay base */}
-      <div
-        className="lib-thumbnail-overlay pointer-events-none absolute inset-0"
-        aria-hidden="true"
-      />
-
-      {/* hot bottom glow */}
-      {scoreTier(score) === "hot" && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 110%, rgba(237,73,86,0.22), transparent 60%)",
-          }}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* play reveal */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <div
-          className="grid h-12 w-12 place-items-center rounded-full border border-white/20 backdrop-blur-sm"
-          style={{ background: "rgba(255,255,255,0.12)" }}
-        >
-          <Play className="h-5 w-5 fill-white text-white" aria-hidden="true" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── MetricChip ────────────────────────────────────────────── */
 
@@ -263,7 +142,7 @@ function MetricChip({
   animated,
   delay,
 }: {
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string }>;
   label: string;
   value: number;
   color?: string;
@@ -309,7 +188,7 @@ function FeaturedReelCard({
     >
       <Link
         href={`/trends/${video.id}`}
-        className="relative block overflow-hidden rounded-[var(--radius-2xl)] transition-all duration-300"
+        className="viral-artifact-card viral-artifact-card-featured relative block overflow-hidden rounded-[var(--radius-2xl)] transition-all duration-300"
         style={{
           border: "1px solid rgba(237,73,86,0.32)",
           background:
@@ -340,13 +219,12 @@ function FeaturedReelCard({
         <div className="grid md:grid-cols-[280px_minmax(0,1fr)]">
 
           {/* thumbnail col */}
-          <div className="relative min-h-[220px] overflow-hidden md:min-h-[260px]">
-            <ThumbnailImage
-              thumbnailUrl={video.thumbnailUrl}
-              score={video.trendScore}
-              creator={video.creator}
-              aspectRatio="unset"
-              shimmer
+          <div className="relative min-h-[360px] overflow-hidden p-3 md:min-h-[390px]">
+            <ReelArtifactPoster
+              video={video}
+              fill
+              featured
+              className="h-full"
             />
             {/* right fade overlay for seamless blend on desktop */}
             <div
@@ -534,7 +412,7 @@ function PortraitReelCard({
     >
       <Link
         href={`/trends/${video.id}`}
-        className="block overflow-hidden rounded-[var(--radius-xl)] transition-all duration-300"
+        className="viral-artifact-card block overflow-hidden rounded-[var(--radius-xl)] transition-all duration-300"
         style={{
           border: `1px solid ${borderColor}`,
           background:
@@ -559,13 +437,8 @@ function PortraitReelCard({
         />
 
         {/* thumbnail */}
-        <div className="relative">
-          <ThumbnailImage
-            thumbnailUrl={video.thumbnailUrl}
-            score={video.trendScore}
-            creator={video.creator}
-            aspectRatio="4 / 5"
-          />
+        <div className="relative p-2.5">
+          <ReelArtifactPoster video={video} />
 
           {/* score badge — top right */}
           <div className="absolute right-2.5 top-2.5 z-20">
@@ -696,12 +569,14 @@ function PortraitReelCard({
 function SectionHeader({
   tier,
   count,
+  label,
 }: {
   tier: ScoreTier;
   count: number;
+  label?: string;
 }) {
   const color = tier === "hot" ? "var(--hot)" : tier === "gold" ? "var(--gold)" : "var(--aqua)";
-  const label = tierLabel(tier);
+  const visibleLabel = label ?? tierLabel(tier);
 
   return (
     <div className="flex items-center gap-3">
@@ -723,7 +598,7 @@ function SectionHeader({
         className="font-mono text-[11px] font-bold uppercase tracking-[0.18em]"
         style={{ color }}
       >
-        {label}
+        {visibleLabel}
       </h2>
       <div className="h-px flex-1" style={{ background: `linear-gradient(to right, ${color}40, transparent)` }} aria-hidden="true" />
       <span
@@ -757,16 +632,16 @@ function EmptyLibrary() {
             "radial-gradient(circle, rgba(88,200,190,0.5), transparent 70%)",
         }}
       />
-      <Radar className="mx-auto mb-4 h-8 w-8 text-[color:var(--muted)]" aria-hidden="true" />
+      <Archive className="mx-auto mb-4 h-8 w-8 text-[color:var(--muted)]" aria-hidden="true" />
       <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--foreground)]">
         Biblioteca vazia
       </h2>
       <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[color:var(--muted-strong)]">
-        Cole perfis do Instagram no painel lateral e inicie a primeira coleta. Os reels virais aparecem aqui automaticamente.
+        Cole perfis do Instagram no painel lateral e inicie a primeira coleta. Os artefatos reais aparecem aqui automaticamente.
       </p>
       <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--muted)]">
-        <Radar className="h-3.5 w-3.5" aria-hidden="true" />
-        fonte obrigatória · dados reais apenas
+        <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+        fonte obrigatoria / dados reais apenas
       </div>
     </motion.div>
   );
@@ -781,25 +656,41 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
     return <EmptyLibrary />;
   }
 
+  const libraryDensity =
+    results.length === 1
+      ? "featured"
+      : results.length <= 6
+        ? "editorial"
+        : results.length < 20
+          ? "shelf"
+          : "cluster";
+  const densityCopy = {
+    featured: "1 artefato em foco com leitura ampliada.",
+    editorial: "grid editorial compacto para comparar poucos achados reais.",
+    shelf: "prateleira viva com profundidade, score e fonte.",
+    cluster: "biblioteca densa pronta para filtros por mercado, fonte e energia.",
+  }[libraryDensity];
   const brCount = results.filter((video) => video.market === "BR").length;
   const sourceCount = results.reduce((total, video) => total + Math.max(video.evidenceCount, video.snapshotCount), 0);
   const topScore = results.reduce((max, video) => Math.max(max, video.trendScore), 0);
 
   // Separa por tier, mantendo ordem original dentro de cada tier
-  const hotCards = results.filter((v) => v.trendScore >= 78).slice(0, 2);
-  const hotIds = new Set(hotCards.map((v) => v.id));
+  const featuredCards = results.length === 1
+    ? results.slice(0, 1)
+    : results.filter((v) => v.trendScore >= 78).slice(0, 2);
+  const featuredIds = new Set(featuredCards.map((v) => v.id));
 
   const warmCards = results.filter(
-    (v) => v.trendScore >= 52 && v.trendScore < 78
+    (v) => !featuredIds.has(v.id) && v.trendScore >= 52 && v.trendScore < 78
   );
 
   const coolCards = results.filter(
-    (v) => v.trendScore < 52 && !hotIds.has(v.id)
+    (v) => v.trendScore < 52 && !featuredIds.has(v.id)
   );
 
   // cards que caíram fora dos featured hot (score >=78 mas além dos 2 exibidos)
   const extraHotAsWarm = results.filter(
-    (v) => v.trendScore >= 78 && !hotIds.has(v.id)
+    (v) => v.trendScore >= 78 && !featuredIds.has(v.id)
   );
   const gridWarm = [...extraHotAsWarm, ...warmCards];
 
@@ -807,6 +698,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
     <AnimatePresence mode="wait">
       <motion.div
         key="library-root"
+        data-library-density={libraryDensity}
         variants={gridVariants}
         initial="hidden"
         animate="show"
@@ -822,13 +714,16 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
           <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
-                biblioteca em movimento
+                arquivo em movimento
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[color:var(--foreground)] md:text-[32px]">
-                Reels coletados virando repertorio estrategico
+                Artefatos virais virando repertorio estrategico
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                Cada card preserva origem, score e metricas reais. A Sala de Sinais transforma os melhores achados em decisao.
+                Cada artefato preserva origem, score e metricas reais. A Sala de Sinais transforma os melhores achados em leitura acionavel.
+              </p>
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                {densityCopy}
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2 sm:w-[360px]">
@@ -852,13 +747,17 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
           </div>
         </section>
         {/* ── EM CHAMAS — featured horizontal ── */}
-        {hotCards.length > 0 && (
+        {featuredCards.length > 0 && (
           <section aria-labelledby="section-hot">
             <div id="section-hot" className="mb-4">
-              <SectionHeader tier="hot" count={hotCards.length} />
+              <SectionHeader
+                tier={results.length === 1 ? scoreTier(featuredCards[0]?.trendScore ?? 0) : "hot"}
+                count={featuredCards.length}
+                label={results.length === 1 ? "ARTEFATO EM FOCO" : "EM CHAMAS"}
+              />
             </div>
             <GSAPScrollEntrance className="grid gap-4" stagger={0.10} y={20}>
-              {hotCards.map((video, idx) => (
+              {featuredCards.map((video, idx) => (
                 <div key={video.id} className="gse-item">
                   <FeaturedReelCard video={video} index={idx} />
                 </div>
@@ -878,7 +777,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                 <div key={video.id} className="gse-item">
                   <PortraitReelCard
                     video={video}
-                    index={hotCards.length + idx}
+                    index={featuredCards.length + idx}
                   />
                 </div>
               ))}
@@ -897,7 +796,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
                 <div key={video.id} className="gse-item">
                   <PortraitReelCard
                     video={video}
-                    index={hotCards.length + gridWarm.length + idx}
+                    index={featuredCards.length + gridWarm.length + idx}
                   />
                 </div>
               ))}

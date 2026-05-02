@@ -1,3 +1,5 @@
+import type { NormalizedReelMedia } from "@/lib/trends/reel-media";
+
 export type ViralUniverseMode = "library" | "signal-room";
 
 export type ViralMarket = "BR" | "US" | string;
@@ -13,6 +15,8 @@ export interface ViralReelNode {
   evidenceCount: number;
   creator?: string;
   sourceLabel?: string;
+  thumbnailUrl?: string;
+  media?: NormalizedReelMedia;
   tags?: string[];
 }
 

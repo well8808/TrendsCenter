@@ -48,14 +48,14 @@ export function AuthShell({
             <div>
               <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted)]">
                 <span className="inline-block h-1 w-1 rounded-full bg-[color:var(--hot)]" aria-hidden="true" />
-                radar privado
+                arquivo privado
               </div>
               <h1 className="mt-12 max-w-lg text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.02em]">
                 Instagram Reels<br />
-                <span className="text-[color:var(--muted-strong)]">Command Center</span>
+                <span className="gradient-text-ig">Viral Library</span>
               </h1>
               <p className="mt-6 max-w-sm text-[13px] leading-6 text-[color:var(--muted)]">
-                Sinais de Reels, fontes verificadas e oportunidades em um painel seguro.
+                Um arquivo vivo de Reels em crescimento, fontes reais e sinais criativos para decidir o proximo movimento.
               </p>
             </div>
             <ol className="grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--line)] text-[11px]">

@@ -21,8 +21,8 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      title="Entrar no Reels Center"
-      subtitle="Acesse seu radar de Reels, sinais, fontes e alertas de mercado."
+      title="Entrar no Trends Center"
+      subtitle="Acesse sua biblioteca de Reels virais, sinais estrategicos e fontes reais."
       error={error}
       footerHref="/signup"
       footerLabel="Criar conta"

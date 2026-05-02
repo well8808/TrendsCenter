@@ -94,7 +94,7 @@ function jobTitle(job: JobRunDto) {
     return "Atualizacao de dados";
   }
 
-  return "Atualizacao do radar";
+  return "Atualizacao do arquivo";
 }
 
 function jobContext(job: JobRunDto) {
@@ -214,14 +214,14 @@ export function JobRunsFeed({
             </span>
             monitoramento {queue ? "" : ""}
           </p>
-          <h2 className="mt-1.5 text-base font-semibold leading-tight">Atualizacoes do radar</h2>
+          <h2 className="mt-1.5 text-base font-semibold leading-tight">Atualizacoes do arquivo</h2>
         </div>
         <button
           type="button"
           onClick={() => resource.refetch()}
           disabled={resource.isFetching}
           className="app-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-strong)] transition hover:text-[color:var(--aqua)] disabled:opacity-60"
-          aria-label="Atualizar radar"
+          aria-label="Atualizar arquivo"
         >
           <RefreshCw
             className={cn("h-3 w-3", resource.isFetching && !prefersReducedMotion && "animate-spin")}
@@ -315,7 +315,7 @@ function JobRow({
             <span className="min-w-0 truncate">{jobTitle(job)}</span>
           </p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-            {job.queue === "ingestion" ? "entrada de dados" : "radar"}
+            {job.queue === "ingestion" ? "entrada de dados" : "arquivo"}
             {` · ${jobContext(job)}`}
           </p>
         </div>

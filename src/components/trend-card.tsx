@@ -258,7 +258,7 @@ export function TrendCard({
       transition={{ delay: baseDelay }}
       whileHover={prefersReducedMotion ? undefined : { y: selected || isNow ? -1 : -2 }}
       className={cn(
-        "group relative overflow-hidden rounded-[var(--radius-2xl)] border backdrop-blur-xl transition-colors",
+        "signal-intelligence-card group relative overflow-hidden rounded-[var(--radius-2xl)] border backdrop-blur-xl transition-colors",
         isNow
           ? "border-[rgba(237,73,86,0.38)] bg-[rgba(237,73,86,0.04)]"
           : selected
@@ -301,6 +301,8 @@ export function TrendCard({
             <span>{typeLabel[signal.type]}</span>
             <span aria-hidden="true" className="opacity-40">·</span>
             <span>{statusLabel[signal.status]}</span>
+            <span aria-hidden="true" className="opacity-40">/</span>
+            <span>leitura estrategica</span>
           </motion.div>
 
           <motion.h3
@@ -332,7 +334,7 @@ export function TrendCard({
 
           <motion.div
             variants={itemVariants}
-            className="mt-3 flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.14)] px-3 py-2.5"
+            className="signal-proof-strip mt-3 flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.14)] px-3 py-2.5"
           >
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--muted-strong)]">
               <Layers3 className="h-3.5 w-3.5 text-[color:var(--aqua)]" aria-hidden="true" />

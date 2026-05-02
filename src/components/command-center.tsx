@@ -16,7 +16,7 @@ import {
   AudioLines,
   Bell,
   Bookmark,
-  Command,
+  Clapperboard,
   Database,
   DatabaseZap,
   FileWarning,
@@ -24,7 +24,6 @@ import {
   Globe2,
   Inbox,
   LayoutDashboard,
-  Radar,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -40,9 +39,9 @@ import { GSAPTileReveal } from "@/components/gsap-tile-reveal";
 import { IngestionLab } from "@/components/ingestion-lab";
 import { AnimatedNumber } from "@/components/motion-system/AnimatedNumber";
 import { MotionCard } from "@/components/motion-system/MotionCard";
-import { ParticleField } from "@/components/particle-field";
 import { SourcePill } from "@/components/source-pill";
 import { TrendCard } from "@/components/trend-card";
+import { TrendEnergyField } from "@/components/viral-library/trend-energy-field";
 import { ViralUniverseStage } from "@/components/viral-universe/viral-universe-stage";
 import type { ViralSignalNode, ViralUniverseStats } from "@/components/viral-universe/viral-scene-quality";
 import type { CommandCenterData } from "@/lib/persistence/command-center";
@@ -115,8 +114,8 @@ const itemVariants: Variants = {
 const navItems = [
   { label: "Sala de Sinais", icon: LayoutDashboard, key: "cc" },
   { label: "Biblioteca Viral", icon: Inbox, key: "library" },
-  { label: "Radar BR", icon: Radar, key: "radar-br" },
-  { label: "Early EUA", icon: Globe2, key: "us" },
+  { label: "Reels BR", icon: Clapperboard, key: "radar-br" },
+  { label: "Sinais EUA", icon: Globe2, key: "us" },
   { label: "Fontes e coleta", icon: Database, key: "instagram-sources" },
 ];
 
@@ -415,7 +414,7 @@ function CommandStatusStrip({
   return (
     <motion.div
       variants={itemVariants}
-      aria-label="Resumo operacional do command center"
+      aria-label="Resumo operacional da Sala de Sinais"
       className="relative z-10 mt-5 grid gap-2 rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.14)] bg-[rgba(8,8,7,0.58)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl sm:grid-cols-3"
     >
       {statusItems.map((item, index) => (
@@ -1161,13 +1160,13 @@ function Sidebar({
           variants={itemVariants}
           className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[rgba(8,8,7,0.6)] p-3"
         >
-          <div className="brand-mark relative grid h-10 w-10 place-items-center rounded-[var(--radius-md)]">
-            <Command className="h-5 w-5" aria-hidden="true" />
+          <div className="brand-mark brand-mark-studio relative grid h-10 w-10 place-items-center rounded-[var(--radius-md)]">
+            <Clapperboard className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-none tracking-tight">Market Intel</p>
+            <p className="text-sm font-semibold leading-none tracking-tight">Trends Center</p>
             <p className="mt-1.5 truncate text-[11px] text-[color:var(--muted)]">
-              {tenant.workspaceName}
+              Arquivo vivo / {tenant.workspaceName}
             </p>
           </div>
         </motion.div>
@@ -1436,7 +1435,7 @@ export function CommandCenter({
       tone: "acid" as const,
     },
     {
-      label: "Radar BR / US",
+      label: "Reels BR / US",
       value: `${brCount}/${usCount}`,
       rawValue: brCount,
       delta: hasSignals ? "sinais por mercado" : "Reels por mercado",
@@ -1460,7 +1459,12 @@ export function CommandCenter({
 
   return (
     <main className="relative min-h-dvh">
-      <ParticleField opacity={0.28} count={55} />
+      <TrendEnergyField
+        mode="signal-room"
+        reels={reelStats.total}
+        signals={signals.length}
+        evidence={reelStats.evidenceCount}
+      />
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
@@ -1493,7 +1497,7 @@ export function CommandCenter({
               reels={[]}
               signals={universeSignals}
               stats={universeStats}
-              label="Reel -> Sinal"
+              label="Artefato -> Leitura"
               className="absolute left-1 top-0 h-[235px] w-[330px] opacity-[0.82] sm:left-6 sm:top-3 sm:h-[280px] sm:w-[430px] md:left-8 md:top-4 md:h-[320px] md:w-[500px] md:opacity-95"
             />
             <div
@@ -1503,7 +1507,7 @@ export function CommandCenter({
             <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 md:min-h-[322px] xl:flex-row xl:items-end xl:justify-between">
               <motion.div variants={itemVariants} className="flex items-center gap-3 xl:w-[240px] xl:shrink-0 2xl:w-auto">
                 <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
-                  <Command className="h-5 w-5" aria-hidden="true" />
+                  <Clapperboard className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <motion.h1
@@ -1779,9 +1783,9 @@ export function CommandCenter({
                         body={
                           reelStats.total > 0
                             ? "A biblioteca ja tem Reels reais. Abra Encontrar Reels para analisar videos; os sinais estrategicos ainda nao foram gerados."
-                            : "Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar o radar."
+                            : "Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar a biblioteca."
                         }
-                        hint={reelStats.total > 0 ? "ver biblioteca em /trends" : "adicione dados ao radar"}
+                        hint={reelStats.total > 0 ? "ver biblioteca em /trends" : "adicione dados ao arquivo"}
                       />
                     ) : workspaceState === "error" ? (
                       <EmptyState

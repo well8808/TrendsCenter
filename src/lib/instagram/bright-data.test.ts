@@ -107,6 +107,7 @@ describe("Bright Data Reels integration", () => {
       followers: 45000,
       audio_title: "Audio teste",
       audio_url: "https://www.instagram.com/audio/1/",
+      thumbnail_url: "https://cdn.example.com/thumb.jpg",
     });
 
     const collected = normalizeBrightDataReelsSnapshot(
@@ -135,7 +136,140 @@ describe("Bright Data Reels integration", () => {
         profileUrl: "https://www.instagram.com/creator_br/",
         followerCount: 45000,
       },
+      thumbnailUrl: "https://cdn.example.com/thumb.jpg",
+      providerMedia: {
+        thumbnailUrl: "https://cdn.example.com/thumb.jpg",
+        sourceField: "thumbnail_url",
+      },
       hashtags: ["criativo"],
+    });
+  });
+
+  it("captures Bright Data poster fields in priority order", () => {
+    const body = JSON.stringify({
+      url: "https://www.instagram.com/reel/ABC123/",
+      caption: "Teste com capa real",
+      username: "creator_br",
+      thumbnail_url: "https://cdn.example.com/thumb.jpg",
+      cover_url: "https://cdn.example.com/cover.jpg",
+      display_url: "https://cdn.example.com/display.jpg",
+    });
+
+    const collected = normalizeBrightDataReelsSnapshot(
+      {
+        mode: "profile_reels",
+        market: "BR",
+        sourceUrl: "https://www.instagram.com/creator_br/",
+        sourceTitle: "Bright Data Teste",
+      },
+      body,
+    );
+
+    expect(collected.videos[0]).toMatchObject({
+      thumbnailUrl: "https://cdn.example.com/thumb.jpg",
+      providerMedia: {
+        thumbnailUrl: "https://cdn.example.com/thumb.jpg",
+        sourceField: "thumbnail_url",
+      },
+    });
+    expect(collected.videos[0].providerMedia?.availableFields).toEqual(
+      expect.arrayContaining(["thumbnail_url", "cover_url", "display_url"]),
+    );
+  });
+
+  it("captures plain thumbnail fields returned by the provider", () => {
+    const body = JSON.stringify({
+      url: "https://www.instagram.com/reel/ABC123/",
+      caption: "Teste com thumbnail sem sufixo",
+      username: "creator_br",
+      thumbnail: "https://cdn.example.com/plain-thumbnail.jpg",
+      video_url: "https://cdn.example.com/video.mp4",
+    });
+
+    const collected = normalizeBrightDataReelsSnapshot(
+      {
+        mode: "profile_reels",
+        market: "BR",
+        sourceUrl: "https://www.instagram.com/creator_br/",
+        sourceTitle: "Bright Data Teste",
+      },
+      body,
+    );
+
+    expect(collected.videos[0]).toMatchObject({
+      thumbnailUrl: "https://cdn.example.com/plain-thumbnail.jpg",
+      providerMedia: {
+        thumbnailUrl: "https://cdn.example.com/plain-thumbnail.jpg",
+        videoUrl: "https://cdn.example.com/video.mp4",
+        selectedUrl: "https://cdn.example.com/plain-thumbnail.jpg",
+        mediaKind: "image",
+        mediaConfidence: "high",
+        sourceField: "thumbnail",
+      },
+    });
+  });
+
+  it("treats video_url as real video media when no poster is available", () => {
+    const body = JSON.stringify({
+      url: "https://www.instagram.com/reel/ABC123/",
+      caption: "Teste com video real",
+      username: "creator_br",
+      video_url: "https://cdn.example.com/video.mp4",
+    });
+
+    const collected = normalizeBrightDataReelsSnapshot(
+      {
+        mode: "profile_reels",
+        market: "BR",
+        sourceUrl: "https://www.instagram.com/creator_br/",
+        sourceTitle: "Bright Data Teste",
+      },
+      body,
+    );
+
+    expect(collected.videos[0]).toMatchObject({
+      thumbnailUrl: undefined,
+      providerMedia: {
+        videoUrl: "https://cdn.example.com/video.mp4",
+        selectedUrl: "https://cdn.example.com/video.mp4",
+        mediaKind: "video",
+        mediaConfidence: "medium",
+        sourceField: "video_url",
+      },
+    });
+  });
+
+  it("captures nested Bright Data media candidates without using the Instagram post URL as media", () => {
+    const body = JSON.stringify({
+      url: "https://www.instagram.com/reel/ABC123/",
+      caption: "Teste com nested media",
+      username: "creator_br",
+      image_versions2: {
+        candidates: [
+          { url: "https://scontent.cdninstagram.com/v/t51.2885-15/cover.jpg" },
+        ],
+      },
+      video_url: "https://www.instagram.com/reel/ABC123/",
+      media_url: "https://scontent.cdninstagram.com/o1/v/t16/f2/video.mp4",
+    });
+
+    const collected = normalizeBrightDataReelsSnapshot(
+      {
+        mode: "profile_reels",
+        market: "BR",
+        sourceUrl: "https://www.instagram.com/creator_br/",
+        sourceTitle: "Bright Data Teste",
+      },
+      body,
+    );
+
+    expect(collected.videos[0]).toMatchObject({
+      thumbnailUrl: "https://scontent.cdninstagram.com/v/t51.2885-15/cover.jpg",
+      providerMedia: {
+        thumbnailUrl: "https://scontent.cdninstagram.com/v/t51.2885-15/cover.jpg",
+        videoUrl: "https://scontent.cdninstagram.com/o1/v/t16/f2/video.mp4",
+        sourceField: "image_versions2",
+      },
     });
   });
 });

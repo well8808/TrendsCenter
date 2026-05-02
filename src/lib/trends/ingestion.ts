@@ -4,6 +4,11 @@ import { requirePermission } from "@/lib/auth/authorization";
 import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
 import { normalizeForDedupe, stableHash } from "@/lib/ingestion/dedupe";
+import {
+  classifyReelMediaStability,
+  getReelMediaHost,
+  type ReelMediaStability,
+} from "@/lib/trends/reel-media";
 import { calculateVideoTrendScore } from "@/lib/trends/scoring";
 import { promoteImportedReelToSignal } from "@/lib/trends/signal-bridge";
 
@@ -51,10 +56,23 @@ interface NormalizedSound {
   videoCount?: number;
 }
 
+interface NormalizedProviderMedia {
+  thumbnailUrl?: string;
+  videoUrl?: string;
+  selectedUrl?: string;
+  mediaKind?: "image" | "video";
+  mediaConfidence?: "high" | "medium" | "low";
+  mediaHost?: string;
+  mediaStability?: ReelMediaStability;
+  sourceField?: string;
+  availableFields: string[];
+}
+
 interface NormalizedVideo {
   platformVideoId?: string;
   url?: string;
   thumbnailUrl?: string;
+  providerMedia?: NormalizedProviderMedia;
   title: string;
   caption?: string;
   postedAt?: Date;
@@ -129,6 +147,139 @@ function dateValue(value: unknown) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
+function firstOptionalField(item: Record<string, unknown>, fields: string[]) {
+  for (const field of fields) {
+    const value = optionalText(item[field]);
+
+    if (value) {
+      return { value, field };
+    }
+  }
+
+  return undefined;
+}
+
+function stringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.map((item) => text(item)).filter(Boolean).slice(0, 30)
+    : [];
+}
+
+function parseMediaKind(value: unknown): NormalizedProviderMedia["mediaKind"] {
+  return value === "image" || value === "video" ? value : undefined;
+}
+
+function parseMediaConfidence(value: unknown): NormalizedProviderMedia["mediaConfidence"] {
+  return value === "high" || value === "medium" || value === "low" ? value : undefined;
+}
+
+function parseProviderMedia(item: Record<string, unknown>): NormalizedProviderMedia | undefined {
+  const providerMedia = record(item.providerMedia);
+  const media = Object.keys(providerMedia).length > 0 ? providerMedia : record(item.media);
+  const topLevelPoster = firstOptionalField(item, [
+    "thumbnail",
+    "thumbnail_url",
+    "thumbnailUrl",
+    "cover",
+    "cover_url",
+    "coverUrl",
+    "display",
+    "display_url",
+    "displayUrl",
+    "image",
+    "image_url",
+    "imageUrl",
+    "poster",
+    "poster_url",
+    "posterUrl",
+    "preview",
+    "preview_url",
+    "previewUrl",
+    "picture",
+    "photo",
+    "reel_cover",
+    "reelCover",
+  ]);
+  const topLevelVideo = firstOptionalField(item, [
+    "video_url",
+    "media_url",
+    "playback_url",
+    "video_preview",
+    "video_src",
+  ]);
+  const parsedMediaKind = parseMediaKind(media.mediaKind);
+  const selectedUrl = optionalText(media.selectedUrl);
+  const thumbnailUrl = optionalText(media.thumbnailUrl) ?? (parsedMediaKind === "image" ? selectedUrl : undefined) ?? topLevelPoster?.value;
+  const videoUrl = optionalText(media.videoUrl) ?? (parsedMediaKind === "video" ? selectedUrl : undefined) ?? topLevelVideo?.value;
+  const mediaKind = parsedMediaKind ?? (thumbnailUrl ? "image" : videoUrl ? "video" : undefined);
+  const mediaConfidence = parseMediaConfidence(media.mediaConfidence) ?? (thumbnailUrl ? "high" : videoUrl ? "medium" : undefined);
+  const sourceField = optionalText(media.sourceField) ?? topLevelPoster?.field ?? topLevelVideo?.field;
+  const selectedMediaUrl = selectedUrl ?? thumbnailUrl ?? videoUrl;
+  const mediaHost = getReelMediaHost(selectedMediaUrl);
+  const mediaStability = classifyReelMediaStability({
+    url: selectedMediaUrl,
+    mediaKind,
+    sourceField,
+    mediaConfidence,
+  });
+  const availableFields = Array.from(new Set([
+    ...stringArray(media.availableFields),
+    ...(topLevelPoster?.field ? [topLevelPoster.field] : []),
+    ...(topLevelVideo?.field ? [topLevelVideo.field] : []),
+  ])).slice(0, 30);
+
+  if (!thumbnailUrl && !videoUrl && !sourceField && availableFields.length === 0) {
+    return undefined;
+  }
+
+  return {
+    thumbnailUrl,
+    videoUrl,
+    selectedUrl: selectedMediaUrl,
+    mediaKind,
+    mediaConfidence,
+    mediaHost,
+    mediaStability,
+    sourceField,
+    availableFields,
+  };
+}
+
+function buildVideoRawMetrics(item: NormalizedVideo): Prisma.InputJsonObject {
+  const rawMetrics: Record<string, unknown> = {
+    externalNetwork: false,
+  };
+
+  if (item.platformVideoId) rawMetrics.platformVideoId = item.platformVideoId;
+  if (item.url) rawMetrics.url = item.url;
+  if (item.thumbnailUrl) rawMetrics.thumbnailUrl = item.thumbnailUrl;
+
+  if (item.providerMedia) {
+    const providerMedia: Record<string, unknown> = {
+      availableFields: item.providerMedia.availableFields,
+    };
+
+    if (item.providerMedia.thumbnailUrl) providerMedia.thumbnailUrl = item.providerMedia.thumbnailUrl;
+    if (item.providerMedia.videoUrl) providerMedia.videoUrl = item.providerMedia.videoUrl;
+    if (item.providerMedia.selectedUrl) providerMedia.selectedUrl = item.providerMedia.selectedUrl;
+    if (item.providerMedia.mediaKind) providerMedia.mediaKind = item.providerMedia.mediaKind;
+    if (item.providerMedia.mediaConfidence) providerMedia.mediaConfidence = item.providerMedia.mediaConfidence;
+    if (item.providerMedia.mediaHost) providerMedia.mediaHost = item.providerMedia.mediaHost;
+    if (item.providerMedia.mediaStability) providerMedia.mediaStability = item.providerMedia.mediaStability;
+    if (item.providerMedia.sourceField) providerMedia.sourceField = item.providerMedia.sourceField;
+
+    rawMetrics.providerMedia = providerMedia;
+    if (item.providerMedia.sourceField) rawMetrics.mediaSourceField = item.providerMedia.sourceField;
+    if (item.providerMedia.availableFields.length > 0) rawMetrics.mediaFields = item.providerMedia.availableFields;
+    if (item.providerMedia.videoUrl) rawMetrics.providerVideoUrl = item.providerMedia.videoUrl;
+    if (item.providerMedia.selectedUrl) rawMetrics.providerSelectedMediaUrl = item.providerMedia.selectedUrl;
+    if (item.providerMedia.mediaKind) rawMetrics.providerMediaKind = item.providerMedia.mediaKind;
+    if (item.providerMedia.mediaStability) rawMetrics.providerMediaStability = item.providerMedia.mediaStability;
+  }
+
+  return rawMetrics as Prisma.InputJsonObject;
+}
+
 function parseEnum<T extends string>(value: string, allowed: T[], fallback: T) {
   return allowed.includes(value as T) ? value as T : fallback;
 }
@@ -175,6 +326,7 @@ function parseVideos(payloadJson: string): NormalizedVideo[] {
     const title = requireText(text(item.title) || text(item.caption), `Título do vídeo ${index + 1}`);
     const evidence = record(item.evidence);
     const hashtagsRaw = Array.isArray(item.hashtags) ? item.hashtags : [];
+    const providerMedia = parseProviderMedia(item);
     const hashtags = hashtagsRaw
       .map((tag) => normalizeForDedupe(text(tag).replace(/^#/, "")))
       .filter(Boolean)
@@ -195,7 +347,8 @@ function parseVideos(payloadJson: string): NormalizedVideo[] {
     return {
       platformVideoId: optionalText(item.platformVideoId) ?? optionalText(item.id),
       url: optionalText(item.url),
-      thumbnailUrl: optionalText(item.thumbnailUrl),
+      thumbnailUrl: optionalText(item.thumbnailUrl) ?? providerMedia?.thumbnailUrl,
+      providerMedia,
       title,
       caption: optionalText(item.caption),
       postedAt: dateValue(item.postedAt),
@@ -626,11 +779,7 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
           commentCount: item.commentCount,
           shareCount: item.shareCount,
           saveCount: item.saveCount,
-          rawMetrics: {
-            platformVideoId: item.platformVideoId,
-            url: item.url,
-            externalNetwork: false,
-          },
+          rawMetrics: buildVideoRawMetrics(item),
           growthViews: score.growthViews,
           velocityScore: score.velocityScore,
           accelerationScore: score.accelerationScore,

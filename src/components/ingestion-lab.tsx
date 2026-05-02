@@ -124,7 +124,7 @@ const intakeSteps: Array<{
   { label: "Capturar", detail: "sinal, perfil ou URL permitida", tone: "acid", icon: FileInput },
   { label: "Provar", detail: "fonte + evidencia vinculada", tone: "aqua", icon: Link2 },
   { label: "Pontuar", detail: "score, risco e timing", tone: "gold", icon: Target },
-  { label: "Decidir", detail: "acao pronta no radar", tone: "coral", icon: ShieldCheck },
+  { label: "Decidir", detail: "acao pronta na Sala de Sinais", tone: "coral", icon: ShieldCheck },
 ];
 
 const operationDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -244,7 +244,7 @@ async function queueIngestionRequest(payload: ManualIngestionPayload): Promise<A
   return {
     ok: true,
     message: body.data.idempotent
-      ? "Esses dados ja estavam no radar."
+      ? "Esses dados ja estavam no arquivo."
       : "Dados recebidos e enviados para analise.",
     requestId: body.data.request.id,
     jobId: body.data.job.id,
@@ -555,7 +555,7 @@ export function IngestionLab({
               Transforme achados em decisoes
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted-strong)]">
-              Um fluxo visual para capturar, provar e levar bons sinais para o radar sem bagunca.
+              Um fluxo visual para capturar, provar e levar bons sinais para a Sala de Sinais sem bagunca.
             </p>
           </div>
           <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
@@ -642,14 +642,14 @@ export function IngestionLab({
             <textarea
               className={cn(fieldClass, "min-h-20 resize-none")}
               name="summary"
-              placeholder="Resumo do que chamou atencao e por que merece entrar no radar."
+              placeholder="Resumo do que chamou atencao e por que merece entrar no arquivo."
             />
           </Field>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <ResultBadge result={signalResult} />
             <SubmitButton tone="acid" loading={isCreating} icon={Plus}>
-              adicionar ao radar
+              adicionar ao arquivo
             </SubmitButton>
           </div>
         </motion.form>
@@ -723,7 +723,7 @@ export function IngestionLab({
                 <PipelineEmptyState
                   icon={RadioTower}
                   title="Nenhuma fonte pronta"
-                  body="Adicione uma fonte oficial, propria ou licenciada para alimentar o radar."
+                  body="Adicione uma fonte oficial, propria ou licenciada para alimentar a biblioteca."
                   tone="aqua"
                 />
               ) : (
@@ -843,7 +843,7 @@ export function IngestionLab({
                     className="rounded-[var(--radius-sm)] border border-[rgba(230,183,101,0.16)] bg-[rgba(230,183,101,0.045)] px-3 py-2"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="truncate text-sm font-medium">Radar atualizado</p>
+                      <p className="truncate text-sm font-medium">Arquivo atualizado</p>
                       <StatusBadge status={job.status} />
                     </div>
                     <p className="mt-1 text-xs text-[color:var(--muted)]">
@@ -866,7 +866,7 @@ export function IngestionLab({
               regra de uso
             </div>
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted-strong)]">
-              So entra no radar dado manual, proprio, oficial ou licenciado. Falhou, aparece como falha.
+              So entra no arquivo dado manual, proprio, oficial ou licenciado. Falhou, aparece como falha.
             </p>
           </div>
         </div>

@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 
 import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
+import { normalizeReelMedia, type NormalizedReelMedia } from "@/lib/trends/reel-media";
 
 export type TrendSearchSort = "score" | "recency" | "growth";
 export type TrendMarketFilter = "ALL" | "BR" | "US";
@@ -58,6 +59,7 @@ export interface TrendVideoResult {
   caption?: string;
   url?: string;
   thumbnailUrl?: string;
+  media: NormalizedReelMedia;
   market: string;
   origin: string;
   trendScore: number;
@@ -141,6 +143,7 @@ function mapVideo(video: TrendVideoPayload): TrendVideoResult {
     caption: video.caption ?? undefined,
     url: video.url ?? undefined,
     thumbnailUrl: video.thumbnailUrl ?? undefined,
+    media: normalizeReelMedia(video),
     market: video.market,
     origin: video.origin,
     trendScore: video.trendScore,

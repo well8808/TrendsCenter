@@ -222,7 +222,7 @@ function AssistantResult({ data }: { data: ReelsSearchAssistantPlanDto }) {
         href={trendHref(data)}
         className="mt-4 inline-flex min-h-[var(--control-height)] w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.1)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--acid)] transition hover:bg-[rgba(237,73,86,0.16)]"
       >
-        aplicar no radar
+        aplicar no arquivo
       </Link>
     </div>
   );
