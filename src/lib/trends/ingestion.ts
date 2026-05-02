@@ -5,6 +5,7 @@ import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
 import { normalizeForDedupe, stableHash } from "@/lib/ingestion/dedupe";
 import { calculateVideoTrendScore } from "@/lib/trends/scoring";
+import { promoteImportedReelToSignal } from "@/lib/trends/signal-bridge";
 
 const allowedMarkets: Market[] = ["BR", "US"];
 const allowedOrigins: DataOrigin[] = ["MANUAL", "OFFICIAL", "OWNED"];
@@ -708,6 +709,7 @@ async function runImport(input: TrendImportSourceInput, context: TenantContext) 
           dedupeKey: ["trend-evidence", key, stableHash(item.evidence.url ?? item.evidence.title).slice(0, 18)].join(":"),
         },
       });
+      await promoteImportedReelToSignal(tx, context, video.id);
       importedVideoIds.push(video.id);
     }
 

@@ -30,7 +30,7 @@ export function AnimatedNumber({
 }: AnimatedNumberProps) {
   const prefersReducedMotion = useReducedMotion();
   const numericValue = typeof value === "number" && Number.isFinite(value) ? value : null;
-  const motionValue = useMotionValue(prefersReducedMotion ? numericValue ?? from : from);
+  const motionValue = useMotionValue(from);
   const formatter = useMemo(
     () =>
       new Intl.NumberFormat(locale, {

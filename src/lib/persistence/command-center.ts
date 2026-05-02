@@ -3,6 +3,7 @@ import type { Prisma, TrendSource } from "@prisma/client";
 import type { TenantContext } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db";
 import { calculateTrendScore } from "@/lib/scoring";
+import { promoteImportedReelsToSignals } from "@/lib/trends/signal-bridge";
 import type {
   ConfidenceBand,
   SignalHistoryItem,
@@ -460,6 +461,20 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
       avgScore: Math.round(videoStats._avg.trendScore ?? 0),
       evidenceCount: videoEvidenceCount,
     };
+    let currentSignals = signals;
+
+    if (currentSignals.length === 0 && reelStats.total > 0) {
+      const promotedCount = await promoteImportedReelsToSignals(context, 3);
+
+      if (promotedCount > 0) {
+        currentSignals = await prisma.signal.findMany({
+          where: { workspaceId: context.workspaceId },
+          include: signalInclude,
+          orderBy: [{ priority: "asc" }, { strength: "desc" }, { updatedAt: "desc" }],
+        });
+      }
+    }
+
     const ingestionLab: IngestionLabData = {
       connectors: connectors.map((connector) => ({
         id: connector.id,
@@ -499,7 +514,7 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
       },
     };
 
-    if (signals.length === 0) {
+    if (currentSignals.length === 0) {
       return {
         signals: [],
         sources: sources.map(mapSource),
@@ -518,7 +533,7 @@ export async function getCommandCenterData(context: TenantContext): Promise<Comm
     }
 
     return {
-      signals: signals.map(mapSignal),
+      signals: currentSignals.map(mapSignal),
       sources: sources.map(mapSource),
       trendSources: trendSources.map(mapTrendSource),
       persistence: {
