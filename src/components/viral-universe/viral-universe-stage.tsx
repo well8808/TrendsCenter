@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 
 import { usePrefersReducedMotion3D } from "@/components/viral-universe/use-prefers-reduced-motion-3d";
@@ -21,6 +21,27 @@ const ViralArchiveScene3D = dynamic(
     loading: () => <ViralUniverseFallback />,
   },
 );
+
+class ViralWebGLBoundary extends Component<
+  { children: ReactNode; onError: () => void },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError();
+  }
+
+  render() {
+    if (this.state.failed) return null;
+
+    return this.props.children;
+  }
+}
 
 function useInViewport() {
   const ref = useRef<HTMLDivElement>(null);
@@ -129,7 +150,10 @@ export function ViralUniverseStage({
   const { clientReady, prefersReducedMotion } = usePrefersReducedMotion3D();
   const quality = useViralMotionQuality(prefersReducedMotion);
   const { ref, visible } = useInViewport();
-  const renderCanvas = clientReady && !prefersReducedMotion && quality.canRender3d;
+  const [webglFailed, setWebglFailed] = useState(false);
+  const handleWebglFailure = useCallback(() => setWebglFailed(true), []);
+  const hasSceneData = reels.length > 0 || signals.length > 0;
+  const renderCanvas = clientReady && !prefersReducedMotion && quality.canRender3d && hasSceneData && !webglFailed;
   const currentLabel = label ?? (mode === "library" ? "Arquivo vivo" : "Leitura estrategica");
   const sortedReels = useMemo(() => reels.slice().sort((a, b) => b.score - a.score), [reels]);
   const sortedSignals = useMemo(() => signals.slice().sort((a, b) => b.score - a.score), [signals]);
@@ -151,14 +175,17 @@ export function ViralUniverseStage({
       <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:34px_34px]" />
 
       {renderCanvas ? (
-        <ViralArchiveScene3D
-          mode={mode}
-          reels={sortedReels}
-          signals={sortedSignals}
-          stats={stats}
-          quality={quality}
-          active={visible}
-        />
+        <ViralWebGLBoundary onError={handleWebglFailure}>
+          <ViralArchiveScene3D
+            mode={mode}
+            reels={sortedReels}
+            signals={sortedSignals}
+            stats={stats}
+            quality={quality}
+            active={visible}
+            onContextLost={handleWebglFailure}
+          />
+        </ViralWebGLBoundary>
       ) : (
         <ViralUniverseFallback mode={mode} stats={stats} />
       )}

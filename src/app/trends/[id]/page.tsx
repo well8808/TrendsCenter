@@ -18,6 +18,7 @@ import {
 
 import { ContentIdeaBriefPanel } from "@/components/content-idea-brief-panel";
 import { DecisionFlowStepper } from "@/components/cinematic/decision-flow-stepper";
+import { FlowNarrativePanel } from "@/components/cinematic/flow-narrative-panel";
 import { OpportunityDecisionPanel } from "@/components/opportunity-decision-panel";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { createOrOpenContentDraftAction } from "@/app/studio/actions";
@@ -277,7 +278,10 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
           </header>
 
-          <DecisionFlowStepper stages={cinematicStages} />
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]" aria-label="Jornada da oportunidade">
+            <DecisionFlowStepper stages={cinematicStages} title="Sala de decisao" />
+            <FlowNarrativePanel stages={cinematicStages} title="Proximo movimento" />
+          </section>
 
           <section className="app-panel overflow-hidden rounded-[var(--radius-lg)] p-4 md:p-5" aria-labelledby="opportunity-brief">
             <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">

@@ -465,6 +465,7 @@ export function ViralArchiveScene3D({
   stats,
   quality,
   active,
+  onContextLost,
 }: {
   mode: ViralUniverseMode;
   reels: ViralReelNode[];
@@ -472,6 +473,7 @@ export function ViralArchiveScene3D({
   stats: ViralUniverseStats;
   quality: ViralSceneQuality;
   active: boolean;
+  onContextLost?: () => void;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
 
@@ -481,12 +483,19 @@ export function ViralArchiveScene3D({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(31, 1, 0.1, 80);
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: quality.antialias,
-      powerPreference: "high-performance",
-      preserveDrawingBuffer: false,
-    });
+    let renderer: THREE.WebGLRenderer;
+
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: quality.antialias,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: false,
+      });
+    } catch {
+      onContextLost?.();
+      return;
+    }
     const density = archiveDensity(stats);
     const artifacts = buildArchiveArtifacts({ reels, stats, limit: quality.reelLimit });
     const signalPlates = buildArchiveSignals({ signals, limit: quality.signalLimit });
@@ -516,6 +525,13 @@ export function ViralArchiveScene3D({
     let pointerY = 0;
     let lastFrame = 0;
     const startedAt = performance.now();
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      onContextLost?.();
+    };
+
+    renderer.domElement.addEventListener("webglcontextlost", handleContextLost, false);
 
     artifactGroups.forEach((group) => {
       const artifact = group.userData.artifact as ViralArchiveArtifact;
@@ -621,11 +637,12 @@ export function ViralArchiveScene3D({
       if (rafId !== null) window.cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
+      renderer.domElement.removeEventListener("webglcontextlost", handleContextLost, false);
       disposeScene(scene);
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [active, mode, quality.antialias, quality.cameraDrift, quality.dpr, quality.reelLimit, quality.signalLimit, reels, signals, stats]);
+  }, [active, mode, onContextLost, quality.antialias, quality.cameraDrift, quality.dpr, quality.reelLimit, quality.signalLimit, reels, signals, stats]);
 
   return <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />;
 }

@@ -2,6 +2,7 @@
 
 import { Check, ClipboardCheck, Copy, Lightbulb, ListChecks, MessageSquareText, ShieldAlert, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ContentDraftSummary } from "@/lib/trends/content-draft";
@@ -86,6 +87,7 @@ export function ContentIdeaBriefPanel({
   createDraftAction,
 }: ContentIdeaBriefPanelProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullBrief = useMemo(() => formatContentIdeaBriefForCopy(idea), [idea]);
   const structure = useMemo(() => structureText(idea), [idea]);
@@ -116,7 +118,7 @@ export function ContentIdeaBriefPanel({
   }
 
   return (
-    <section
+    <motion.section
       className={cn(
         "app-panel overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-6",
         idea.isReady
@@ -124,6 +126,11 @@ export function ContentIdeaBriefPanel({
           : "border-[rgba(255,255,255,0.08)]",
       )}
       aria-labelledby="content-idea-brief"
+      data-content-idea-ready={idea.isReady ? "true" : "false"}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.34, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
@@ -275,6 +282,6 @@ export function ContentIdeaBriefPanel({
           </div>
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCinematicFlow, summarizeCinematicLibrary } from "@/lib/trends/cinematic-flow";
+import {
+  buildCinematicFlow,
+  deriveCinematicFlowProgress,
+  summarizeCinematicLibrary,
+} from "@/lib/trends/cinematic-flow";
 
 describe("cinematic flow helpers", () => {
   it("connects a real reel through signal, brief, content idea and studio draft", () => {
@@ -79,5 +83,57 @@ describe("cinematic flow helpers", () => {
       highSignal: 1,
       topScore: 91,
     });
+  });
+
+  it("derives a practical next step for the cinematic journey", () => {
+    const stages = buildCinematicFlow({
+      videoId: "video-3",
+      title: "Reel real sem pauta",
+      origin: "BRIGHT_DATA",
+      trendScore: 71,
+      signal: { id: "signal-3", title: "Signal real", score: 72 },
+    });
+    const progress = deriveCinematicFlowProgress(stages);
+
+    expect(progress).toMatchObject({
+      completed: 3,
+      total: 5,
+      percent: 60,
+      label: "3/5",
+      actionLabel: "Decidir pauta",
+    });
+    expect(progress.current?.key).toBe("idea");
+    expect(progress.summary).toContain("salvar");
+  });
+
+  it("marks the flow complete only when the studio draft exists", () => {
+    const stages = buildCinematicFlow({
+      videoId: "video-4",
+      title: "Reel com draft",
+      origin: "BRIGHT_DATA",
+      trendScore: 88,
+      signal: { id: "signal-4", title: "Signal real", score: 84 },
+      decision: {
+        action: "create_content_idea",
+        label: "Transformar em pauta",
+        shortLabel: "ideia",
+        section: "saved",
+      },
+      contentDraft: {
+        id: "draft-4",
+        title: "Draft real",
+        status: "READY",
+        statusLabel: "Pronto",
+      },
+    });
+    const progress = deriveCinematicFlowProgress(stages);
+
+    expect(progress).toMatchObject({
+      completed: 5,
+      percent: 100,
+      actionLabel: "Fluxo completo",
+    });
+    expect(progress.current).toBeUndefined();
+    expect(progress.summary).toContain("Studio");
   });
 });

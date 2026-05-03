@@ -407,12 +407,14 @@ export function CinematicSignalUniverseScene({
   stats,
   quality,
   active,
+  onContextLost,
 }: {
   reels: ViralReelNode[];
   stages: CinematicFlowStage[];
   stats: ViralUniverseStats;
   quality: ViralSceneQuality;
   active: boolean;
+  onContextLost?: () => void;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
 
@@ -422,12 +424,19 @@ export function CinematicSignalUniverseScene({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(33, 1, 0.1, 60);
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: quality.antialias,
-      powerPreference: "high-performance",
-      preserveDrawingBuffer: false,
-    });
+    let renderer: THREE.WebGLRenderer;
+
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: quality.antialias,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: false,
+      });
+    } catch {
+      onContextLost?.();
+      return;
+    }
     const density = archiveDensity(stats);
     const artifacts = buildArchiveArtifacts({ reels, stats, limit: Math.min(quality.reelLimit, 14) });
     const plates = createStagePlates(stages);
@@ -457,6 +466,13 @@ export function CinematicSignalUniverseScene({
     let pointerX = 0;
     let pointerY = 0;
     let lastFrame = 0;
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      onContextLost?.();
+    };
+
+    renderer.domElement.addEventListener("webglcontextlost", handleContextLost, false);
 
     artifactGroups.forEach((group) => {
       const artifact = group.userData.artifact as ViralArchiveArtifact;
@@ -555,11 +571,12 @@ export function CinematicSignalUniverseScene({
       if (rafId !== null) window.cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
+      renderer.domElement.removeEventListener("webglcontextlost", handleContextLost, false);
       disposeScene(scene);
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [active, quality.antialias, quality.cameraDrift, quality.dpr, quality.reelLimit, reels, stages, stats]);
+  }, [active, onContextLost, quality.antialias, quality.cameraDrift, quality.dpr, quality.reelLimit, reels, stages, stats]);
 
   return <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />;
 }

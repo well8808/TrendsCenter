@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Radio } from "lucide-react";
 
-import type { CinematicFlowStage } from "@/lib/trends/cinematic-flow";
+import { deriveCinematicFlowProgress, type CinematicFlowStage } from "@/lib/trends/cinematic-flow";
 import { cn } from "@/lib/utils";
 
 const toneClasses = {
@@ -60,6 +60,7 @@ export function DecisionFlowStepper({
   className?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const progress = deriveCinematicFlowProgress(stages);
 
   return (
     <motion.nav
@@ -77,12 +78,31 @@ export function DecisionFlowStepper({
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(237,73,86,0.36)] to-transparent"
       />
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
-          {title}
-        </p>
-        <p className="hidden text-[11px] text-[color:var(--muted)] sm:block">
-          Reel -&gt; Signal -&gt; Brief -&gt; Pauta -&gt; Studio
-        </p>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
+            {title}
+          </p>
+          <p className="mt-1 hidden text-[11px] text-[color:var(--muted)] sm:block">
+            Reel -&gt; Signal -&gt; Brief -&gt; Pauta -&gt; Studio
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="metric-number text-lg font-semibold text-[color:var(--foreground)]">
+            {progress.label}
+          </p>
+          <p className="font-mono text-[8px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+            {progress.percent}%
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.055)]" aria-hidden="true">
+        <motion.span
+          className="block h-full rounded-full bg-[linear-gradient(90deg,var(--hot),var(--gold),var(--aqua))]"
+          initial={prefersReducedMotion ? false : { width: 0 }}
+          animate={{ width: `${progress.percent}%` }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.42, ease: [0.22, 1, 0.36, 1] }}
+        />
       </div>
 
       <div className={cn("grid gap-2", compact ? "lg:grid-cols-5" : "xl:grid-cols-5")}>
@@ -93,14 +113,23 @@ export function DecisionFlowStepper({
                 "group relative flex h-full min-w-0 gap-3 rounded-[var(--radius-md)] border p-3 transition",
                 toneClasses[stage.tone].border,
                 stage.state === "waiting" ? "bg-[rgba(255,255,255,0.012)] opacity-72" : toneClasses[stage.tone].bg,
+                stage.state === "current" && "ring-1 ring-[rgba(237,73,86,0.24)]",
                 stage.href && "hover:border-[rgba(237,73,86,0.38)] hover:bg-[rgba(237,73,86,0.06)]",
               )}
+              aria-current={stage.state === "current" ? "step" : undefined}
+              data-flow-stage={stage.key}
+              data-flow-state={stage.state}
             >
               <StateMarker stage={stage} />
               <div className="min-w-0">
-                <p className={cn("line-clamp-1 text-sm font-semibold", toneClasses[stage.tone].text)}>
-                  {stage.title}
-                </p>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  {stage.state === "current" ? (
+                    <Radio className="h-3 w-3 shrink-0 text-[color:var(--hot)]" aria-hidden="true" />
+                  ) : null}
+                  <p className={cn("line-clamp-1 text-sm font-semibold", toneClasses[stage.tone].text)}>
+                    {stage.title}
+                  </p>
+                </div>
                 <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[color:var(--muted)]">
                   {stage.body}
                 </p>

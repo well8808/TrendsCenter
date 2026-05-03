@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { saveContentDraftAction } from "@/app/studio/actions";
 import { DecisionFlowStepper } from "@/components/cinematic/decision-flow-stepper";
+import { FlowNarrativePanel } from "@/components/cinematic/flow-narrative-panel";
 import { ContentDraftEditor } from "@/components/content-draft-editor";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { requireTenantContext } from "@/lib/auth/session";
@@ -89,7 +90,10 @@ export default async function StudioDraftPage({ params }: { params: Promise<{ id
             </Link>
           </div>
 
-          <DecisionFlowStepper stages={cinematicStages} title="Da oportunidade ao roteiro" compact />
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]" aria-label="Continuidade do roteiro">
+            <DecisionFlowStepper stages={cinematicStages} title="Da oportunidade ao roteiro" compact />
+            <FlowNarrativePanel stages={cinematicStages} title="Continuidade no Studio" />
+          </section>
 
           <ContentDraftEditor draft={draft} action={saveContentDraftAction} />
         </div>

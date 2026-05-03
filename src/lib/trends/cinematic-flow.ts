@@ -59,6 +59,17 @@ export interface CinematicLibrarySummaryInput {
   };
 }
 
+export interface CinematicFlowProgress {
+  completed: number;
+  total: number;
+  percent: number;
+  current?: CinematicFlowStage;
+  next?: CinematicFlowStage;
+  label: string;
+  summary: string;
+  actionLabel: string;
+}
+
 const compactFormatter = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -181,4 +192,63 @@ export function summarizeCinematicLibrary(
       topScore: 0,
     },
   );
+}
+
+function stageActionLabel(stage?: CinematicFlowStage) {
+  if (!stage) return "Fluxo completo";
+
+  if (stage.key === "signal") return "Validar Signal";
+  if (stage.key === "brief") return "Ler Brief";
+  if (stage.key === "idea") return "Decidir pauta";
+  if (stage.key === "studio") return "Continuar no Studio";
+
+  return "Abrir Reel";
+}
+
+function stageSummary(stage?: CinematicFlowStage, next?: CinematicFlowStage) {
+  if (!stage) {
+    return "O Reel ja virou leitura, pauta e roteiro. Use o Studio para finalizar ou publicar.";
+  }
+
+  if (stage.key === "signal") {
+    return "O Reel ja esta no arquivo; agora falta conectar ou revisar o sinal estrategico por tras dele.";
+  }
+
+  if (stage.key === "brief") {
+    return "A proxima leitura deve explicar o que aconteceu, por que importa e qual acao faz sentido.";
+  }
+
+  if (stage.key === "idea") {
+    return "A oportunidade esta pronta para uma decisao: salvar, observar, descartar, usar ou transformar em pauta.";
+  }
+
+  if (stage.key === "studio") {
+    return next
+      ? "A pauta existe; o proximo passo e abrir ou criar o roteiro editavel no Studio."
+      : "A pauta ja pode continuar para roteiro, edicao e publicacao no Studio.";
+  }
+
+  return "Comece pelo artefato real: origem, metricas, creator e prova preservada.";
+}
+
+export function deriveCinematicFlowProgress(stages: CinematicFlowStage[]): CinematicFlowProgress {
+  const total = stages.length;
+  const completed = stages.filter((stage) => stage.state === "complete").length;
+  const current = stages.find((stage) => stage.state === "current")
+    ?? stages.find((stage) => stage.state === "waiting");
+  const next = current
+    ? stages.slice(stages.findIndex((stage) => stage.key === current.key) + 1).find((stage) => stage.state !== "complete")
+    : undefined;
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return {
+    completed,
+    total,
+    percent,
+    current,
+    next,
+    label: total > 0 ? `${completed}/${total}` : "0/0",
+    summary: stageSummary(current, next),
+    actionLabel: stageActionLabel(current ?? next),
+  };
 }

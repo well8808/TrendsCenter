@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 
 import { usePrefersReducedMotion3D } from "@/components/viral-universe/use-prefers-reduced-motion-3d";
@@ -17,6 +17,27 @@ const CinematicSignalUniverseScene = dynamic(
     loading: () => <CinematicSignalUniverseFallback />,
   },
 );
+
+class WebGLBoundary extends Component<
+  { children: ReactNode; onError: () => void },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError();
+  }
+
+  render() {
+    if (this.state.failed) return null;
+
+    return this.props.children;
+  }
+}
 
 function useInViewport() {
   const ref = useRef<HTMLDivElement>(null);
@@ -41,9 +62,11 @@ function useInViewport() {
 export function CinematicSignalUniverseFallback({
   stages = [],
   stats,
+  reason,
 }: {
   stages?: CinematicFlowStage[];
   stats?: ViralUniverseStats;
+  reason?: string;
 }) {
   const artifactCount = Math.max(1, Math.min(stats?.reels ?? 5, 8));
   const visibleStages = stages.length > 0
@@ -88,6 +111,14 @@ export function CinematicSignalUniverseFallback({
           </span>
         ))}
       </div>
+      {reason ? (
+        <span
+          className="absolute bottom-4 right-4 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-white/48 backdrop-blur-md"
+          suppressHydrationWarning
+        >
+          {reason}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -108,7 +139,24 @@ export function CinematicSignalUniverseStage({
   const { clientReady, prefersReducedMotion } = usePrefersReducedMotion3D();
   const quality = useViralMotionQuality(prefersReducedMotion);
   const { ref, visible } = useInViewport();
-  const renderCanvas = clientReady && !prefersReducedMotion && quality.canRender3d;
+  const [webglFailed, setWebglFailed] = useState(false);
+  const handleWebglFailure = useCallback(() => setWebglFailed(true), []);
+  const renderCanvas = clientReady
+    && !prefersReducedMotion
+    && quality.canRender3d
+    && reels.length > 0
+    && stages.length > 0
+    && !webglFailed;
+  const fallbackReason = useMemo(() => {
+    if (webglFailed) return "fallback seguro / WebGL indisponivel";
+    if (!clientReady) return "modo leve seguro";
+    if (prefersReducedMotion) return "movimento reduzido";
+    if (!quality.canRender3d) return "modo leve mobile";
+    if (reels.length === 0) return "aguardando Reels reais";
+    if (stages.length === 0) return "fluxo aguardando dados";
+
+    return "fallback visual";
+  }, [clientReady, prefersReducedMotion, quality.canRender3d, reels.length, stages.length, webglFailed]);
 
   return (
     <motion.div
@@ -123,20 +171,24 @@ export function CinematicSignalUniverseStage({
       aria-hidden="true"
       data-cinematic-stage="signal-universe"
       data-render-mode={renderCanvas ? "webgl" : "fallback"}
+      data-disabled-reason={renderCanvas ? undefined : fallbackReason}
     >
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(237,73,86,0.1),rgba(255,255,255,0.025)_42%,rgba(88,200,190,0.045))]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:38px_38px]" />
 
       {renderCanvas ? (
-        <CinematicSignalUniverseScene
-          reels={reels}
-          stages={stages}
-          stats={stats}
-          quality={quality}
-          active={visible}
-        />
+        <WebGLBoundary onError={handleWebglFailure}>
+          <CinematicSignalUniverseScene
+            reels={reels}
+            stages={stages}
+            stats={stats}
+            quality={quality}
+            active={visible}
+            onContextLost={handleWebglFailure}
+          />
+        </WebGLBoundary>
       ) : (
-        <CinematicSignalUniverseFallback stages={stages} stats={stats} />
+        <CinematicSignalUniverseFallback stages={stages} stats={stats} reason={fallbackReason} />
       )}
 
       <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 backdrop-blur-md">

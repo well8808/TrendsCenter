@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft, BookOpenCheck, Sparkles } from "lucide-react";
 
+import { DecisionFlowStepper } from "@/components/cinematic/decision-flow-stepper";
+import { FlowNarrativePanel } from "@/components/cinematic/flow-narrative-panel";
 import { CinematicMetric, CinematicPageShell, CinematicSection } from "@/components/cinematic/cinematic-primitives";
 import { StudioDraftMotionCard } from "@/components/cinematic/studio-draft-motion-card";
 import { requireTenantContext } from "@/lib/auth/session";
+import { buildCinematicFlow } from "@/lib/trends/cinematic-flow";
 import {
   contentDraftStatusMeta,
   contentDraftStatusOrder,
@@ -11,6 +14,7 @@ import {
   type ContentDraftStatusKey,
 } from "@/lib/trends/content-draft";
 import { listContentDrafts } from "@/lib/trends/content-draft-service";
+import { normalizeOpportunityDecisionAction } from "@/lib/trends/opportunity-actions";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +84,38 @@ export default async function StudioPage() {
   const activeCount = drafts.filter((draft) => draft.status !== "ARCHIVED").length;
   const readyCount = groups.READY.length + groups.SCHEDULED.length;
   const publishedCount = groups.PUBLISHED.length;
+  const focusDraft = drafts.find((draft) => draft.status !== "ARCHIVED") ?? drafts[0];
+  const focusDecisionAction = focusDraft?.decision
+    ? normalizeOpportunityDecisionAction(focusDraft.decision.action) ?? "create_content_idea"
+    : undefined;
+  const studioStages = focusDraft
+    ? buildCinematicFlow({
+        videoId: focusDraft.video.id,
+        title: focusDraft.video.title,
+        creator: focusDraft.video.creator,
+        origin: focusDraft.video.origin,
+        market: focusDraft.video.market,
+        trendScore: focusDraft.video.trendScore,
+        views: focusDraft.video.views,
+        growthViews: focusDraft.video.growthViews,
+        relatedSignalCount: focusDraft.signal ? 1 : 0,
+        signal: focusDraft.signal,
+        decision: focusDraft.decision
+          ? {
+              action: focusDecisionAction ?? "create_content_idea",
+              label: focusDraft.decision.label,
+              shortLabel: "ideia",
+              section: "saved",
+            }
+          : undefined,
+        contentDraft: {
+          id: focusDraft.id,
+          title: focusDraft.title,
+          status: focusDraft.status,
+          statusLabel: focusDraft.statusLabel,
+        },
+      })
+    : [];
 
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
@@ -136,11 +172,20 @@ export default async function StudioPage() {
             </Link>
           </CinematicSection>
         ) : (
-          <CinematicSection className="grid gap-3 xl:grid-cols-4" aria-label="Fila do estudio de conteudo">
-            {contentDraftStatusOrder.filter((status) => status !== "ARCHIVED").map((status) => (
-              <Lane key={status} status={status} drafts={groups[status]} />
-            ))}
-          </CinematicSection>
+          <>
+            {studioStages.length > 0 ? (
+              <CinematicSection className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]" aria-label="Fluxo do estudio">
+                <DecisionFlowStepper stages={studioStages} title="Do Reel ao roteiro" compact />
+                <FlowNarrativePanel stages={studioStages} title="Ativo em producao" />
+              </CinematicSection>
+            ) : null}
+
+            <CinematicSection className="grid gap-3 xl:grid-cols-4" aria-label="Fila do estudio de conteudo">
+              {contentDraftStatusOrder.filter((status) => status !== "ARCHIVED").map((status) => (
+                <Lane key={status} status={status} drafts={groups[status]} />
+              ))}
+            </CinematicSection>
+          </>
         )}
 
         {groups.ARCHIVED.length > 0 ? (

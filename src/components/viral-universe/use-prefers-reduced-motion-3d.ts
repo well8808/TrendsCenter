@@ -15,6 +15,6 @@ export function usePrefersReducedMotion3D() {
 
   return {
     clientReady,
-    prefersReducedMotion: !clientReady || Boolean(prefersReducedMotion),
+    prefersReducedMotion: Boolean(prefersReducedMotion),
   };
 }
