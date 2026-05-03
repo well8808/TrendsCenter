@@ -153,6 +153,7 @@ export interface TrendSearchData {
     total: number;
     br: number;
     us: number;
+    signals: number;
     avgScore: number;
     latestIndexedAt?: string;
   };
@@ -269,7 +270,7 @@ export async function getTrendSearchData(
 ): Promise<TrendSearchData> {
   const prisma = getPrisma();
   const where = searchWhere(context, params);
-  const [results, total, br, us, latest] = await Promise.all([
+  const [results, total, br, us, signalTotal, latest] = await Promise.all([
     prisma.video.findMany({
       where,
       include: videoInclude,
@@ -279,6 +280,7 @@ export async function getTrendSearchData(
     prisma.video.count({ where: { workspaceId: context.workspaceId } }),
     prisma.video.count({ where: { workspaceId: context.workspaceId, market: "BR" } }),
     prisma.video.count({ where: { workspaceId: context.workspaceId, market: "US" } }),
+    prisma.signal.count({ where: { workspaceId: context.workspaceId } }),
     prisma.video.findFirst({
       where: { workspaceId: context.workspaceId },
       orderBy: { collectedAt: "desc" },
@@ -318,6 +320,7 @@ export async function getTrendSearchData(
       total,
       br,
       us,
+      signals: signalTotal,
       avgScore,
       latestIndexedAt: latest?.collectedAt.toISOString(),
     },

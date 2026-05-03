@@ -3,10 +3,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { saveContentDraftAction } from "@/app/studio/actions";
+import { DecisionFlowStepper } from "@/components/cinematic/decision-flow-stepper";
 import { ContentDraftEditor } from "@/components/content-draft-editor";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { requireTenantContext } from "@/lib/auth/session";
+import { buildCinematicFlow } from "@/lib/trends/cinematic-flow";
 import { getContentDraft } from "@/lib/trends/content-draft-service";
+import { normalizeOpportunityDecisionAction } from "@/lib/trends/opportunity-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +35,35 @@ export default async function StudioDraftPage({ params }: { params: Promise<{ id
     sound: draft.video.sound,
     hashtags: draft.video.hashtags,
   };
+  const decisionAction = draft.decision
+    ? normalizeOpportunityDecisionAction(draft.decision.action) ?? "create_content_idea"
+    : undefined;
+  const cinematicStages = buildCinematicFlow({
+    videoId: draft.video.id,
+    title: draft.video.title,
+    creator: draft.video.creator,
+    origin: draft.video.origin,
+    market: draft.video.market,
+    trendScore: draft.video.trendScore,
+    views: draft.video.views,
+    growthViews: draft.video.growthViews,
+    relatedSignalCount: draft.signal ? 1 : 0,
+    signal: draft.signal,
+    decision: draft.decision
+      ? {
+          action: decisionAction ?? "create_content_idea",
+          label: draft.decision.label,
+          shortLabel: "ideia",
+          section: "saved",
+        }
+      : undefined,
+    contentDraft: {
+      id: draft.id,
+      title: draft.title,
+      status: draft.status,
+      statusLabel: draft.statusLabel,
+    },
+  });
 
   return (
     <main className="relative min-h-dvh text-[color:var(--foreground)]">
@@ -56,6 +88,8 @@ export default async function StudioDraftPage({ params }: { params: Promise<{ id
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
+
+          <DecisionFlowStepper stages={cinematicStages} title="Da oportunidade ao roteiro" compact />
 
           <ContentDraftEditor draft={draft} action={saveContentDraftAction} />
         </div>

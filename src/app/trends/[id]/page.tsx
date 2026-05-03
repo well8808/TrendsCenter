@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 
 import { ContentIdeaBriefPanel } from "@/components/content-idea-brief-panel";
+import { DecisionFlowStepper } from "@/components/cinematic/decision-flow-stepper";
 import { OpportunityDecisionPanel } from "@/components/opportunity-decision-panel";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
 import { createOrOpenContentDraftAction } from "@/app/studio/actions";
 import { requireTenantContext } from "@/lib/auth/session";
+import { buildCinematicFlow } from "@/lib/trends/cinematic-flow";
 import { buildContentIdeaBrief } from "@/lib/trends/content-idea-brief";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import { getTrendDetail } from "@/lib/trends/search";
@@ -120,6 +122,28 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
     postedAt: trend.postedAt,
   });
   const primarySignal = trend.relatedSignals[0];
+  const cinematicStages = buildCinematicFlow({
+    videoId: trend.id,
+    title: trend.title,
+    creator: trend.creator?.handle,
+    origin: trend.origin,
+    market: trend.market,
+    trendScore: trend.trendScore,
+    views: trend.metrics.views,
+    growthViews: trend.growthViews,
+    evidenceCount: trend.evidenceCount,
+    relatedSignalCount: trend.relatedSignals.length,
+    signal: primarySignal
+      ? {
+          id: primarySignal.id,
+          title: primarySignal.title,
+          score: primarySignal.score,
+          confidence: primarySignal.confidence,
+        }
+      : undefined,
+    decision: trend.decision,
+    contentDraft: trend.contentDraft,
+  });
   const contentIdea = buildContentIdeaBrief({
     reel: {
       title: trend.title,
@@ -253,6 +277,8 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
           </header>
 
+          <DecisionFlowStepper stages={cinematicStages} />
+
           <section className="app-panel overflow-hidden rounded-[var(--radius-lg)] p-4 md:p-5" aria-labelledby="opportunity-brief">
             <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
               <div className="relative">
@@ -376,7 +402,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             ))}
           </section>
 
-          <section className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
+          <section id="sinais-relacionados" className="app-panel rounded-[var(--radius-lg)] p-5 md:p-6">
             <div className="section-head text-[color:var(--hot)]">
               <Target className="h-4 w-4 shrink-0" aria-hidden="true" />
               sinais relacionados

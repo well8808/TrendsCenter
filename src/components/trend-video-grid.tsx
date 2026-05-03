@@ -7,8 +7,10 @@ import type { ComponentType } from "react";
 
 import { GSAPCounter } from "@/components/gsap-counter";
 import { ReelArtifactPoster } from "@/components/viral-library/reel-artifact-poster";
+import { DecisionFlowStepper } from "@/components/cinematic/decision-flow-stepper";
 import { buildContentIdeaBrief } from "@/lib/trends/content-idea-brief";
 import type { ContentDraftSummary } from "@/lib/trends/content-draft";
+import { buildCinematicFlow, summarizeCinematicLibrary } from "@/lib/trends/cinematic-flow";
 import { buildOpportunityBrief } from "@/lib/trends/opportunity-brief";
 import {
   getOpportunityDecisionQueueGroup,
@@ -129,6 +131,22 @@ function contentIdeaForVideo(video: TrendVideoView) {
     opportunityBrief,
     decision: video.decision,
   });
+}
+
+function flowInputForVideo(video: TrendVideoView) {
+  return {
+    videoId: video.id,
+    title: video.title,
+    creator: video.creator,
+    origin: video.origin,
+    market: video.market,
+    trendScore: video.trendScore,
+    views: video.views,
+    growthViews: video.growthViews,
+    evidenceCount: video.evidenceCount,
+    decision: video.decision,
+    contentDraft: video.contentDraft,
+  };
 }
 
 function statusToneClass(tone: "hot" | "gold" | "aqua" | "muted") {
@@ -789,6 +807,52 @@ function ActionStrip({ results }: { results: TrendVideoView[] }) {
   );
 }
 
+function LibraryFlowRibbon({ results }: { results: TrendVideoView[] }) {
+  const summary = summarizeCinematicLibrary(results.map(flowInputForVideo));
+  const focus = results.find((video) => shouldShowInActionNow(video.decision)) ?? results[0];
+
+  if (!focus) return null;
+
+  const stages = buildCinematicFlow(flowInputForVideo(focus));
+
+  return (
+    <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]" aria-label="Fluxo de produto">
+      <DecisionFlowStepper
+        stages={stages}
+        title="Reel para oportunidade"
+        compact
+        className="min-h-full"
+      />
+      <div className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] p-4">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--hot)]">
+          fila cinematica
+        </p>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--muted-strong)]">
+          A biblioteca agora mostra o caminho ate o Studio: detectar, ler, decidir, criar pauta e continuar o roteiro editavel.
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {[
+            { label: "agir agora", value: summary.actionNow, tone: "text-[color:var(--hot)]" },
+            { label: "pautas", value: summary.ideas, tone: "text-[color:var(--gold)]" },
+            { label: "drafts", value: summary.drafts, tone: "text-[color:var(--aqua)]" },
+            { label: "top score", value: summary.topScore, tone: "text-[color:var(--foreground)]" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.018)] p-3"
+            >
+              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                {item.label}
+              </p>
+              <p className={`metric-number mt-1 text-xl font-semibold ${item.tone}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DecisionShelf({ results }: { results: TrendVideoView[] }) {
   const groupOrder: OpportunityDecisionQueueGroup[] = ["ideas", "saved", "observing", "used"];
   const hiddenCount = results.filter((video) => getOpportunityDecisionQueueGroup(video.decision) === "hidden").length;
@@ -1134,6 +1198,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             </div>
           </div>
         </section>
+        <LibraryFlowRibbon results={results} />
         <ActionStrip results={results} />
         <DecisionShelf results={results} />
         {/* ── EM CHAMAS — featured horizontal ── */}

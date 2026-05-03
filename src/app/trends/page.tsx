@@ -15,12 +15,13 @@ import { ProviderReelsImportForm } from "@/components/provider-reels-import-form
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
+import { CinematicSignalUniverseStage } from "@/components/cinematic/cinematic-signal-universe-stage";
 import { TrendEnergyField } from "@/components/viral-library/trend-energy-field";
-import { ViralUniverseStage } from "@/components/viral-universe/viral-universe-stage";
 import type { ViralReelNode, ViralUniverseStats } from "@/components/viral-universe/viral-scene-quality";
 import { requireTenantContext } from "@/lib/auth/session";
 import type { JobRunsListDto } from "@/lib/api";
 import { listWorkspaceJobRuns } from "@/lib/services/jobs-service";
+import { buildCinematicFlow } from "@/lib/trends/cinematic-flow";
 import { getTrendSearchData } from "@/lib/trends/search";
 import { cn } from "@/lib/utils";
 
@@ -101,11 +102,28 @@ export default async function TrendsPage({
   }));
   const universeStats: ViralUniverseStats = {
     reels: data.stats.total,
-    signals: 0,
+    signals: data.stats.signals,
     sources: new Set(videos.map((video) => video.origin)).size,
     evidence: viralReels.reduce((total, reel) => total + reel.evidenceCount, 0),
     avgScore: data.stats.avgScore,
   };
+  const focusVideo = videos[0];
+  const cinematicStages = focusVideo
+    ? buildCinematicFlow({
+        videoId: focusVideo.id,
+        title: focusVideo.title,
+        creator: focusVideo.creator,
+        origin: focusVideo.origin,
+        market: focusVideo.market,
+        trendScore: focusVideo.trendScore,
+        views: focusVideo.views,
+        growthViews: focusVideo.growthViews,
+        evidenceCount: focusVideo.evidenceCount,
+        relatedSignalCount: data.stats.signals,
+        decision: focusVideo.decision,
+        contentDraft: focusVideo.contentDraft,
+      })
+    : [];
 
   const stats = [
     { label: "Reels", value: data.stats.total, tone: "acid" as const },
@@ -192,12 +210,11 @@ export default async function TrendsPage({
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-[color:var(--muted)] md:text-[15px]">
                   Reels reais entram como artefatos: creator, som, metricas e provas preservadas. Os melhores achados alimentam a Sala de Sinais para virar decisao.
                 </p>
-                <ViralUniverseStage
-                  mode="library"
+                <CinematicSignalUniverseStage
                   reels={viralReels}
-                  signals={[]}
+                  stages={cinematicStages}
                   stats={universeStats}
-                  label="Arquivo vivo"
+                  label="Reel -> Signal -> Studio"
                   className="mt-5 h-[174px] w-full lg:absolute lg:right-4 lg:top-5 lg:z-[1] lg:mt-0 lg:h-[250px] lg:w-[430px] lg:opacity-95 2xl:h-[280px] 2xl:w-[500px]"
                 />
               </div>

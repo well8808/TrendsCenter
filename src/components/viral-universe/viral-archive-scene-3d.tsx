@@ -514,6 +514,7 @@ export function ViralArchiveScene3D({
     let rafId: number | null = null;
     let pointerX = 0;
     let pointerY = 0;
+    let lastFrame = 0;
     const startedAt = performance.now();
 
     artifactGroups.forEach((group) => {
@@ -563,10 +564,20 @@ export function ViralArchiveScene3D({
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     updateSize();
 
-    const frame = () => {
+    const frame = (now: number) => {
       if (disposed) return;
 
-      const elapsed = (performance.now() - startedAt) / 1000;
+      if (!active) {
+        return;
+      }
+
+      if (now - lastFrame < 1000 / 24) {
+        rafId = window.requestAnimationFrame(frame);
+        return;
+      }
+
+      lastFrame = now;
+      const elapsed = (now - startedAt) / 1000;
       shelves.rotation.y = Math.sin(elapsed * 0.055) * 0.018;
       backdrop.rotation.z = Math.sin(elapsed * 0.05) * 0.008;
       connectors.scale.setScalar(1 + Math.sin(elapsed * 0.35) * 0.008);
@@ -600,12 +611,10 @@ export function ViralArchiveScene3D({
 
       renderer.render(scene, camera);
 
-      if (active) {
-        rafId = window.requestAnimationFrame(frame);
-      }
+      rafId = window.requestAnimationFrame(frame);
     };
 
-    frame();
+    rafId = window.requestAnimationFrame(frame);
 
     return () => {
       disposed = true;

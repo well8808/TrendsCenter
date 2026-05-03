@@ -79,6 +79,12 @@ export interface ContentDraftView extends ContentDraftSummary {
     action: string;
     updatedAt: string;
   };
+  signal?: {
+    id: string;
+    title: string;
+    score: number;
+    confidence: string;
+  };
 }
 
 export interface UpdateContentDraftInput {
@@ -150,7 +156,10 @@ function mapVideo(video: ContentDraftRecord["video"]): ContentDraftVideoView {
   };
 }
 
-function mapContentDraft(record: ContentDraftRecord): ContentDraftView {
+function mapContentDraft(
+  record: ContentDraftRecord,
+  signal?: ContentDraftView["signal"],
+): ContentDraftView {
   const summary = getContentDraftSummary(record);
 
   return {
@@ -177,6 +186,7 @@ function mapContentDraft(record: ContentDraftRecord): ContentDraftView {
           updatedAt: record.opportunityDecision.updatedAt.toISOString(),
         }
       : undefined,
+    signal,
   };
 }
 
@@ -247,10 +257,11 @@ export async function listContentDrafts(context: TenantContext) {
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
   });
 
-  return records.map(mapContentDraft);
+  return records.map((record) => mapContentDraft(record));
 }
 
 export async function getContentDraft(context: TenantContext, draftId: string) {
+  const prisma = getPrisma();
   const record = await getPrisma().contentDraft.findFirst({
     where: {
       id: draftId,
@@ -260,7 +271,36 @@ export async function getContentDraft(context: TenantContext, draftId: string) {
     include: contentDraftInclude,
   });
 
-  return record ? mapContentDraft(record) : null;
+  if (!record) {
+    return null;
+  }
+
+  const signal = await prisma.signal.findFirst({
+    where: {
+      workspaceId: context.workspaceId,
+      dedupeKey: `reel-signal:${record.video.dedupeKey}`,
+    },
+    include: {
+      scores: {
+        orderBy: { calculatedAt: "desc" },
+        select: { score: true },
+        take: 1,
+      },
+    },
+    orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
+  });
+
+  return mapContentDraft(
+    record,
+    signal
+      ? {
+          id: signal.id,
+          title: signal.title,
+          score: signal.scores[0]?.score ?? signal.strength,
+          confidence: signal.confidence.toLowerCase(),
+        }
+      : undefined,
+  );
 }
 
 export async function createOrOpenContentDraftFromOpportunity(

@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { CheckCircle2, CircleDashed, Loader2 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 
 import type { OpportunityDecisionMeta } from "@/lib/trends/opportunity-actions";
 import { cn } from "@/lib/utils";
@@ -24,12 +25,16 @@ export function OpportunityDecisionSubmitButton({
   recommended: boolean;
 }) {
   const { pending } = useFormStatus();
+  const prefersReducedMotion = useReducedMotion();
 
   return (
-    <button
+    <motion.button
       type="submit"
       aria-pressed={selected}
       disabled={pending}
+      whileHover={!prefersReducedMotion && !pending ? { y: -1 } : undefined}
+      whileTap={!prefersReducedMotion && !pending ? { scale: 0.992 } : undefined}
+      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "group w-full rounded-[var(--radius-md)] border p-3 text-left transition disabled:cursor-wait disabled:opacity-75",
         selected
@@ -62,6 +67,6 @@ export function OpportunityDecisionSubmitButton({
       <span className="mt-1.5 block text-[12px] leading-5 text-[color:var(--muted-strong)]">
         {action.body}
       </span>
-    </button>
+    </motion.button>
   );
 }
