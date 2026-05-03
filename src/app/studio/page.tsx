@@ -174,9 +174,9 @@ export default async function StudioPage() {
         ) : (
           <>
             {studioStages.length > 0 ? (
-              <CinematicSection className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]" aria-label="Fluxo do estudio">
+              <CinematicSection className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]" aria-label="Fluxo do estudio">
                 <DecisionFlowStepper stages={studioStages} title="Do Reel ao roteiro" compact />
-                <FlowNarrativePanel stages={studioStages} title="Ativo em producao" />
+                <FlowNarrativePanel stages={studioStages} title="Ativo em producao" compact />
               </CinematicSection>
             ) : null}
 

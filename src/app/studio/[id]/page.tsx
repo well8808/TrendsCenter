@@ -90,9 +90,9 @@ export default async function StudioDraftPage({ params }: { params: Promise<{ id
             </Link>
           </div>
 
-          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]" aria-label="Continuidade do roteiro">
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]" aria-label="Continuidade do roteiro">
             <DecisionFlowStepper stages={cinematicStages} title="Da oportunidade ao roteiro" compact />
-            <FlowNarrativePanel stages={cinematicStages} title="Continuidade no Studio" />
+            <FlowNarrativePanel stages={cinematicStages} title="Continuidade no Studio" compact />
           </section>
 
           <ContentDraftEditor draft={draft} action={saveContentDraftAction} />

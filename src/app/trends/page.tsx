@@ -139,8 +139,8 @@ export default async function TrendsPage({
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
       <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="min-w-0 space-y-7">
-          <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-7">
+        <div className="min-w-0 space-y-5">
+          <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-6">
             {/* Atmospheric gradient */}
             <div
               aria-hidden="true"
@@ -157,7 +157,7 @@ export default async function TrendsPage({
               className="pointer-events-none absolute right-0 top-0 z-0 hidden h-[260px] w-[470px] bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(12,12,10,0.04)_52%,rgba(12,12,10,0.22)_100%)] lg:block"
               aria-hidden="true"
             />
-            <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="relative z-10 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
                 <Link
                   className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--aqua)] transition hover:gap-3"
@@ -178,7 +178,7 @@ export default async function TrendsPage({
                   </span>
                 </div>
 
-                <nav className="mt-5 flex flex-wrap items-center gap-2" aria-label="Areas principais">
+                <nav className="mt-4 flex flex-wrap items-center gap-2" aria-label="Areas principais">
                   <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(237,73,86,0.34)] bg-[rgba(237,73,86,0.1)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--foreground)]">
                     Biblioteca Viral
                     <span className="metric-number text-[color:var(--hot)]">{data.stats.total}</span>
@@ -203,7 +203,7 @@ export default async function TrendsPage({
                   </a>
                 </nav>
 
-                <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">
+                <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.02] tracking-[-0.02em] md:text-[3rem]">
                   Arquivo vivo de{" "}
                   <span className="gradient-text-ig">cultura viral</span>
                 </h1>
@@ -215,7 +215,7 @@ export default async function TrendsPage({
                   stages={cinematicStages}
                   stats={universeStats}
                   label="Reel -> Signal -> Studio"
-                  className="mt-5 h-[174px] w-full lg:absolute lg:right-4 lg:top-5 lg:z-[1] lg:mt-0 lg:h-[250px] lg:w-[430px] lg:opacity-95 2xl:h-[280px] 2xl:w-[500px]"
+                  className="mt-5 h-[174px] w-full lg:absolute lg:right-4 lg:top-5 lg:z-[1] lg:mt-0 lg:h-[228px] lg:w-[410px] lg:opacity-95 2xl:h-[250px] 2xl:w-[470px]"
                 />
               </div>
 
@@ -236,7 +236,7 @@ export default async function TrendsPage({
             )}
 
             <form
-              className="relative mt-7 overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.14)] bg-[rgba(0,0,0,0.32)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+              className="relative mt-6 overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.14)] bg-[rgba(0,0,0,0.32)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
               action="/trends"
             >
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(239,233,220,0.2)] to-transparent" />

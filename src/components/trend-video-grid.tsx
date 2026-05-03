@@ -824,7 +824,7 @@ function LibraryFlowRibbon({ results }: { results: TrendVideoView[] }) {
         compact
         className="min-h-full"
       />
-      <FlowNarrativePanel stages={stages} title="Produto em movimento" />
+      <FlowNarrativePanel stages={stages} title="Produto em movimento" compact />
       <div className="xl:col-span-2 grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
           { label: "agir agora", value: summary.actionNow, tone: "text-[color:var(--hot)]" },
@@ -1148,7 +1148,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
         variants={gridVariants}
         initial="hidden"
         animate="show"
-        className="grid gap-8"
+        className="grid gap-6"
         role="feed"
         aria-label="Biblioteca de reels virais"
       >
@@ -1192,9 +1192,7 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             </div>
           </div>
         </section>
-        <LibraryFlowRibbon results={results} />
         <ActionStrip results={results} />
-        <DecisionShelf results={results} />
         {/* ── EM CHAMAS — featured horizontal ── */}
         {featuredCards.length > 0 && (
           <section aria-labelledby="section-hot">
@@ -1212,6 +1210,9 @@ export function TrendVideoGrid({ results }: { results: TrendVideoView[] }) {
             </div>
           </section>
         )}
+
+        <DecisionShelf results={results} />
+        <LibraryFlowRibbon results={results} />
 
         {/* ── QUENTES — grid portrait 2-3 cols ── */}
         {gridWarm.length > 0 && (

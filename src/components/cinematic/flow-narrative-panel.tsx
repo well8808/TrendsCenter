@@ -21,10 +21,12 @@ const toneClass: Record<CinematicTone, string> = {
 export function FlowNarrativePanel({
   stages,
   title = "Narrativa do fluxo",
+  compact = false,
   className,
 }: {
   stages: CinematicFlowStage[];
   title?: string;
+  compact?: boolean;
   className?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -36,7 +38,8 @@ export function FlowNarrativePanel({
   return (
     <motion.aside
       className={cn(
-        "relative overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.09)] bg-[linear-gradient(145deg,rgba(255,255,255,0.045),rgba(255,255,255,0.014))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]",
+        "relative overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.09)] bg-[linear-gradient(145deg,rgba(255,255,255,0.045),rgba(255,255,255,0.014))] shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]",
+        compact ? "p-3.5" : "p-4",
         className,
       )}
       initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
@@ -67,7 +70,7 @@ export function FlowNarrativePanel({
         </span>
       </div>
 
-      <div className="relative mt-4 h-2 overflow-hidden rounded-full bg-[rgba(255,255,255,0.055)]" aria-hidden="true">
+      <div className={cn("relative overflow-hidden rounded-full bg-[rgba(255,255,255,0.055)]", compact ? "mt-3 h-1.5" : "mt-4 h-2")} aria-hidden="true">
         <motion.span
           className="block h-full rounded-full bg-[linear-gradient(90deg,var(--hot),var(--gold),var(--aqua))]"
           initial={prefersReducedMotion ? false : { width: 0 }}
@@ -76,35 +79,48 @@ export function FlowNarrativePanel({
         />
       </div>
 
-      <p className="relative mt-4 text-sm leading-6 text-[color:var(--muted-strong)]">
+      <p className={cn("relative text-sm text-[color:var(--muted-strong)]", compact ? "mt-3 line-clamp-2 leading-5" : "mt-4 leading-6")}>
         {progress.summary}
       </p>
 
-      <div className="relative mt-4 grid gap-2">
-        {stages.map((stage) => (
-          <div
-            key={stage.key}
-            className={cn(
-              "flex min-w-0 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2",
-              stage.state === "complete" ? toneClass[stage.tone] : "border-[rgba(255,255,255,0.07)] bg-[rgba(0,0,0,0.16)] text-[color:var(--muted)]",
-            )}
-          >
-            {stage.state === "complete" ? (
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            ) : stage.state === "current" ? (
-              <Radio className="h-3.5 w-3.5 shrink-0 text-[color:var(--hot)]" aria-hidden="true" />
-            ) : (
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(255,255,255,0.28)]" aria-hidden="true" />
-            )}
-            <span className="line-clamp-1 min-w-0 text-[12px] font-semibold">{stage.title}</span>
-            {stage.metric ? (
-              <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] opacity-80">
-                {stage.metric}
-              </span>
-            ) : null}
-          </div>
-        ))}
-      </div>
+      {compact ? (
+        <div className="relative mt-3 flex flex-wrap items-center gap-2">
+          <span className={cn("rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em]", toneClass[focusTone])}>
+            {focus?.state === "complete" ? "etapa concluida" : "etapa atual"}
+          </span>
+          {focus?.metric ? (
+            <span className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.16)] px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[color:var(--muted-strong)]">
+              {focus.metric}
+            </span>
+          ) : null}
+        </div>
+      ) : (
+        <div className="relative mt-4 grid gap-2">
+          {stages.map((stage) => (
+            <div
+              key={stage.key}
+              className={cn(
+                "flex min-w-0 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2",
+                stage.state === "complete" ? toneClass[stage.tone] : "border-[rgba(255,255,255,0.07)] bg-[rgba(0,0,0,0.16)] text-[color:var(--muted)]",
+              )}
+            >
+              {stage.state === "complete" ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              ) : stage.state === "current" ? (
+                <Radio className="h-3.5 w-3.5 shrink-0 text-[color:var(--hot)]" aria-hidden="true" />
+              ) : (
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(255,255,255,0.28)]" aria-hidden="true" />
+              )}
+              <span className="line-clamp-1 min-w-0 text-[12px] font-semibold">{stage.title}</span>
+              {stage.metric ? (
+                <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] opacity-80">
+                  {stage.metric}
+                </span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
 
       {href ? (
         <Link

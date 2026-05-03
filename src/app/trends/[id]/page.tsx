@@ -278,9 +278,9 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
             </div>
           </header>
 
-          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]" aria-label="Jornada da oportunidade">
-            <DecisionFlowStepper stages={cinematicStages} title="Sala de decisao" />
-            <FlowNarrativePanel stages={cinematicStages} title="Proximo movimento" />
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]" aria-label="Jornada da oportunidade">
+            <DecisionFlowStepper stages={cinematicStages} title="Sala de decisao" compact />
+            <FlowNarrativePanel stages={cinematicStages} title="Proximo movimento" compact />
           </section>
 
           <section className="app-panel overflow-hidden rounded-[var(--radius-lg)] p-4 md:p-5" aria-labelledby="opportunity-brief">
