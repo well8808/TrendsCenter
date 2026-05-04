@@ -1051,7 +1051,6 @@ select option {
   filter: blur(42px);
   opacity: 0.42;
   transform: translate3d(0, 0, 0);
-  animation: archive-aura-drift 12s var(--ease-premium) infinite alternate;
 }
 
 .trend-energy-aura-hot {
@@ -1068,19 +1067,16 @@ select option {
   height: 16rem;
   width: 22rem;
   background: rgba(247, 119, 55, 0.09);
-  animation-delay: -4s;
 }
 
 .trend-energy-line,
 .trend-energy-proof {
   background: linear-gradient(90deg, transparent, rgba(237, 73, 86, 0.38), rgba(247, 119, 55, 0.18), transparent);
   transform-origin: left center;
-  animation: archive-line-breathe 6s var(--ease-premium) infinite;
 }
 
 .trend-energy-proof {
   background: linear-gradient(90deg, transparent, rgba(88, 200, 190, 0.32), rgba(239, 233, 220, 0.12), transparent);
-  animation-duration: 7.5s;
 }
 
 .archive-stage-fallback {

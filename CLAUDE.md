@@ -23,7 +23,12 @@ Language:     TypeScript strict — sem any, sem shortcuts
 Database:     Neon (Postgres serverless) via Prisma ORM
 Auth:         Sistema próprio com sessão por tenant — NÃO substituir
 Styling:      Tailwind CSS v4 — sem styled-components, sem CSS modules
-Animation:    motion/react (Framer Motion) — já instalado, USE
+Animation:    motion/react (Framer Motion) — principal
+              gsap + @gsap/react — autorizado (counters, scroll entrance)
+              three.js + @react-three/fiber + drei — autorizado (cenas 3D decorativas)
+              lottie-react + dotlottie — autorizado (ícones animados)
+              lenis — scroll suave, autorizado
+              @splinetool/react-spline — autorizado
 Icons:        lucide-react — já instalado, não adicionar outras libs
 State:        Server Components + Server Actions — evitar useState quando possível
 Deploy:       Vercel
@@ -48,7 +53,8 @@ Deploy:       Vercel
 --muted-strong:     #ded4c1    /* texto de suporte importante */
 
 /* Cores de sinal — identidade do produto */
---acid:    #c7ff5d   /* ALTA PRIORIDADE — trends quentes, score alto */
+--hot:     #ed4956   /* ALTA PRIORIDADE — cor primária real (vermelho Instagram) */
+--acid:    var(--hot) /* alias legado — use sempre --hot no código novo */
 --aqua:    #40e0d0   /* INFORMAÇÃO — links, foco, navegação */
 --coral:   #ff6f61   /* ALERTA — risco alto, bloqueado */
 --gold:    #f3c969   /* ATENÇÃO — prioridade média, próximo teste */
@@ -255,6 +261,11 @@ Server Component (padrão):
 
 ## UX — como o produto deve se comportar
 
+### Plataforma alvo
+- **Desktop only** — o produto é usado exclusivamente em PC. Mobile não é prioridade.
+- Largura mínima: 1280px. Os breakpoints `lg:` e `xl:` são os que importam.
+- Não implementar hamburger menu, bottom nav ou qualquer adaptação mobile.
+
 ### Feedback imediato
 - Toda action dá feedback visual em < 200ms (otimista quando possível)
 - Erros aparecem no mesmo contexto da ação, não em toast flutuante
@@ -289,11 +300,12 @@ Nesta ordem de destaque:
 - ❌ Glassmorphism decorativo (blur sem propósito)
 - ❌ Bordas grossas coloridas em cards (border-left: 4px — proibido)
 - ❌ Box shadows genéricas em botões
-- ❌ Gradientes de cor saturada (tipo roxo→azul clichê)
+- ❌ Gradientes de cor saturada arbitrários (roxo→azul clichê)
+- ✅ `--ig-grad` (gradiente Instagram) é PERMITIDO em: CTA principal, item ativo da sidebar, marca. Nunca em borda de card ou texto de dado.
 - ❌ Ícones sem label em ações críticas
 - ❌ Modal para confirmações simples — use inline ou toast
 - ❌ Texto todo em maiúsculas exceto `.eyebrow`
-- ❌ Mais de 3 cores de ênfase na mesma tela
+- ❌ Mais de 5 cores de ênfase na mesma tela (hot, aqua, gold, coral, violet — cada uma com papel definido)
 
 **Código:**
 - ❌ `console.log` em produção

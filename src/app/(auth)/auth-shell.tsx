@@ -3,21 +3,21 @@ import type { ReactNode } from "react";
 
 const errorCopy: Record<string, string> = {
   missing: "Preencha e-mail e senha para continuar.",
-  invalid: "Credenciais inválidas ou senha curta. Use pelo menos 10 caracteres no cadastro.",
+  invalid: "E-mail ou senha incorretos.",
   exists: "Já existe uma conta com este e-mail.",
-  failed: "Não foi possível concluir a autenticação agora.",
-  workspace: "Esta conta ainda nao possui um radar ativo.",
-  unverified: "Verifique seu e-mail antes de entrar no radar.",
-  rate_limited: "Muitas tentativas. Aguarde um pouco e tente novamente.",
+  failed: "Não foi possível entrar agora. Tente novamente.",
+  workspace: "Esta conta ainda não tem acesso ativo.",
+  unverified: "Confirme seu e-mail antes de entrar.",
+  rate_limited: "Muitas tentativas. Aguarde um momento e tente novamente.",
   invalid_token: "Este link não é válido ou já foi usado.",
 };
 
 const statusCopy: Record<string, string> = {
-  sent: "Verificacao pronta neste navegador.",
-  resent: "Novo link de verificacao criado para este navegador.",
-  cooldown: "Reenvio controlado. Aguarde antes de solicitar outro link.",
-  unverified: "Conta pendente de verificacao. Confirme abaixo para liberar o acesso.",
-  success: "Operacao concluida com seguranca.",
+  sent: "Link enviado. Verifique seu e-mail.",
+  resent: "Novo link enviado. Verifique seu e-mail.",
+  cooldown: "Aguarde um momento antes de solicitar outro link.",
+  unverified: "Conta pendente. Confirme seu e-mail para liberar o acesso.",
+  success: "Operação concluída.",
 };
 
 export function AuthShell({
@@ -48,40 +48,34 @@ export function AuthShell({
             <div>
               <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted)]">
                 <span className="inline-block h-1 w-1 rounded-full bg-[color:var(--hot)]" aria-hidden="true" />
-                arquivo privado
+                acesso restrito
               </div>
               <h1 className="mt-12 max-w-lg text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.02em]">
                 Instagram Reels<br />
                 <span className="gradient-text-ig">Viral Library</span>
               </h1>
               <p className="mt-6 max-w-sm text-[13px] leading-6 text-[color:var(--muted)]">
-                Um arquivo vivo de Reels em crescimento, fontes reais e sinais criativos para decidir o proximo movimento.
+                Reels em crescimento, fontes verificadas e sinais estratégicos para decidir o próximo movimento.
               </p>
             </div>
-            <ol className="grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--line)] text-[11px]">
-              {[
-                { num: "01", label: "conta segura" },
-                { num: "02", label: "fontes reais" },
-                { num: "03", label: "18+ seguro" },
-              ].map(({ num, label }) => (
-                <li
-                  key={num}
-                  className="bg-[rgba(0,0,0,0.32)] px-3.5 py-4"
-                >
-                  <p className="font-mono text-[10px] font-semibold tracking-[0.18em] text-[color:var(--muted)]">
-                    {num}
-                  </p>
-                  <p className="mt-2 text-[color:var(--muted-strong)]">{label}</p>
-                </li>
-              ))}
-            </ol>
+            <ul className="space-y-2 text-[12px] text-[color:var(--muted)]">
+              <li className="flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-[color:var(--success)]" aria-hidden="true" />
+                Conta segura e privada
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-[color:var(--aqua)]" aria-hidden="true" />
+                Fontes oficiais e licenciadas
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-[color:var(--muted)]" aria-hidden="true" />
+                Dados reais, sem invenção
+              </li>
+            </ul>
           </div>
           <div className="p-6 sm:p-10">
             <div className="mb-10">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[color:var(--muted)]">
-                acesso seguro
-              </p>
-              <h2 className="mt-4 text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.015em]">{title}</h2>
+              <h2 className="text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.015em]">{title}</h2>
               <p className="mt-3 max-w-sm text-[13px] leading-6 text-[color:var(--muted)]">{subtitle}</p>
             </div>
 

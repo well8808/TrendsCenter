@@ -22,7 +22,7 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Entrar no Trends Center"
-      subtitle="Acesse sua biblioteca de Reels virais, sinais estrategicos e fontes reais."
+      subtitle="Acesse seus Reels, sinais e fontes."
       error={error}
       footerHref="/signup"
       footerLabel="Criar conta"

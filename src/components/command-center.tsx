@@ -326,7 +326,7 @@ function ActiveFilterSummary({
           className="mt-3 flex flex-wrap items-center gap-2"
         >
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-            recorte ativo
+            filtros ativos
           </span>
           {chips.map((chip, index) => (
             <motion.span
@@ -393,21 +393,21 @@ function CommandStatusStrip({
       ]
     : [
         {
-          label: "acontecendo",
+          label: "biblioteca",
           value: String(reelTotal).padStart(2, "0"),
           detail: reelTotal > 0 ? "Reels na biblioteca" : "aguardando primeira coleta",
           tone: "text-[color:var(--aqua)]",
         },
         {
-          label: "atenção",
-          value: "sem sinal",
-          detail: "gere scores a partir de Reels reais",
+          label: "sinais",
+          value: "0",
+          detail: "analise Reels para gerar sinais",
           tone: "text-[color:var(--muted-strong)]",
         },
         {
-          label: "decisão",
-          value: "Encontrar Reels",
-          detail: "abrir biblioteca e validar fontes",
+          label: "próximo passo",
+          value: "Ir para Biblioteca",
+          detail: "abrir biblioteca e analisar Reels",
           tone: "text-[color:var(--gold)]",
         },
       ];
@@ -464,7 +464,7 @@ function PriorityBrief({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="card-eyebrow text-[color:var(--hot)]">foco do recorte</span>
+            <span className="card-eyebrow text-[color:var(--hot)]">em destaque</span>
             <span className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.18)] px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
               prioridade: {priorityLabel[signal.priority]}
             </span>
@@ -654,17 +654,10 @@ function MarketBridgeUS({ signal }: { signal?: TrendSignal }) {
         className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl"
         style={{ background: "rgba(88,200,190,0.07)" }} />
       <div className="flex items-center justify-between gap-2">
-        <p className="card-eyebrow text-[color:var(--aqua)]">early signal EUA</p>
+        <p className="card-eyebrow text-[color:var(--aqua)]">sinal EUA</p>
         <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
           <span>US</span>
-          <motion.span
-            aria-hidden="true"
-            className="inline-block"
-            animate={{ x: [0, 4, 0] }}
-            transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity }}
-          >
-            <ArrowUpRight className="h-3 w-3 -rotate-90 text-[color:var(--aqua)]" />
-          </motion.span>
+          <ArrowUpRight className="h-3 w-3 -rotate-90 text-[color:var(--aqua)]" aria-hidden="true" />
           <span>BR</span>
         </span>
       </div>
@@ -682,7 +675,7 @@ function MarketBridgeUS({ signal }: { signal?: TrendSignal }) {
           <p className="mt-2 text-[12px] leading-5 text-[color:var(--muted-strong)]">{signal.decision}</p>
         </>
       ) : (
-        <p className="mt-3 text-[13px] text-[color:var(--muted)]">Sem early signal dos EUA no recorte.</p>
+        <p className="mt-3 text-[13px] text-[color:var(--muted)]">Sem sinal dos EUA no filtro atual.</p>
       )}
     </motion.div>
   );
@@ -707,9 +700,9 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
         className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl"
         style={{ background: "rgba(157,131,236,0.08)" }} />
       <div className="flex items-center justify-between gap-2">
-        <p className="card-eyebrow text-[color:var(--violet)]">ponte US → BR</p>
+        <p className="card-eyebrow text-[color:var(--violet)]">transferência US → BR</p>
         <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          transferibilidade
+          compatibilidade
         </span>
       </div>
       <div className="mt-3 flex items-baseline gap-2">
@@ -727,7 +720,7 @@ function MarketBridgeTransfer({ transfer }: { transfer: number }) {
         />
       </div>
       <p className="mt-3 text-[12px] leading-5 text-[color:var(--muted-strong)]">
-        Transferência calculada dos sinais persistidos. Só vira ação com fonte oficial ou evidência BR.
+        Proporção de sinais dos EUA com potencial de migração para o Brasil. Requer fonte oficial para virar ação.
       </p>
     </motion.div>
   );
@@ -1167,7 +1160,7 @@ function Sidebar({
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-none tracking-tight">Trends Center</p>
             <p className="mt-1.5 truncate text-[11px] text-[color:var(--muted)]">
-              Arquivo vivo / {tenant.workspaceName}
+              {tenant.workspaceName}
             </p>
           </div>
         </motion.div>
@@ -1659,11 +1652,10 @@ export function CommandCenter({
               >
                 <GSAPSectionReveal className="mb-4">
                   <h2 className="text-xl font-semibold leading-tight tracking-[-0.015em] md:text-[26px]">
-                    <span className="gradient-text-ig">Sala de Sinais</span>{" "}
-                    criativos
+                    <span className="gradient-text-ig">Sinais</span>
                   </h2>
                   <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                    Transforme Reels reais em decisao: entenda o motivo, confira a prova e escolha a proxima acao.
+                    Veja o que está crescendo. Analise o sinal e decida o próximo passo.
                   </p>
                 </GSAPSectionReveal>
 
@@ -1794,25 +1786,25 @@ export function CommandCenter({
                         title={reelStats.total > 0 ? "Reels importados" : "Sem oportunidades ainda"}
                         body={
                           reelStats.total > 0
-                            ? "A biblioteca ja tem Reels reais. Abra Encontrar Reels para analisar videos; os sinais estrategicos ainda nao foram gerados."
-                            : "Conecte uma conta, adicione uma fonte oficial ou importe dados licenciados para iniciar a biblioteca."
+                            ? "A biblioteca já tem Reels. Abra a Biblioteca Viral para analisar os vídeos e gerar sinais."
+                            : "Adicione uma fonte ou importe Reels para começar."
                         }
-                        hint={reelStats.total > 0 ? "ver biblioteca em /trends" : "adicione dados ao arquivo"}
+                        hint={reelStats.total > 0 ? "Abrir Biblioteca Viral" : "adicionar fonte"}
                       />
                     ) : workspaceState === "error" ? (
                       <EmptyState
                         key="error"
                         variant="error"
                         title="Entrada bloqueada"
-                        body="A fonte respondeu com erro. Corrija a origem antes de transformar isso em insight."
-                        hint="revisar atualizacoes"
+                        body="A fonte retornou um erro. Verifique a origem antes de continuar."
+                        hint="revisar fontes"
                       />
                     ) : filteredSignals.length === 0 ? (
                       <EmptyState
                         key="filtered"
                         variant="filtered"
-                        title="Nenhum sinal para este recorte"
-                        body="Combinação de filtros sem match. Reduza um critério ou limpe tudo para voltar ao ranking completo."
+                        title="Nenhum sinal com esses filtros"
+                        body="Nenhum sinal encontrado com essa combinação. Ajuste ou limpe os filtros."
                         hint={`${signals.length} sinais ignorados pelos filtros`}
                         onReset={() => {
                           clearSignalFilters();
