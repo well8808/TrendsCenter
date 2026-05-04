@@ -1070,7 +1070,7 @@ function EmptyLibrary() {
     >
       <motion.div
         aria-hidden="true"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.22, 0.48, 0.22] }}
+        animate={{ scale: [1, 1.02, 1], opacity: [0.22, 0.38, 0.22] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         className="mx-auto mb-6 h-20 w-20 rounded-full"
         style={{

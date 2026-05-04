@@ -34,11 +34,6 @@ Este repo constroi um app premium de inteligencia de mercado Instagram Reels, co
 - Jobs locais nao devem fazer rede externa nem scraping; falhas de conector devem ficar visiveis como falhas.
 - Componentes de app devem ser densos, escanaveis e acessiveis.
 
-## Plataforma
-
-- Produto usado exclusivamente em desktop (PC). Nao otimizar para mobile.
-- Largura minima: 1280px. Breakpoints relevantes: lg: (1024px) e xl: (1280px).
-- Sidebar e right rail sao hidden lg:block — intencional, nao implementar fallback mobile.
 
 ## UI
 
@@ -46,15 +41,6 @@ Este repo constroi um app premium de inteligencia de mercado Instagram Reels, co
 - Priorizar design tokens, navegacao principal, estados vazios, loading, erro e demo.
 - Usar motion para hierarquia e feedback, nao como decoracao gratuita.
 - Nao usar textos que prometam dados reais quando a fonte e mock.
-
-## Linguagem da UI
-
-- Labels devem ser diretos e claros. Sem jargao tecnico nos textos voltados ao usuario.
-- Preferir: "Sinais" nao "Sala de Sinais criativos".
-- Preferir: "filtros ativos" nao "recorte ativo".
-- Preferir: "em destaque" nao "foco do recorte".
-- Evitar nas mensagens de usuario: "radar", "recorte", "persistidos", "workspace".
-- Mensagens de erro: claras e acionaveis, sem referencias a conceitos internos do sistema.
 
 ## Animacoes — regra atual
 

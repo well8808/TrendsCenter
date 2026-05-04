@@ -321,7 +321,7 @@ select option {
   }
 
   .metric-number {
-    font-family: var(--font-geist-sans), sans-serif;
+    font-family: var(--font-geist-mono), monospace;
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1, "lnum" 1;
     letter-spacing: -0.01em;
@@ -637,7 +637,7 @@ select option {
 /* Score — dominant, mas ainda dentro da escala do dashboard.
  * ~32-40px, não marketing-page scale. */
 .score-value {
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-geist-mono), monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
   font-size: clamp(2rem, 2.2vw, 2.5rem);
@@ -860,16 +860,6 @@ select option {
 
 /* ─── A) Keyframes de biblioteca ──────────────────────────── */
 
-@keyframes lib-shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes lib-glow-float {
-  0%, 100% { opacity: 0.5; transform: translateY(0px) scale(1); }
-  50%       { opacity: 0.8; transform: translateY(-6px) scale(1.05); }
-}
-
 @keyframes lib-score-ring {
   from { stroke-dashoffset: 283; }
   to   { stroke-dashoffset: 0; }
@@ -891,12 +881,6 @@ select option {
 }
 
 /* ─── B) Classes utilitárias de biblioteca ─────────────────── */
-
-.lib-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: lib-shimmer 2.4s ease-in-out infinite;
-}
 
 .lib-glow-hot {
   box-shadow: 0 0 0 1px rgba(237,73,86,0.25), 0 0 30px rgba(237,73,86,0.12), 0 20px 60px rgba(0,0,0,0.4);
@@ -1175,8 +1159,6 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lib-shimmer,
-  .lib-glow-float,
   .ig-border,
   .reel-artifact-poster::after,
   .trend-energy-aura,

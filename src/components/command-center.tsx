@@ -112,7 +112,7 @@ const itemVariants: Variants = {
 };
 
 const navItems = [
-  { label: "Sala de Sinais", icon: LayoutDashboard, key: "cc" },
+  { label: "Sinais", icon: LayoutDashboard, key: "cc" },
   { label: "Biblioteca Viral", icon: Inbox, key: "library" },
   { label: "Estudio de Conteudo", icon: Bookmark, key: "studio" },
   { label: "Reels BR", icon: Clapperboard, key: "radar-br" },

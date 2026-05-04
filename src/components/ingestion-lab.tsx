@@ -303,7 +303,6 @@ function IntakePipeline() {
   return (
     <div className="relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.12)] bg-[rgba(0,0,0,0.22)] p-3">
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-45" aria-hidden="true" />
-      <div className="data-stream pointer-events-none absolute inset-x-0 top-1/2 h-px opacity-70" aria-hidden="true" />
       <div className="relative grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {intakeSteps.map((step, index) => {
           const Icon = step.icon;
@@ -538,7 +537,6 @@ export function IngestionLab({
   return (
     <section className="relative min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(239,233,220,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02)),rgba(10,10,8,0.84)] p-4 shadow-[0_28px_90px_rgba(0,0,0,0.36)] md:p-5">
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-40" aria-hidden="true" />
-      <div className="scan-line pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(225,48,108,0.14),transparent_66%)]"
