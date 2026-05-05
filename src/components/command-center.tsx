@@ -1467,7 +1467,7 @@ export function CommandCenter({
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none absolute inset-0 opacity-55" aria-hidden="true" />
 
-      <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1840px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[244px_minmax(0,1fr)] lg:py-0 xl:grid-cols-[244px_minmax(0,1fr)_330px] 2xl:grid-cols-[264px_minmax(0,1fr)_360px]">
+      <div className="relative z-0 mx-auto grid min-h-dvh w-full max-w-[1840px] gap-0 px-2 py-2 sm:px-3 sm:py-3 lg:grid-cols-[244px_minmax(0,1fr)] lg:py-0 2xl:grid-cols-[264px_minmax(0,1fr)_360px]">
         <Sidebar activeKey={activeNavKey} tenant={tenant} onLogout={logout} onNavigate={navigateDashboard} isLoggingOut={isLoggingOut} />
 
         <section id="command-center-top" className="min-w-0 bg-[rgba(7,7,6,0.52)] backdrop-blur-xl lg:my-3 lg:rounded-[var(--radius-lg)] lg:border-x lg:border-[rgba(239,233,220,0.14)]">
@@ -1497,14 +1497,15 @@ export function CommandCenter({
               signals={universeSignals}
               stats={universeStats}
               label="Artefato -> Leitura"
-              className="absolute left-1 top-0 h-[235px] w-[330px] opacity-[0.82] sm:left-6 sm:top-3 sm:h-[280px] sm:w-[430px] md:left-8 md:top-4 md:h-[320px] md:w-[500px] md:opacity-95"
+              showMetrics={false}
+              className="absolute left-1 top-0 h-[220px] w-[320px] opacity-[0.78] sm:left-6 sm:top-3 sm:h-[245px] sm:w-[390px] md:left-8 md:top-4 md:h-[260px] md:w-[430px] md:opacity-90"
             />
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,rgba(7,7,6,0),rgba(7,7,6,0.76)_58%,rgba(7,7,6,0.92))]"
             />
-            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 md:min-h-[322px] xl:flex-row xl:items-end xl:justify-between">
-              <motion.div variants={itemVariants} className="flex items-center gap-3 xl:w-[240px] xl:shrink-0 2xl:w-auto">
+            <div className="relative z-10 grid min-h-[300px] content-end gap-5 md:min-h-[322px] lg:min-h-[292px]">
+              <motion.div variants={itemVariants} className="flex max-w-3xl items-center gap-3">
                 <div className="brand-mark grid h-10 w-10 place-items-center rounded-[var(--radius-md)] lg:hidden">
                   <Clapperboard className="h-5 w-5" aria-hidden="true" />
                 </div>
@@ -1568,10 +1569,10 @@ export function CommandCenter({
                 </div>
               </motion.div>
 
-              <motion.div variants={sectionVariants} className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:justify-end">
+              <motion.div variants={sectionVariants} className="flex w-full flex-wrap items-center gap-2">
                 <motion.label
                   variants={itemVariants}
-                  className="app-control flex min-h-[var(--control-height)] w-full min-w-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[280px] sm:flex-1 xl:w-[260px] xl:min-w-0 xl:flex-none 2xl:w-[360px]"
+                  className="app-control flex min-h-[var(--control-height)] w-full min-w-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-[color:var(--muted-strong)] sm:min-w-[320px] sm:flex-1 xl:max-w-[720px]"
                 >
                   <Search className="h-4 w-4 text-[color:var(--muted)]" aria-hidden="true" />
                   <input
@@ -1596,7 +1597,7 @@ export function CommandCenter({
                 </motion.button>
                 <motion.div variants={itemVariants}>
                   <Link
-                    className="cta-ig inline-flex h-[var(--control-height)] items-center gap-1.5 rounded-full px-5 text-[13px] font-medium"
+                    className="cta-ig inline-flex h-[var(--control-height)] items-center gap-1.5 whitespace-nowrap rounded-full px-5 text-[13px] font-medium"
                     href="/trends"
                   >
                     Encontrar Reels
@@ -1855,10 +1856,10 @@ export function CommandCenter({
           variants={railVariants}
           initial="hidden"
           animate="show"
-          className="mt-6 min-w-0 opacity-95 lg:col-start-2 lg:mb-4 xl:col-start-auto xl:my-4"
+          className="hidden mt-6 min-w-0 opacity-95 lg:col-start-2 lg:mb-4 lg:block 2xl:col-start-auto 2xl:my-4"
         >
-          <div className="xl:sticky xl:top-4 xl:h-[calc(100dvh-32px)] xl:self-start">
-            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5 pb-6 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-12 xl:pr-3">
+          <div className="2xl:sticky 2xl:top-4 2xl:h-[calc(100dvh-32px)] 2xl:self-start">
+            <div className="scrollbar-soft grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5 pb-6 2xl:h-full 2xl:min-h-0 2xl:overflow-y-auto 2xl:overscroll-contain 2xl:pb-12 2xl:pr-3">
               <motion.div variants={sectionVariants}>
                 <div id="evidence-desk">
                   <EvidenceInspector

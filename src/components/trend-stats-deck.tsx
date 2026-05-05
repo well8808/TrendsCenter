@@ -50,7 +50,7 @@ export function TrendStatsDeck({ stats }: { stats: TrendStat[] }) {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="grid min-w-0 grid-cols-2 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] sm:grid-cols-4 xl:min-w-[480px]"
+      className="grid min-w-0 grid-cols-2 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[rgba(0,0,0,0.22)] sm:grid-cols-4 xl:w-[360px] xl:min-w-0 xl:shrink-0 xl:self-end 2xl:w-[480px]"
     >
       {stats.map((stat, idx) => {
         const isPrimary = idx === 0;

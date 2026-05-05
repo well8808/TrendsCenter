@@ -97,14 +97,14 @@ export function CinematicSignalUniverseFallback({
         />
       ))}
       <span className="absolute left-[54%] top-[49%] h-px w-[25%] rotate-[-8deg] bg-gradient-to-r from-[rgba(237,73,86,0.38)] via-[rgba(247,119,55,0.26)] to-transparent" />
-      <div className="absolute right-[7%] top-[17%] grid w-[34%] gap-2">
+      <div className="absolute right-[6%] top-[16%] grid w-[35%] gap-1.5">
         {visibleStages.slice(0, 5).map((stage, index) => (
           <span
             key={stage.key ?? `${stage.title}-${index}`}
-            className="rounded-[14px] border bg-[rgba(0,0,0,0.2)] px-3 py-2 font-mono text-[9px] uppercase tracking-[0.12em] text-white/60"
+            className="rounded-[14px] border bg-[rgba(0,0,0,0.2)] px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-white/60"
             style={{
               borderColor: stage.tone === "hot" ? "rgba(237,73,86,0.34)" : stage.tone === "aqua" ? "rgba(88,200,190,0.26)" : "rgba(255,255,255,0.1)",
-              transform: `translateX(${index % 2 === 0 ? 0 : 14}px)`,
+              transform: `translateX(${index % 2 === 0 ? 0 : 10}px)`,
             }}
           >
             {stage.title}
@@ -113,7 +113,7 @@ export function CinematicSignalUniverseFallback({
       </div>
       {reason ? (
         <span
-          className="absolute bottom-4 right-4 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-white/48 backdrop-blur-md"
+          className="absolute bottom-4 right-4 max-w-[42%] truncate rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-center font-mono text-[9px] uppercase tracking-[0.14em] text-white/48 backdrop-blur-md"
           suppressHydrationWarning
         >
           {reason}

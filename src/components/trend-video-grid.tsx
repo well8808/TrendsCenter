@@ -1065,7 +1065,7 @@ function EmptyLibrary() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease }}
-      className="relative overflow-hidden rounded-[var(--radius-2xl)] border border-dashed border-[color:var(--line-strong)] p-16 text-center"
+      className="relative overflow-hidden rounded-[var(--radius-2xl)] border border-dashed border-[color:var(--line-strong)] p-8 text-center md:p-10 xl:p-12"
       style={{ background: "rgba(255,255,255,0.014)" }}
     >
       <motion.div

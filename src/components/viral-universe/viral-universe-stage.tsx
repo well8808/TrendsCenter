@@ -139,6 +139,7 @@ export function ViralUniverseStage({
   stats,
   className,
   label,
+  showMetrics = true,
 }: {
   mode: ViralUniverseMode;
   reels: ViralReelNode[];
@@ -146,6 +147,7 @@ export function ViralUniverseStage({
   stats: ViralUniverseStats;
   className?: string;
   label?: string;
+  showMetrics?: boolean;
 }) {
   const { clientReady, prefersReducedMotion } = usePrefersReducedMotion3D();
   const quality = useViralMotionQuality(prefersReducedMotion);
@@ -197,11 +199,13 @@ export function ViralUniverseStage({
         </span>
       </div>
 
-      <div className="absolute bottom-4 left-4 hidden max-w-[78%] flex-wrap gap-2 sm:flex">
-        <StageMetric label="reels" value={stats.reels} />
-        <StageMetric label="provas" value={stats.evidence} />
-        <StageMetric label="score" value={stats.avgScore} />
-      </div>
+      {showMetrics ? (
+        <div className="absolute bottom-4 left-4 hidden max-w-[78%] flex-wrap gap-2 sm:flex">
+          <StageMetric label="reels" value={stats.reels} />
+          <StageMetric label="provas" value={stats.evidence} />
+          <StageMetric label="score" value={stats.avgScore} />
+        </div>
+      ) : null}
     </motion.div>
   );
 }

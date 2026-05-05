@@ -138,7 +138,7 @@ export default async function TrendsPage({
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
-      <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
+      <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="min-w-0 space-y-5">
           <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-6">
             {/* Atmospheric gradient */}
@@ -215,7 +215,7 @@ export default async function TrendsPage({
                   stages={cinematicStages}
                   stats={universeStats}
                   label="Reel -> Signal -> Studio"
-                  className="mt-5 h-[174px] w-full lg:absolute lg:right-4 lg:top-5 lg:z-[1] lg:mt-0 lg:h-[228px] lg:w-[410px] lg:opacity-95 2xl:h-[250px] 2xl:w-[470px]"
+                  className="mt-5 h-[220px] w-full xl:h-[250px]"
                 />
               </div>
 
@@ -284,8 +284,8 @@ export default async function TrendsPage({
           <TrendVideoGrid results={videos} />
         </div>
 
-        <aside id="coleta" className="min-w-0 scroll-mt-6 opacity-95 lg:sticky lg:top-5 lg:h-[calc(100dvh-40px)]">
-          <div className="scrollbar-soft grid h-full content-start gap-4 overflow-y-auto overscroll-contain pb-10 pr-1">
+        <aside id="coleta" className="min-w-0 scroll-mt-6 opacity-95 2xl:sticky 2xl:top-5 2xl:h-[calc(100dvh-40px)]">
+          <div className="scrollbar-soft grid content-start gap-4 overscroll-contain pb-10 pr-1 2xl:h-full 2xl:overflow-y-auto">
             <ReelsSearchAssistant />
 
             <ProviderReelsImportForm />
