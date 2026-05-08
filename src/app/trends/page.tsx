@@ -13,6 +13,7 @@ import { IngestionRequestForm } from "@/components/ingestion-request-form";
 import { JobRunsFeed } from "@/components/job-runs-feed";
 import { ProviderReelsImportForm } from "@/components/provider-reels-import-form";
 import { ReelsSearchAssistant } from "@/components/reels-search-assistant";
+import { BrazilSignalGlobeExperience } from "@/components/brazil-signal-globe-experience";
 import { TrendStatsDeck } from "@/components/trend-stats-deck";
 import { TrendVideoGrid, type TrendVideoView } from "@/components/trend-video-grid";
 import { CinematicSignalUniverseStage } from "@/components/cinematic/cinematic-signal-universe-stage";
@@ -138,7 +139,11 @@ export default async function TrendsPage({
       <div className="noise-overlay" aria-hidden="true" />
       <div className="premium-grid pointer-events-none fixed inset-0 opacity-55" aria-hidden="true" />
 
-      <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 py-5 md:px-6 2xl:grid-cols-[minmax(0,1fr)_390px]">
+      <div className="relative z-10 mx-auto w-full max-w-[1760px] px-4 pt-5 md:px-6">
+        <BrazilSignalGlobeExperience />
+      </div>
+
+      <section className="relative mx-auto grid w-full max-w-[1760px] items-start gap-6 px-4 pb-5 pt-6 md:px-6 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="min-w-0 space-y-5">
           <header className="app-hero scan-line relative overflow-hidden rounded-[var(--radius-lg)] p-5 md:p-6">
             {/* Atmospheric gradient */}

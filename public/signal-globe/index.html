@@ -1,0 +1,2500 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trends Center - Real Earth Signal Map</title>
+  <style>
+    :root {
+      --bg: #020408;
+      --ink: #f8f3ea;
+      --muted: #a9a296;
+      --line: rgba(248, 243, 234, 0.13);
+      --line-strong: rgba(248, 243, 234, 0.22);
+      --panel: rgba(5, 9, 14, 0.78);
+      --hot: #ed4956;
+      --aqua: #40e0d0;
+      --gold: #f3c969;
+      --map-blue: #76b7ff;
+      --map-green: #8bd38d;
+      --terrain-line: rgba(246, 231, 186, 0.72);
+      --signal-tone: #ed4956;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; color: inherit; }
+
+    .shell {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 30% 42%, rgba(64, 224, 208, 0.12), transparent 26rem),
+        radial-gradient(circle at 68% 24%, rgba(237, 73, 86, 0.1), transparent 31rem),
+        radial-gradient(circle at 42% 66%, rgba(72, 112, 190, 0.16), transparent 35rem),
+        linear-gradient(135deg, #01030a 0%, #020714 48%, #000000 100%);
+    }
+
+    .globe-zone {
+      position: absolute;
+      inset: 0 31vw 0 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .space-depth {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 8% 18%, rgba(255,255,255,0.82) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 18% 74%, rgba(180,216,255,0.62) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 40% 16%, rgba(255,255,255,0.72) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 56% 82%, rgba(255,255,255,0.5) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 83% 62%, rgba(180,216,255,0.46) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 47% 44%, rgba(44, 102, 160, 0.18), transparent 30rem),
+        linear-gradient(90deg, rgba(0,0,0,0.2), transparent 26%, transparent 68%, rgba(0,0,0,0.46));
+      background-size: 360px 270px, 460px 310px, 530px 380px, 420px 350px, 580px 420px, 100% 100%;
+      opacity: 0.78;
+    }
+
+    .globe-zone::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 44% 47%, transparent 0 28rem, rgba(0,0,0,0.08) 36rem, rgba(0,0,0,0.44) 58rem),
+        linear-gradient(90deg, rgba(0,0,0,0.05), transparent 40%, rgba(0,0,0,0.34));
+      mix-blend-mode: multiply;
+    }
+
+    #globe {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+
+    #globe:active { cursor: grabbing; }
+
+    .sun-hint {
+      display: none;
+      position: absolute;
+      z-index: 4;
+      top: 2vh;
+      right: -76px;
+      width: 238px;
+      height: 238px;
+      border-radius: 999px;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,1) 0 3px, rgba(255,236,172,0.9) 4px 12px, rgba(243,201,105,0.24) 13px 48px, rgba(243,201,105,0.07) 49px 92px, transparent 72%);
+      box-shadow:
+        0 0 70px rgba(255, 230, 164, 0.26),
+        0 0 180px rgba(243, 201, 105, 0.18);
+      opacity: 0.28;
+      mix-blend-mode: screen;
+    }
+
+    .sun-hint::before,
+    .sun-hint::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 560px;
+      height: 1px;
+      transform: translate(-50%, -50%) rotate(-14deg);
+      background: linear-gradient(90deg, transparent, rgba(255,240,190,0.22), transparent);
+    }
+
+    .sun-hint::after {
+      width: 400px;
+      transform: translate(-50%, -50%) rotate(62deg);
+      opacity: 0.52;
+    }
+
+    .solar-readout {
+      display: none;
+      position: absolute;
+      z-index: 6;
+      top: calc(2vh + 202px);
+      right: 32px;
+      padding: 8px 10px;
+      border: 1px solid rgba(243,201,105,0.24);
+      border-radius: 999px;
+      background: rgba(6, 8, 12, 0.46);
+      color: rgba(255,244,211,0.72);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      backdrop-filter: blur(14px);
+      pointer-events: none;
+    }
+
+    .topbar {
+      position: absolute;
+      z-index: 7;
+      top: 22px;
+      left: 26px;
+      right: calc(31vw + 24px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      pointer-events: none;
+    }
+
+    .topbar,
+    .corner-copy,
+    .timezone-label,
+    .decision-panel,
+    .nav-controls {
+      opacity: 0;
+      transition:
+        opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .topbar {
+      transform: translateY(-12px);
+    }
+
+    .corner-copy {
+      transform: translateX(-18px);
+      transition-delay: 140ms;
+    }
+
+    .timezone-label {
+      transform: translateY(12px) scale(0.97);
+      transition-delay: 220ms;
+    }
+
+    .decision-panel {
+      transform: translateX(26px) scale(0.985);
+      transition-delay: 320ms;
+    }
+
+    .nav-controls {
+      transform: translateY(16px) scale(0.98);
+      transition-delay: 420ms;
+    }
+
+    html.is-ready .topbar,
+    html.is-ready .corner-copy,
+    html.is-ready .timezone-label,
+    html.is-ready .decision-panel,
+    html.is-ready .nav-controls {
+      opacity: 1;
+      transform: none;
+    }
+
+    .brand,
+    .status-pill,
+    .interaction-pill,
+    .timezone-label,
+    .city-label {
+      border: 1px solid var(--line);
+      background: rgba(5, 8, 12, 0.52);
+      backdrop-filter: blur(18px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .brand-mark,
+    .boot-logo {
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.2), transparent 36%),
+        linear-gradient(135deg, #ed4956, #a98cff 54%, #f77737);
+      box-shadow: 0 14px 38px rgba(237,73,86,0.24);
+      color: #fff;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+    }
+
+    .brand-mark svg,
+    .boot-logo svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .top-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill,
+    .interaction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 13px;
+      border-radius: 999px;
+      color: rgba(248,243,234,0.74);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .status-pill i {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--aqua);
+      box-shadow: 0 0 14px rgba(64,224,208,0.78);
+    }
+
+    .corner-copy {
+      position: absolute;
+      z-index: 6;
+      left: 28px;
+      bottom: 30px;
+      width: min(420px, calc(72vw - 64px));
+      pointer-events: none;
+    }
+
+    .corner-copy .kicker {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 14px;
+      color: rgba(248,243,234,0.7);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .corner-copy .kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--hot);
+      box-shadow: 0 0 18px rgba(237,73,86,0.82);
+    }
+
+    .corner-copy h1 {
+      margin: 0;
+      color: #fffaf1;
+      font-size: clamp(42px, 4.2vw, 64px);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      font-weight: 820;
+    }
+
+    .corner-copy h1 span {
+      color: #ff626f;
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    .corner-copy p {
+      margin: 13px 0 0;
+      max-width: 360px;
+      color: rgba(248,243,234,0.72);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .timezone-label,
+    .city-label {
+      position: absolute;
+      z-index: 8;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .timezone-label {
+      display: block;
+      top: 106px;
+      left: 28px;
+      transform: none;
+      min-width: 154px;
+      padding: 9px 11px;
+      border-radius: 14px;
+      background: rgba(6, 11, 17, 0.64);
+      color: rgba(248,243,234,0.86);
+      font-size: 12px;
+      border-color: rgba(64,224,208,0.22);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.28), inset 0 0 24px rgba(64,224,208,0.05);
+    }
+
+    .timezone-label strong {
+      display: block;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(64,224,208,0.82);
+    }
+
+    .timezone-label span {
+      display: block;
+      margin-top: 4px;
+      color: rgba(248,243,234,0.95);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 18px;
+      font-weight: 850;
+      letter-spacing: 0.02em;
+    }
+
+    .timezone-label small {
+      display: block;
+      margin-top: 3px;
+      color: rgba(248,243,234,0.48);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .city-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #fff8ef;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 160ms ease;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+
+    .city-label.is-visible { opacity: 1; }
+
+    .city-label i {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--signal-tone);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--signal-tone) 72%, transparent);
+    }
+
+    .map-label {
+      position: absolute;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      color: rgba(255, 255, 255, 0.76);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-shadow: 0 1px 4px #000, 0 -1px 3px #000, 1px 0 3px #000, -1px 0 3px #000;
+      opacity: 0;
+      transition: opacity 160ms ease;
+      white-space: nowrap;
+    }
+
+    .map-label.region {
+      color: rgba(255, 255, 255, 0.96);
+      font-size: 24px;
+      font-weight: 760;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .map-label.country {
+      color: rgba(248, 243, 234, 0.52);
+      font-size: 9px;
+      font-weight: 680;
+    }
+
+    .map-label.state {
+      color: rgba(210, 238, 231, 0.66);
+      font-size: 9px;
+      font-weight: 720;
+    }
+
+    .map-label.city {
+      color: rgba(248, 243, 234, 0.72);
+      font-size: 8.5px;
+      font-weight: 760;
+    }
+
+    .map-label.signal-city {
+      padding: 4px 8px;
+      border: 1px solid color-mix(in srgb, var(--signal-tone) 44%, transparent);
+      border-radius: 999px;
+      background: rgba(4, 7, 10, 0.48);
+      color: #fff8ef;
+      font-size: 10px;
+      box-shadow:
+        0 0 24px color-mix(in srgb, var(--signal-tone) 18%, transparent),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+    }
+
+    .map-label.city::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      margin-right: 5px;
+      border-radius: 999px;
+      background: rgba(64, 224, 208, 0.9);
+      box-shadow: 0 0 9px rgba(64, 224, 208, 0.56);
+      vertical-align: 1px;
+    }
+
+    .map-label.water {
+      color: rgba(220, 236, 255, 0.74);
+      font-size: 11px;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-controls {
+      position: absolute;
+      z-index: 7;
+      right: calc(31vw + 30px);
+      bottom: 30px;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(5, 8, 12, 0.62);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-controls button {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+    }
+
+    .nav-controls svg { width: 18px; height: 18px; }
+
+    .decision-panel {
+      position: absolute;
+      z-index: 9;
+      inset: 14px 16px 14px auto;
+      width: calc(31vw - 24px);
+      min-width: 440px;
+      max-width: 540px;
+      border: 1px solid rgba(248, 243, 234, 0.18);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--signal-tone) 24%, transparent), transparent 17rem),
+        radial-gradient(circle at 110% 12%, rgba(64,224,208,0.13), transparent 19rem),
+        linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025) 46%, rgba(0,0,0,0.2)),
+        rgba(4, 7, 10, 0.82);
+      box-shadow: 0 34px 100px rgba(0,0,0,0.66), inset 0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter: blur(30px) saturate(1.1);
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    .decision-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.38;
+      background-image:
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 42px 42px, 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), transparent 72%);
+      z-index: -1;
+    }
+
+    .decision-panel::after {
+      content: "";
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--signal-tone), var(--aqua), transparent);
+      opacity: 0.78;
+    }
+
+    .panel-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      gap: 7px;
+      padding: 12px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(248,243,234,0.22) transparent;
+    }
+
+    .panel-brand,
+    .dossier-top,
+    .place,
+    .decision-strip,
+    .risk-card,
+    .decision-label,
+    .signal-source {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .panel-brand {
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 5px 7px;
+      border-bottom: 1px solid rgba(248,243,234,0.1);
+      flex: 0 0 auto;
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background:
+        linear-gradient(145deg, color-mix(in srgb, var(--signal-tone) 78%, #ffffff 8%), rgba(10,132,255,0.78)),
+        rgba(255,255,255,0.04);
+      box-shadow: 0 13px 36px color-mix(in srgb, var(--signal-tone) 28%, transparent);
+      color: #fff;
+    }
+
+    .brand-icon svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .brand-copy b,
+    .panel-title,
+    .signal-name,
+    .decision-strip b,
+    .risk-card b {
+      color: var(--ink);
+      letter-spacing: -0.025em;
+    }
+
+    .brand-copy b {
+      display: block;
+      font-size: 14px;
+      font-weight: 780;
+      line-height: 1;
+    }
+
+    .brand-copy span {
+      display: block;
+      margin-top: 5px;
+      color: rgba(248,243,234,0.5);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 9px;
+      font-weight: 760;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .panel-meta,
+    .market-chip,
+    .tag,
+    .risk-level,
+    .section-label,
+    .metric small,
+    .time,
+    .severity,
+    .signal-source {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      text-transform: uppercase;
+    }
+
+    .panel-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 9px;
+      border: 1px solid color-mix(in srgb, var(--signal-tone) 28%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--signal-tone) 8%, transparent);
+      color: rgba(248,243,234,0.68);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+    }
+
+    .panel-meta::before,
+    .live-pin {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--signal-tone);
+      box-shadow: 0 0 16px color-mix(in srgb, var(--signal-tone) 82%, transparent);
+      flex: 0 0 auto;
+    }
+
+    .focus-card,
+    .metric-grid,
+    .evidence-card,
+    .risk-card,
+    .decision-card {
+      border: 1px solid rgba(248, 243, 234, 0.12);
+      background: rgba(1, 4, 7, 0.48);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .focus-card {
+      position: relative;
+      display: grid;
+      gap: 7px;
+      padding: 10px 12px;
+      border-radius: 19px;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .focus-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, color-mix(in srgb, var(--signal-tone) 16%, transparent), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0.055), transparent);
+      pointer-events: none;
+    }
+
+    .focus-card > * {
+      position: relative;
+    }
+
+    .focus-main {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .dossier-top {
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-title {
+      display: inline-flex;
+      align-items: center;
+      margin-right: auto;
+      gap: 8px;
+      color: rgba(248,243,234,0.68);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .market-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 9px;
+      border: 1px solid color-mix(in srgb, var(--signal-tone) 34%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--signal-tone) 10%, transparent);
+      color: rgba(248,243,234,0.72);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .signal-name {
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(17px, 1.14vw, 20px);
+      line-height: 1.08;
+      font-weight: 820;
+      max-width: none;
+    }
+
+    .place {
+      gap: 7px;
+      color: rgba(248,243,234,0.58);
+      font-size: 11.5px;
+      line-height: 1.2;
+      padding-top: 2px;
+    }
+
+    .place svg {
+      width: 14px;
+      height: 14px;
+      color: var(--signal-tone);
+      flex: 0 0 auto;
+    }
+
+    .decision-strip {
+      display: none;
+    }
+
+    .decision-copy {
+      min-width: 0;
+    }
+
+    .decision-copy span,
+    .score-block span,
+    .metric span,
+    .decision-label,
+    .section-label {
+      color: rgba(248,243,234,0.56);
+    }
+
+    .decision-copy span {
+      display: block;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .decision-strip b {
+      display: block;
+      margin-top: 3px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      font-weight: 780;
+    }
+
+    .decision-strip small {
+      display: block;
+      margin-top: 2px;
+      color: rgba(248,243,234,0.58);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .signal-source {
+      flex: 0 0 auto;
+      align-self: end;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.28);
+      color: rgba(248,243,234,0.6);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .signal-source i {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--aqua);
+      box-shadow: 0 0 13px rgba(64,224,208,0.72);
+    }
+
+    .score-board {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr);
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .score-block {
+      padding: 8px;
+      border: 1px solid color-mix(in srgb, var(--signal-tone) 24%, transparent);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 0, color-mix(in srgb, var(--signal-tone) 19%, transparent), transparent 7rem),
+        rgba(0,0,0,0.36);
+    }
+
+    .score-block span,
+    .metric span {
+      display: block;
+      font-size: 10px;
+    }
+
+    .score-block b {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 31px;
+      line-height: 0.92;
+      letter-spacing: -0.08em;
+    }
+
+    .score-block small {
+      display: block;
+      margin-top: 4px;
+      color: rgba(248,243,234,0.5);
+      font-size: 9px;
+      line-height: 1.15;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 5px;
+      padding: 3px 6px;
+      border: 1px solid color-mix(in srgb, var(--signal-tone) 38%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--signal-tone) 10%, transparent);
+      color: color-mix(in srgb, var(--signal-tone) 78%, #ffffff 18%);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+    }
+
+    .score-graph {
+      display: grid;
+      align-content: space-between;
+      gap: 5px;
+      padding: 8px;
+      border: 1px solid rgba(248,243,234,0.11);
+      border-radius: 18px;
+      background: rgba(0,0,0,0.24);
+    }
+
+    .score-graph strong {
+      color: rgba(248,243,234,0.78);
+      font-size: 10.5px;
+      font-weight: 760;
+    }
+
+    .spark {
+      display: block;
+      width: 100%;
+      height: 18px;
+    }
+
+    .score-meter {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .score-meter i {
+      display: block;
+      width: 88%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--signal-tone), var(--aqua));
+      box-shadow: 0 0 18px color-mix(in srgb, var(--signal-tone) 48%, transparent);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      border-radius: 18px;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 7px 9px;
+    }
+
+    .metric + .metric { border-left: 1px solid rgba(248,243,234,0.1); }
+
+    .metric span { margin-bottom: 5px; }
+
+    .metric b {
+      display: flex;
+      align-items: center;
+      min-height: 24px;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 4px;
+      color: var(--aqua);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+    }
+
+    .confidence-ring {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      margin-right: 6px;
+      border-radius: 999px;
+      background: conic-gradient(var(--aqua) 0deg var(--confidence-deg, 331deg), rgba(255,255,255,0.1) var(--confidence-deg, 331deg) 360deg);
+      vertical-align: middle;
+      position: relative;
+    }
+
+    .confidence-ring::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: inherit;
+      background: rgba(4,7,10,0.96);
+    }
+
+    .evidence-card {
+      flex: 0 0 auto;
+      min-height: 0;
+      max-height: none;
+      padding: 8px 10px 9px;
+      border-radius: 18px;
+      overflow: visible;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 9.5px;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+    }
+
+    .timeline {
+      position: relative;
+      display: grid;
+      gap: 4px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 46px;
+      top: 4px;
+      bottom: 4px;
+      width: 1px;
+      background: linear-gradient(var(--signal-tone), rgba(64,224,208,0.58), rgba(248,243,234,0.08));
+    }
+
+    .evidence-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 32px 22px minmax(0,1fr) auto;
+      align-items: center;
+      gap: 7px;
+      min-height: 23px;
+      min-width: 0;
+    }
+
+    .time {
+      color: rgba(248,243,234,0.58);
+      font-size: 8px;
+    }
+
+    .node {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(64,224,208,0.24);
+      border-radius: 9px;
+      background: rgba(64,224,208,0.07);
+      color: var(--aqua);
+      z-index: 1;
+    }
+
+    .node.hot {
+      border-color: rgba(237,73,86,0.35);
+      background: rgba(237,73,86,0.1);
+      color: #ff453a;
+    }
+
+    .node svg { width: 11px; height: 11px; }
+
+    .evidence-copy { min-width: 0; }
+
+    .evidence-copy b {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--ink);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .evidence-copy span {
+      display: block;
+      margin-top: 1px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: rgba(248,243,234,0.54);
+      font-size: 9px;
+    }
+
+    .severity {
+      padding: 3px 6px;
+      border: 1px solid rgba(243,201,105,0.28);
+      border-radius: 999px;
+      color: var(--gold);
+      font-size: 8px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+    }
+
+    .risk-card {
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 16px;
+      flex: 0 0 auto;
+    }
+
+    .risk-card svg {
+      width: 18px;
+      height: 18px;
+      color: var(--aqua);
+    }
+
+    .risk-card b {
+      display: block;
+      color: var(--ink);
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .risk-card span {
+      color: rgba(248,243,234,0.64);
+      font-size: 10.5px;
+      line-height: 1.25;
+    }
+
+    .risk-level {
+      margin-left: auto;
+      padding: 5px 7px;
+      border-radius: 999px;
+      background: rgba(64,224,208,0.08);
+      color: var(--aqua);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+    }
+
+    .decision-card {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 104px;
+      gap: 7px;
+      padding: 8px 9px;
+      border-radius: 18px;
+      flex: 0 0 auto;
+      background:
+        linear-gradient(145deg, color-mix(in srgb, var(--signal-tone) 10%, transparent), transparent 42%),
+        rgba(0,0,0,0.3);
+    }
+
+    .decision-label {
+      grid-column: 1 / -1;
+      gap: 8px;
+      margin-bottom: 0;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 0.14em;
+    }
+
+    .decision-label svg {
+      width: 16px;
+      height: 16px;
+      color: var(--signal-tone);
+    }
+
+    .cta-main,
+    .cta-sub {
+      border: 1px solid rgba(248,243,234,0.14);
+      border-radius: 15px;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .cta-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-width: 0;
+      padding: 9px 11px;
+      border-color: color-mix(in srgb, var(--signal-tone) 48%, transparent);
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.16), transparent 42%),
+        linear-gradient(135deg, var(--signal-tone), color-mix(in srgb, var(--signal-tone) 72%, #f77737));
+      box-shadow: 0 0 30px color-mix(in srgb, var(--signal-tone) 24%, transparent);
+      color: #fff;
+      font-weight: 760;
+      text-align: left;
+    }
+
+    .cta-main span {
+      display: block;
+      color: rgba(255,255,255,0.82);
+      font-size: 11px;
+      font-weight: 540;
+      line-height: 1.25;
+    }
+
+    .cta-main strong {
+      display: block;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.15;
+    }
+
+    .cta-main svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    .cta-sub {
+      background: rgba(255,255,255,0.04);
+      color: rgba(248,243,234,0.8);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .cta-sub span {
+      display: block;
+      margin-top: 3px;
+      color: rgba(248,243,234,0.5);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .cta-main:hover,
+    .cta-sub:hover {
+      transform: translateY(-1px);
+      border-color: rgba(248,243,234,0.28);
+    }
+
+    .boot {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(64,224,208,0.12), transparent 26rem),
+        rgba(2,4,8,0.94);
+      transition: opacity 420ms ease, visibility 420ms ease;
+    }
+
+    .boot.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .boot-card {
+      display: grid;
+      place-items: center;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .boot-logo {
+      width: 58px;
+      height: 58px;
+    }
+
+    .boot-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .boot-status {
+      margin: 0;
+      color: rgba(248,243,234,0.62);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .boot-bar {
+      width: 180px;
+      height: 2px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .boot-bar i {
+      display: block;
+      width: 64%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--hot), var(--aqua));
+      animation: bootline 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes bootline {
+      from { transform: translateX(-72%); }
+      to { transform: translateX(92%); }
+    }
+
+    @media (max-width: 1240px) {
+      .decision-panel {
+        width: 390px;
+        min-width: 390px;
+      }
+
+      .globe-zone { right: 402px; }
+      .topbar { right: 426px; }
+      .nav-controls { right: 428px; }
+      .panel-content { padding: 12px; gap: 7px; }
+      .signal-name { font-size: 19px; }
+      .score-block b { font-size: 31px; }
+    }
+
+    @media (max-height: 790px) {
+      .panel-content {
+        width: 111.2%;
+        height: 111.2%;
+        margin-left: -11.2%;
+        overflow: hidden;
+        transform: scale(0.9);
+        transform-origin: top right;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="globe-zone" aria-label="Planeta interativo com sinais do Brasil">
+      <div class="space-depth" aria-hidden="true"></div>
+      <canvas id="globe" aria-label="Terra 3D realista com luz solar, fuso horario e paises"></canvas>
+      <div class="sun-hint" aria-hidden="true"></div>
+      <div class="solar-readout" id="solarReadout">SOL --:-- UTC</div>
+    </section>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17V7"></path><path d="M9 19V5"></path><path d="M13 15V9"></path><path d="M17 20V4"></path><path d="M21 14V10"></path>
+          </svg>
+        </div>
+        <div>
+          <strong>Trends Center</strong>
+          <span>comando de sinais por territorio</span>
+        </div>
+      </div>
+      <div class="top-meta">
+        <div class="interaction-pill">arraste para girar</div>
+        <div class="status-pill"><i></i> sistema online</div>
+      </div>
+    </header>
+
+    <section class="corner-copy" aria-label="Descricao do mapa">
+      <div class="kicker">Brasil em foco</div>
+      <h1>Mapa vivo de <span>Reels.</span></h1>
+      <p>Cidades, fontes, evidencias e decisao aparecem no mesmo plano.</p>
+    </section>
+
+    <div class="timezone-label" id="timezoneLabel">
+      <strong>Brasília UTC-3</strong>
+      <span id="timezoneClock">--:-- BRT</span>
+      <small>dia / noite em tempo real</small>
+    </div>
+    <div class="city-label" id="cityLabel"><i></i><span>São Paulo, SP</span></div>
+    <div class="map-label region" id="labelBrazil">Brasil</div>
+    <div class="map-label state" id="labelAmazon">Amazônia</div>
+    <div class="map-label water" id="labelAtlantic">Atlântico Sul</div>
+    <div class="map-label country" id="labelBolivia">Bolívia</div>
+    <div class="map-label country" id="labelParaguai">Paraguai</div>
+    <div class="map-label country" id="labelArgentina">Argentina</div>
+    <div class="map-label country" id="labelChile">Chile</div>
+    <div class="map-label country" id="labelPeru">Peru</div>
+    <div class="map-label city" id="labelManaus">Manaus</div>
+    <div class="map-label city" id="labelBrasilia">Brasília</div>
+    <div class="map-label city" id="labelSalvador">Salvador</div>
+    <div class="map-label city" id="labelRio">Rio de Janeiro</div>
+    <div class="map-label city" id="labelSaoPaulo">São Paulo</div>
+
+    <nav class="nav-controls" aria-label="Navegar sinais">
+      <button type="button" id="resetView" aria-label="Voltar para Brasil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
+      </button>
+      <button type="button" id="nextSignal" aria-label="Proximo sinal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+      </button>
+    </nav>
+
+    <aside class="decision-panel" aria-live="polite">
+      <div class="panel-content">
+        <div class="panel-brand">
+          <div class="brand-lockup">
+            <div class="brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 17V7"></path><path d="M9 19V5"></path><path d="M13 15V9"></path><path d="M17 20V4"></path><path d="M21 14V10"></path>
+              </svg>
+            </div>
+            <div class="brand-copy">
+              <b>Trends Center</b>
+              <span>comando de sinais</span>
+            </div>
+          </div>
+          <div class="panel-meta" id="panelState">preview ativo</div>
+        </div>
+
+        <section class="focus-card">
+          <div class="dossier-top">
+            <div class="panel-title"><i class="live-pin"></i> Sinal em destaque</div>
+            <div class="market-chip" id="signalMarket">BRASIL / SP</div>
+          </div>
+          <div class="focus-main">
+            <div class="place">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span id="signalPlace">São Paulo, SP - Brasil</span>
+            </div>
+            <h2 class="signal-name" id="signalTitle">Audio esportivo vira ponte para formatos curtos de humor.</h2>
+            <span class="tag" id="signalTag">prioridade alta</span>
+          </div>
+          <div class="decision-strip">
+            <div class="decision-copy">
+              <span>proxima decisao</span>
+              <b id="decisionTitle">Enviar para Estudio</b>
+              <small id="decisionHint">briefing e coleta aprofundada</small>
+            </div>
+            <div class="signal-source"><i></i><span id="signalSource">Propria</span></div>
+          </div>
+        </section>
+
+        <section class="score-board" aria-label="Score do sinal">
+          <div class="score-block">
+            <span>Oportunidade</span>
+            <b id="signalScore">88</b>
+            <small>score ponderado</small>
+          </div>
+          <div class="score-graph">
+            <strong>janela de crescimento</strong>
+            <svg class="spark" viewBox="0 0 140 36" fill="none" aria-hidden="true">
+              <path d="M2 26 15 21l13 3 12-12 13 16 13-10 13 3 13-14 13 18 13-8 13 4 12-14" stroke="var(--signal-tone)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M2 32 15 27l13 3 12-12 13 16 13-10 13 3 13-14 13 18 13-8 13 4 12-14" stroke="rgba(64,224,208,0.42)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <div class="score-meter" aria-hidden="true"><i id="scoreMeter"></i></div>
+          </div>
+        </section>
+
+        <section class="metric-grid" aria-label="Resumo do sinal">
+          <div class="metric">
+            <span>Confianca</span>
+            <b><i class="confidence-ring"></i><span id="signalConfidence">92%</span></b>
+            <small id="signalConfidenceLabel">alta</small>
+          </div>
+          <div class="metric">
+            <span>Evidencias</span>
+            <b id="signalEvidence">05</b>
+            <small>verificadas</small>
+          </div>
+          <div class="metric">
+            <span>Fonte</span>
+            <b id="signalSourceMetric">Owned</b>
+            <small>registrada</small>
+          </div>
+        </section>
+
+        <section class="evidence-card" aria-label="Evidencias do sinal">
+          <div class="section-label"><span>Ledger de evidencias</span><span id="evidenceCount">4 itens</span></div>
+          <div class="timeline" id="evidenceTimeline"></div>
+        </section>
+
+        <section class="risk-card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path><path d="M9 12l2 2 4-5"></path></svg>
+          <div>
+            <b>Risco</b>
+            <span id="riskText">Uso permitido; sem restricoes detectadas nas evidencias registradas.</span>
+          </div>
+          <div class="risk-level">baixo</div>
+        </section>
+
+        <section class="decision-card">
+          <div class="decision-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>
+            Proxima decisao
+          </div>
+          <button type="button" class="cta-main">
+            <span><strong>Abrir briefing</strong><span>montar roteiro seguro</span></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+          </button>
+          <button type="button" class="cta-sub">Monitorar<span id="monitorHint">por 12h</span></button>
+        </section>
+      </div>
+    </aside>
+
+    <div class="boot" id="boot">
+      <div class="boot-card">
+        <div class="boot-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17V7"></path><path d="M9 19V5"></path><path d="M13 15V9"></path><path d="M17 20V4"></path><path d="M21 14V10"></path>
+          </svg>
+        </div>
+        <p class="boot-title">Trends Center</p>
+        <p class="boot-status" id="bootStatus">carregando planeta</p>
+        <div class="boot-bar" aria-hidden="true"><i></i></div>
+      </div>
+    </div>
+  </main>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.min.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "./vendor/three/build/three.module.min.js";
+    import { OrbitControls } from "./vendor/three/examples/jsm/controls/OrbitControls.js";
+
+    const canvas = document.getElementById("globe");
+    const boot = document.getElementById("boot");
+    const bootStatus = document.getElementById("bootStatus");
+    const timezoneLabel = document.getElementById("timezoneLabel");
+    const timezoneClock = document.getElementById("timezoneClock");
+    const cityLabel = document.getElementById("cityLabel");
+    const solarReadout = document.getElementById("solarReadout");
+    const mapLabels = [
+      { element: document.getElementById("labelBrazil"), key: "brasil", kind: "region", lon: -52.6, lat: -13.2, lift: 0.5, threshold: 0.08, opacity: 1, offsetY: 8 },
+      { element: document.getElementById("labelAmazon"), key: "amazonia", kind: "terrain", lon: -62.4, lat: -4.1, lift: 0.42, threshold: 0.18, opacity: 0.58, offsetX: -8, offsetY: -12 },
+      { element: document.getElementById("labelAtlantic"), key: "atlantico", kind: "water", lon: -30.5, lat: -28.6, lift: 0.36, threshold: 0.02, opacity: 0.5 },
+      { element: document.getElementById("labelBolivia"), key: "bolivia", kind: "neighbor", lon: -66.0, lat: -17.1, lift: 0.38, threshold: 0.16, opacity: 0.34, offsetX: -10 },
+      { element: document.getElementById("labelParaguai"), key: "paraguai", kind: "neighbor", lon: -58.9, lat: -23.2, lift: 0.38, threshold: 0.16, opacity: 0.34, offsetY: -6 },
+      { element: document.getElementById("labelArgentina"), key: "argentina", kind: "neighbor", lon: -64.4, lat: -35.7, lift: 0.38, threshold: 0.16, opacity: 0.32, offsetY: 6 },
+      { element: document.getElementById("labelChile"), key: "chile", kind: "neighbor", lon: -71.4, lat: -31.8, lift: 0.38, threshold: 0.18, opacity: 0.26, offsetX: -14 },
+      { element: document.getElementById("labelPeru"), key: "peru", kind: "neighbor", lon: -75.0, lat: -9.2, lift: 0.38, threshold: 0.18, opacity: 0.28, offsetX: -10 },
+      { element: document.getElementById("labelManaus"), key: "Manaus", kind: "city", lon: -60.02, lat: -3.12, lift: 0.44, threshold: 0.24, opacity: 0.48, offsetX: -20, offsetY: -5 },
+      { element: document.getElementById("labelBrasilia"), key: "Brasilia", kind: "city", lon: -47.88, lat: -15.79, lift: 0.44, threshold: 0.2, opacity: 0.54, offsetX: 17, offsetY: -12 },
+      { element: document.getElementById("labelSalvador"), key: "Salvador", kind: "city", lon: -38.5, lat: -12.97, lift: 0.44, threshold: 0.24, opacity: 0.42, offsetX: 18, offsetY: -5 },
+      { element: document.getElementById("labelRio"), key: "Rio de Janeiro", kind: "city", lon: -43.17, lat: -22.91, lift: 0.48, threshold: 0.18, opacity: 0.48, offsetX: 24, offsetY: -9 },
+      { element: document.getElementById("labelSaoPaulo"), key: "Sao Paulo", kind: "city", lon: -46.63, lat: -23.55, lift: 0.48, threshold: 0.18, opacity: 0.52, offsetX: 22, offsetY: 15 },
+    ];
+
+    const field = {
+      place: document.getElementById("signalPlace"),
+      market: document.getElementById("signalMarket"),
+      title: document.getElementById("signalTitle"),
+      tag: document.getElementById("signalTag"),
+      score: document.getElementById("signalScore"),
+      scoreMeter: document.getElementById("scoreMeter"),
+      confidence: document.getElementById("signalConfidence"),
+      confidenceLabel: document.getElementById("signalConfidenceLabel"),
+      evidence: document.getElementById("signalEvidence"),
+      source: document.getElementById("signalSource"),
+      sourceMetric: document.getElementById("signalSourceMetric"),
+      risk: document.getElementById("riskText"),
+      decision: document.getElementById("decisionTitle"),
+      decisionHint: document.getElementById("decisionHint"),
+      monitorHint: document.getElementById("monitorHint"),
+      timeline: document.getElementById("evidenceTimeline"),
+      evidenceCount: document.getElementById("evidenceCount"),
+      panelState: document.getElementById("panelState"),
+    };
+
+    const FPS = 30;
+    const frameAt = (now) => Math.floor((now / 1000) * FPS);
+    const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+    const labelKey = (value) => String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const interpolate = (frame, input, output) => {
+      const t = clamp((frame - input[0]) / (input[1] - input[0]));
+      const eased = 1 - Math.pow(1 - t, 3);
+      return output[0] + (output[1] - output[0]) * eased;
+    };
+
+    function unitLonLatToVec3(lon, lat) {
+      const phi = THREE.MathUtils.degToRad(90 - lat);
+      const theta = THREE.MathUtils.degToRad(lon + 180);
+      return new THREE.Vector3(
+        -Math.sin(phi) * Math.cos(theta),
+        Math.cos(phi),
+        Math.sin(phi) * Math.sin(theta),
+      ).normalize();
+    }
+
+    function formatTime(date, timeZone) {
+      return new Intl.DateTimeFormat("pt-BR", {
+        timeZone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(date);
+    }
+
+    function getSolarState(date = new Date()) {
+      const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+      const day = Math.floor((date - start) / 86400000);
+      const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+      const declination = 23.44 * Math.sin(THREE.MathUtils.degToRad((360 / 365) * (day - 81)));
+      const subsolarLon = THREE.MathUtils.euclideanModulo(180 - utcHours * 15 + 540, 360) - 180;
+      return {
+        lon: subsolarLon,
+        lat: declination,
+        utcClock: formatTime(date, "UTC"),
+        brtClock: formatTime(date, "America/Sao_Paulo"),
+      };
+    }
+
+    const signals = [
+      {
+        city: "São Paulo",
+        uf: "SP",
+        lat: -23.5505,
+        lon: -46.6333,
+        score: 88,
+        confidence: 92,
+        confidenceLabel: "alta",
+        evidence: 5,
+        source: "Propria",
+        tone: "#ed4956",
+        tag: "prioridade alta",
+        title: "Audio esportivo vira ponte para formatos curtos de humor.",
+        risk: "Uso permitido; sem restricoes detectadas nas evidencias registradas.",
+        decision: "Enviar para Estudio",
+        decisionHint: "briefing e coleta aprofundada",
+        monitorHint: "por 12h",
+        evidenceRows: [
+          ["14:21", "Reel do criador", "122.5k views - audio match 92%", "high", "hot"],
+          ["13:47", "Metricas - SP", "+210% uso em 24h", "med", "aqua"],
+          ["12:18", "Comentarios", "humor, resenha, jogo", "med", "aqua"],
+          ["09:32", "Tendencia de audio", "ascendente em SP desde 6h", "low", "aqua"],
+        ],
+      },
+      {
+        city: "Rio de Janeiro",
+        uf: "RJ",
+        lat: -22.9068,
+        lon: -43.1729,
+        score: 81,
+        confidence: 86,
+        confidenceLabel: "alta",
+        evidence: 6,
+        source: "Meta",
+        tone: "#f3c969",
+        tag: "formato quente",
+        title: "Formato de 3 takes ganha tracao em lifestyle e beleza.",
+        risk: "Sem uso de midia de terceiros; recomendacao baseada em estrutura criativa.",
+        decision: "Briefar variacao",
+        decisionHint: "estrutura sem copiar conteudo",
+        monitorHint: "por 8h",
+        evidenceRows: [
+          ["15:02", "Cluster RJ", "6 evidencias na janela atual", "high", "hot"],
+          ["13:44", "Formato", "3 takes recorrentes", "med", "aqua"],
+          ["11:39", "Fonte", "superficie oficial registrada", "med", "aqua"],
+        ],
+      },
+      {
+        city: "Miami",
+        uf: "US",
+        lat: 25.7617,
+        lon: -80.1918,
+        score: 77,
+        confidence: 80,
+        confidenceLabel: "media",
+        evidence: 4,
+        source: "Licenciada",
+        tone: "#40e0d0",
+        tag: "sinal externo",
+        title: "Early signal nos EUA antecipa variacao para o Brasil.",
+        risk: "Usar como referencia de timing; validar linguagem local antes de produzir.",
+        decision: "Comparar com BR",
+        decisionHint: "cruzar com sinais de SP",
+        monitorHint: "por 24h",
+        evidenceRows: [
+          ["16:18", "Early signal", "crescimento em janela curta", "med", "aqua"],
+          ["15:02", "Fonte", "licenca registrada", "med", "aqua"],
+          ["13:40", "Ponte BR", "similaridade de audio", "low", "aqua"],
+        ],
+      },
+    ];
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x091522, 0.014);
+
+    const camera = new THREE.PerspectiveCamera(29, 1, 0.1, 120);
+    camera.position.set(0.04, 0.05, 8.85);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance",
+      preserveDrawingBuffer: false,
+    });
+    renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.92;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.082;
+    controls.enablePan = false;
+    controls.minDistance = 7.35;
+    controls.maxDistance = 11.6;
+    controls.rotateSpeed = 0.18;
+    controls.zoomSpeed = 0.42;
+
+    const earth = new THREE.Group();
+    const markerRoot = new THREE.Group();
+    scene.add(earth);
+
+    scene.add(new THREE.AmbientLight(0x9fc6ff, 0.32));
+    const solarLocalDirection = new THREE.Vector3(0.5, 0.2, 0.84).normalize();
+    const sunDirection = solarLocalDirection.clone();
+    const sunLight = new THREE.DirectionalLight(0xeaf6ff, 2.45);
+    sunLight.position.copy(sunDirection.clone().multiplyScalar(13));
+    scene.add(sunLight);
+
+    const rimLight = new THREE.DirectionalLight(0x73dfff, 0.72);
+    rimLight.position.set(-4.5, 1.8, 2.2);
+    scene.add(rimLight);
+
+    const R = 3.05;
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2(99, 99);
+    const bootStartedAt = performance.now();
+
+    let selectedIndex = 0;
+    let markerEntries = [];
+    let autoReturn = 1;
+    let lastSolarFrame = -Infinity;
+    let targetEarthQuaternion = new THREE.Quaternion();
+    let earthMaterial;
+
+    function lonLatToVec3(lon, lat, radius = R) {
+      const phi = THREE.MathUtils.degToRad(90 - lat);
+      const theta = THREE.MathUtils.degToRad(lon + 180);
+      return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta),
+      );
+    }
+
+    function makeReliefSampler(image) {
+      const width = 1280;
+      const height = 640;
+      const reliefCanvas = document.createElement("canvas");
+      reliefCanvas.width = width;
+      reliefCanvas.height = height;
+      const ctx = reliefCanvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(image, 0, 0, width, height);
+      const data = ctx.getImageData(0, 0, width, height).data;
+      const pixel = (u, v) => {
+        const x = Math.max(0, Math.min(width - 1, Math.floor(THREE.MathUtils.euclideanModulo(u, 1) * width)));
+        const y = Math.max(0, Math.min(height - 1, Math.floor((1 - clamp(v)) * height)));
+        const index = (y * width + x) * 4;
+        const r = data[index];
+        const g = data[index + 1];
+        const b = data[index + 2];
+        const luma = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+        const land = clamp(((r + g * 1.08) - b * 0.72 - 34) / 150);
+        return { luma, land };
+      };
+      return (u, v) => {
+        const center = pixel(u, v);
+        const east = pixel(u + 1 / width, v);
+        const west = pixel(u - 1 / width, v);
+        const north = pixel(u, v + 1 / height);
+        const south = pixel(u, v - 1 / height);
+        const contrast = Math.abs(east.luma - west.luma) + Math.abs(north.luma - south.luma);
+        const mountain = Math.pow(clamp(center.luma * 1.18), 1.95);
+        const coastShelf = Math.pow(clamp(center.land), 0.55) * 0.04;
+        const terrain = center.land * (coastShelf + mountain * 0.74 + contrast * 5.4);
+        const oceanFloor = (1 - center.land) * 0.064;
+        return clamp(terrain - oceanFloor, -0.072, 1.08);
+      };
+    }
+
+    function applyTerrainRelief(geometry, image, amount = 0.105) {
+      const sampleRelief = makeReliefSampler(image);
+      const positions = geometry.attributes.position;
+      const uvs = geometry.attributes.uv;
+      const normal = new THREE.Vector3();
+      for (let i = 0; i < positions.count; i += 1) {
+        normal.fromBufferAttribute(positions, i).normalize();
+        const u = uvs.getX(i);
+        const v = uvs.getY(i);
+        const relief = sampleRelief(u, v);
+        const displacement = relief * amount;
+        positions.setXYZ(
+          i,
+          positions.getX(i) + normal.x * displacement,
+          positions.getY(i) + normal.y * displacement,
+          positions.getZ(i) + normal.z * displacement,
+        );
+      }
+      positions.needsUpdate = true;
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    function mixColor(a, b, t) {
+      const k = clamp(t);
+      return [
+        Math.round(a[0] + (b[0] - a[0]) * k),
+        Math.round(a[1] + (b[1] - a[1]) * k),
+        Math.round(a[2] + (b[2] - a[2]) * k),
+      ];
+    }
+
+    function makeAppleMapTexture(image) {
+      const width = 2048;
+      const height = 1024;
+      const source = document.createElement("canvas");
+      source.width = width;
+      source.height = height;
+      const sourceCtx = source.getContext("2d", { willReadFrequently: true });
+      sourceCtx.drawImage(image, 0, 0, width, height);
+      const src = sourceCtx.getImageData(0, 0, width, height);
+      const data = src.data;
+      const oceanDeep = [19, 88, 133];
+      const oceanMid = [35, 139, 184];
+      const oceanShelf = [83, 169, 191];
+      const forest = [72, 128, 82];
+      const grass = [122, 160, 95];
+      const dry = [197, 169, 111];
+      const mountain = [181, 176, 159];
+      const snow = [230, 233, 224];
+      for (let y = 0; y < height; y += 1) {
+        const latFactor = Math.abs(y / height - 0.5) * 2;
+        for (let x = 0; x < width; x += 1) {
+          const i = (y * width + x) * 4;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const luma = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+          const oceanMask = clamp((b - Math.max(r, g) * 0.58 - 2) / 105);
+          const landMask = 1 - oceanMask;
+          const arid = clamp((r - g * 0.82 + luma * 44 - 30) / 110);
+          const high = clamp((luma - 0.48) / 0.38);
+          const ice = clamp((latFactor - 0.82) * 5.8 + high * 0.42);
+          let land = mixColor(forest, grass, clamp(luma * 1.25));
+          land = mixColor(land, dry, arid * 0.78);
+          land = mixColor(land, mountain, high * 0.72);
+          land = mixColor(land, snow, ice * landMask);
+          let ocean = mixColor(oceanDeep, oceanMid, clamp(luma * 1.8));
+          ocean = mixColor(ocean, oceanShelf, clamp((luma - 0.35) * 2.4) * 0.55);
+          const color = mixColor(land, ocean, oceanMask);
+          const shade = 0.9 + luma * 0.18;
+          data[i] = Math.round(color[0] * shade);
+          data[i + 1] = Math.round(color[1] * shade);
+          data[i + 2] = Math.round(color[2] * shade);
+          data[i + 3] = 255;
+        }
+      }
+      sourceCtx.putImageData(src, 0, 0);
+      const texture = new THREE.CanvasTexture(source);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 8;
+      return texture;
+    }
+
+    function makeGoogleEarthTexture(image) {
+      const width = 2048;
+      const height = 1024;
+      const source = document.createElement("canvas");
+      source.width = width;
+      source.height = height;
+      const ctx = source.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(image, 0, 0, width, height);
+      const pixels = ctx.getImageData(0, 0, width, height);
+      const data = pixels.data;
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const i = (y * width + x) * 4;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const luma = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+          const lon = (x / width) * 360 - 180;
+          const lat = 90 - (y / height) * 180;
+          const brazilBounds = clamp((lon + 74) / 6) * clamp((-34 - lon) / 6) * clamp((lat + 34) / 6) * clamp((6 - lat) / 6);
+          const brazilCore = Math.pow(clamp(brazilBounds), 0.72);
+          const oceanMask = clamp((b - Math.max(r, g) * 0.5 + 8) / 110);
+          if (oceanMask > 0.18) {
+            const depth = clamp(b / 255);
+            const ocean = mixColor([6, 24, 52], [18, 77, 123], depth * 0.92);
+            const shelf = mixColor(ocean, [39, 130, 148], clamp((luma - 0.34) * 2.8));
+            const color = mixColor([r, g, b], shelf, oceanMask * 0.88);
+            data[i] = color[0];
+            data[i + 1] = color[1];
+            data[i + 2] = color[2];
+          } else {
+            const lush = clamp((g - r * 0.74 + 28) / 112);
+            const dry = clamp((r - g * 0.82 + 16) / 116);
+            let color = [r, g, b];
+            color = mixColor(color, [44, 122, 78], lush * 0.34);
+            color = mixColor(color, [178, 134, 82], dry * 0.26);
+            color = mixColor(color, [220, 208, 176], clamp((luma - 0.58) * 2.1) * 0.24);
+            color = mixColor(color, [62, 150, 104], brazilCore * lush * 0.16);
+            color = mixColor(color, [238, 220, 170], brazilCore * clamp((luma - 0.46) * 1.8) * 0.08);
+            const contrast = 0.9 + clamp((luma - 0.35) * 1.2) * 0.18 + brazilCore * 0.08;
+            data[i] = Math.round(color[0] * contrast);
+            data[i + 1] = Math.round(color[1] * contrast);
+            data[i + 2] = Math.round(color[2] * contrast);
+          }
+        }
+      }
+      ctx.putImageData(pixels, 0, 0);
+      const texture = new THREE.CanvasTexture(source);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 8;
+      return texture;
+    }
+
+    function setBrazilView() {
+      const from = lonLatToVec3(-50.8, -15.8, 1).normalize();
+      const to = new THREE.Vector3(-0.2, -0.02, 1).normalize();
+      targetEarthQuaternion = new THREE.Quaternion().setFromUnitVectors(from, to);
+      autoReturn = 1;
+    }
+
+    function seededRandom(seed) {
+      let value = seed >>> 0;
+      return () => {
+        value += 0x6D2B79F5;
+        let t = value;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function buildStars() {
+      const count = 2600;
+      const random = seededRandom(7357);
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      for (let i = 0; i < count; i += 1) {
+        const band = random() < 0.34;
+        positions[i * 3] = (random() - 0.5) * 78;
+        positions[i * 3 + 1] = band
+          ? (positions[i * 3] * 0.18) + (random() - 0.5) * 8
+          : (random() - 0.5) * 44;
+        positions[i * 3 + 2] = -26 - random() * 58;
+        const shade = band ? 0.42 + random() * 0.34 : 0.5 + random() * 0.38;
+        colors[i * 3] = shade;
+        colors[i * 3 + 1] = Math.min(1, shade + (band ? 0.04 : 0));
+        colors[i * 3 + 2] = Math.min(1, shade + (band ? 0.18 : 0.08));
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const stars = new THREE.Points(
+        geometry,
+        new THREE.PointsMaterial({
+          size: 0.03,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.72,
+          depthWrite: false,
+          fog: false,
+        }),
+      );
+      scene.add(stars);
+    }
+
+    function makeEarthMaterial(mapTexture, topoTexture, nightTexture) {
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          mapTexture: { value: mapTexture },
+          topoTexture: { value: topoTexture },
+          nightTexture: { value: nightTexture },
+          sunDirection: { value: sunDirection },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          varying vec3 vWorldNormal;
+          varying vec3 vWorldPosition;
+          void main() {
+            vUv = uv;
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            vWorldNormal = normalize(mat3(modelMatrix) * normal);
+            gl_Position = projectionMatrix * viewMatrix * worldPosition;
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D mapTexture;
+          uniform sampler2D topoTexture;
+          uniform sampler2D nightTexture;
+          uniform vec3 sunDirection;
+          varying vec2 vUv;
+          varying vec3 vWorldNormal;
+          varying vec3 vWorldPosition;
+          void main() {
+            vec3 normal = normalize(vWorldNormal);
+            vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+            vec3 sun = normalize(sunDirection);
+            float sunlight = dot(normal, sun);
+            vec3 mapColor = texture2D(mapTexture, vUv).rgb;
+            vec3 topoColor = texture2D(topoTexture, vUv).rgb;
+            vec3 nightMap = texture2D(nightTexture, vUv).rgb;
+            float oceanMask = smoothstep(0.03, 0.4, topoColor.b - max(topoColor.r, topoColor.g) * 0.58);
+            float landMask = 1.0 - oceanMask;
+            float terrainHeight = dot(topoColor, vec3(0.28, 0.52, 0.2));
+            vec3 color = mapColor;
+            float daylight = smoothstep(-0.08, 0.24, sunlight);
+            float nightAmount = 1.0 - daylight;
+            float terrainLight = 0.64 + max(sunlight, 0.0) * 0.56;
+            color *= terrainLight;
+            color += vec3(0.08, 0.1, 0.08) * landMask * clamp((terrainHeight - 0.45) * 1.8, 0.0, 1.0) * 0.12;
+            float rim = pow(1.0 - max(dot(normal, viewDirection), 0.0), 2.35);
+            vec3 reflectedSun = reflect(-sun, normal);
+            float oceanGlint = pow(max(dot(reflectedSun, viewDirection), 0.0), 40.0) * oceanMask;
+            float cityLights = smoothstep(0.14, 0.72, max(max(nightMap.r, nightMap.g), nightMap.b));
+            vec3 nightColor = mapColor * vec3(0.17, 0.24, 0.36);
+            nightColor += vec3(0.95, 0.62, 0.3) * cityLights * landMask * 0.42;
+            float twilight = 1.0 - smoothstep(0.0, 0.24, abs(sunlight));
+            color = mix(nightColor, color, daylight);
+            color += vec3(0.012, 0.045, 0.08) * nightAmount;
+            color += vec3(0.45, 0.62, 0.82) * oceanGlint * 0.22;
+            color += vec3(0.82, 0.34, 0.22) * twilight * 0.12;
+            color += vec3(0.26, 0.52, 0.72) * rim * (0.2 + nightAmount * 0.16);
+            color = mix(vec3(0.018, 0.04, 0.06), color, 0.88);
+            color = min(color, vec3(0.72, 0.76, 0.78));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `,
+      });
+    }
+
+    function makeAtmosphereMaterial() {
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          sunDirection: { value: sunDirection },
+        },
+        vertexShader: `
+          varying vec3 vWorldNormal;
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            vWorldNormal = normalize(mat3(modelMatrix) * normal);
+            gl_Position = projectionMatrix * viewMatrix * worldPosition;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 sunDirection;
+          varying vec3 vWorldNormal;
+          varying vec3 vWorldPosition;
+          void main() {
+            vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+            float rim = pow(1.0 - max(dot(normalize(vWorldNormal), viewDirection), 0.0), 2.0);
+            float sunEdge = smoothstep(-0.28, 0.82, dot(normalize(vWorldNormal), normalize(sunDirection)));
+            vec3 color = mix(vec3(0.08, 0.45, 0.62), vec3(0.64, 0.92, 1.0), sunEdge);
+            gl_FragColor = vec4(color, rim * 0.42);
+          }
+        `,
+        transparent: true,
+        side: THREE.BackSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+    }
+
+    function quantizedPointKey(point, precision) {
+      return `${Math.round(point[0] * precision)},${Math.round(point[1] * precision)}`;
+    }
+
+    function sameQuantizedPoint(a, b, precision) {
+      return quantizedPointKey(a, precision) === quantizedPointKey(b, precision);
+    }
+
+    function boundarySegmentKey(a, b, precision) {
+      const aKey = quantizedPointKey(a, precision);
+      const bKey = quantizedPointKey(b, precision);
+      return aKey < bKey ? `${aKey}|${bKey}` : `${bKey}|${aKey}`;
+    }
+
+    function collectUniqueBoundarySegments(features, precision = 1000) {
+      const segments = new Map();
+      for (const feature of features) {
+        const featureCode = feature.isoA3 || feature.uf || feature.name || "";
+        for (const ring of feature.rings) {
+          if (ring.length < 2) continue;
+          const isClosed = sameQuantizedPoint(ring[0], ring[ring.length - 1], precision);
+          const limit = isClosed ? ring.length - 1 : ring.length;
+          for (let i = 0; i < limit; i += 1) {
+            const a = ring[i];
+            const b = ring[(i + 1) % ring.length];
+            if (quantizedPointKey(a, precision) === quantizedPointKey(b, precision)) continue;
+            const key = boundarySegmentKey(a, b, precision);
+            const existing = segments.get(key);
+            if (existing) {
+              existing.count += 1;
+              existing.featureCodes.add(featureCode);
+            } else {
+              segments.set(key, { a, b, count: 1, featureCodes: new Set([featureCode]) });
+            }
+          }
+        }
+      }
+      return segments.values();
+    }
+
+    function makeBoundaryLineSegments(features, radius, color, opacity, lift = 0.06, options = {}) {
+      const precision = options.precision ?? 1000;
+      const minimumUses = options.minimumUses ?? 1;
+      const excludeCodes = new Set(options.excludeCodes ?? []);
+      const includeCodes = options.includeCodes ? new Set(options.includeCodes) : null;
+      const positions = [];
+      for (const segment of collectUniqueBoundarySegments(features, precision)) {
+        if (segment.count < minimumUses) continue;
+        if (includeCodes && ![...segment.featureCodes].some((code) => includeCodes.has(code))) continue;
+        if ([...segment.featureCodes].some((code) => excludeCodes.has(code))) continue;
+        const start = lonLatToVec3(segment.a[0], segment.a[1], radius + lift);
+        const end = lonLatToVec3(segment.b[0], segment.b[1], radius + lift);
+        positions.push(start.x, start.y, start.z, end.x, end.y, end.z);
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      const material = new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        depthWrite: false,
+      });
+      return new THREE.LineSegments(geometry, material);
+    }
+
+    function makeMarkerTexture(color) {
+      const c = document.createElement("canvas");
+      c.width = c.height = 160;
+      const ctx = c.getContext("2d");
+      const g = ctx.createRadialGradient(80, 80, 0, 80, 80, 78);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(0.08, color);
+      g.addColorStop(0.28, `${color}7a`);
+      g.addColorStop(0.7, `${color}16`);
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 160, 160);
+      const texture = new THREE.CanvasTexture(c);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
+    function makeMarker(signal, index) {
+      const group = new THREE.Group();
+      const position = lonLatToVec3(signal.lon, signal.lat, R + 0.22);
+      group.position.copy(position);
+      group.lookAt(position.clone().multiplyScalar(2));
+      group.userData.index = index;
+      const color = new THREE.Color(signal.tone);
+
+      const core = new THREE.Mesh(
+        new THREE.SphereGeometry(index === 0 ? 0.036 : 0.028, 18, 14),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.96, depthWrite: false }),
+      );
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: makeMarkerTexture(signal.tone),
+        transparent: true,
+        opacity: index === 0 ? 0.62 : 0.34,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }));
+      halo.scale.set(index === 0 ? 0.36 : 0.24, index === 0 ? 0.36 : 0.24, 1);
+
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(index === 0 ? 0.13 : 0.09, 0.0024, 8, 80),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: index === 0 ? 0.42 : 0.24, depthWrite: false, blending: THREE.AdditiveBlending }),
+      );
+      ring.rotation.x = Math.PI / 2;
+
+      group.add(halo, ring, core);
+      markerRoot.add(group);
+      return { group, core, halo, ring, signal };
+    }
+
+    function makeBrazilFocus() {
+      const group = new THREE.Group();
+      const position = lonLatToVec3(-50.8, -15.8, R + 0.2);
+      const focusTexture = makeMarkerTexture("#40e0d0");
+      const hotTexture = makeMarkerTexture("#ed4956");
+      const goldTexture = makeMarkerTexture("#f3c969");
+
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: focusTexture,
+        transparent: true,
+        opacity: 0.2,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }));
+      glow.position.copy(position);
+      glow.scale.set(2.75, 2.75, 1);
+
+      const hotGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: hotTexture,
+        transparent: true,
+        opacity: 0.14,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }));
+      hotGlow.position.copy(lonLatToVec3(-45.8, -21.9, R + 0.25));
+      hotGlow.scale.set(1.88, 1.88, 1);
+
+      const northGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: goldTexture,
+        transparent: true,
+        opacity: 0.08,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }));
+      northGlow.position.copy(lonLatToVec3(-55.4, -4.8, R + 0.24));
+      northGlow.scale.set(1.55, 1.55, 1);
+
+      const cityNodes = [
+        { lon: -60.02, lat: -3.12, texture: goldTexture, size: 0.105, opacity: 0.24 },
+        { lon: -48.5, lat: -1.45, texture: focusTexture, size: 0.09, opacity: 0.18 },
+        { lon: -38.54, lat: -3.73, texture: focusTexture, size: 0.095, opacity: 0.19 },
+        { lon: -34.88, lat: -8.05, texture: focusTexture, size: 0.085, opacity: 0.17 },
+        { lon: -38.5, lat: -12.97, texture: goldTexture, size: 0.105, opacity: 0.22 },
+        { lon: -47.88, lat: -15.79, texture: focusTexture, size: 0.12, opacity: 0.28 },
+        { lon: -49.27, lat: -16.68, texture: focusTexture, size: 0.085, opacity: 0.17 },
+        { lon: -43.94, lat: -19.92, texture: goldTexture, size: 0.09, opacity: 0.18 },
+        { lon: -43.17, lat: -22.91, texture: hotTexture, size: 0.115, opacity: 0.28 },
+        { lon: -46.63, lat: -23.55, texture: hotTexture, size: 0.145, opacity: 0.34 },
+        { lon: -49.27, lat: -25.43, texture: focusTexture, size: 0.085, opacity: 0.17 },
+        { lon: -51.23, lat: -30.03, texture: goldTexture, size: 0.086, opacity: 0.17 },
+        { lon: -56.1, lat: -15.6, texture: focusTexture, size: 0.08, opacity: 0.15 },
+      ];
+
+      cityNodes.forEach((node) => {
+        const dot = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: node.texture,
+          transparent: true,
+          opacity: node.opacity,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }));
+        dot.position.copy(lonLatToVec3(node.lon, node.lat, R + 0.28));
+        dot.scale.set(node.size, node.size, 1);
+        group.add(dot);
+      });
+
+      group.add(glow, hotGlow, northGlow);
+      return group;
+    }
+
+    function iconSvg(tone) {
+      if (tone === "hot") {
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 18V8"></path><path d="M10 18V5"></path><path d="M14 18v-7"></path><path d="M18 18V9"></path></svg>`;
+      }
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-6 4 12 2-6h4"></path></svg>`;
+    }
+
+    function updatePanel(index) {
+      selectedIndex = (index + signals.length) % signals.length;
+      const signal = signals[selectedIndex];
+      document.documentElement.style.setProperty("--signal-tone", signal.tone);
+      document.documentElement.style.setProperty("--confidence-deg", `${Math.round(clamp(signal.confidence / 100, 0, 1) * 360)}deg`);
+      field.market.textContent = signal.uf === "US" ? "EUA / EARLY" : `BRASIL / ${signal.uf}`;
+      field.place.textContent = `${signal.city}, ${signal.uf} - ${signal.uf === "US" ? "EUA" : "Brasil"}`;
+      field.title.textContent = signal.title;
+      field.tag.textContent = signal.tag;
+      field.score.textContent = signal.score;
+      field.score.style.color = signal.tone;
+      field.scoreMeter.style.width = `${Math.round(clamp(signal.score / 100, 0, 1) * 100)}%`;
+      field.confidence.textContent = `${signal.confidence}%`;
+      field.confidenceLabel.textContent = signal.confidenceLabel;
+      field.evidence.textContent = String(signal.evidence).padStart(2, "0");
+      field.source.textContent = signal.source;
+      field.sourceMetric.textContent = signal.source;
+      field.risk.textContent = signal.risk;
+      field.decision.textContent = signal.decision;
+      field.decisionHint.textContent = signal.decisionHint;
+      field.monitorHint.textContent = signal.monitorHint;
+      field.panelState.textContent = signal.uf === "US" ? "early signal" : "preview ativo";
+      const rows = signal.evidenceRows.slice(0, 3);
+      field.evidenceCount.textContent = `${rows.length} itens`;
+      field.timeline.innerHTML = rows.map(([time, title, copy, severity, tone]) => `
+        <div class="evidence-row">
+          <div class="time">${time}</div>
+          <div class="node ${tone === "hot" ? "hot" : ""}">${iconSvg(tone)}</div>
+          <div class="evidence-copy"><b>${title}</b><span>${copy}</span></div>
+          <div class="severity">${severity}</div>
+        </div>
+      `).join("");
+
+      markerEntries.forEach((entry, entryIndex) => {
+        const active = entryIndex === selectedIndex;
+        entry.core.material.opacity = active ? 1 : 0.62;
+        entry.halo.material.opacity = active ? 0.62 : 0.24;
+        entry.ring.material.opacity = active ? 0.5 : 0.18;
+      });
+
+      cityLabel.querySelector("span").textContent = `${signal.city}, ${signal.uf}`;
+      cityLabel.classList.add("is-visible");
+    }
+
+    function updateSolarReadouts() {
+      const solar = getSolarState(new Date());
+      solarLocalDirection.copy(lonLatToVec3(solar.lon, solar.lat, 1).normalize());
+      timezoneClock.textContent = `${solar.brtClock} BRT`;
+      solarReadout.textContent = `BRASILIA ${solar.brtClock} BRT`;
+      updateSunDirection();
+    }
+
+    function updateSunDirection() {
+      sunDirection.copy(solarLocalDirection).applyQuaternion(earth.quaternion).normalize();
+      sunLight.position.copy(sunDirection.clone().multiplyScalar(13));
+      if (earthMaterial?.uniforms?.sunDirection) {
+        earthMaterial.uniforms.sunDirection.value.copy(sunDirection);
+      }
+    }
+
+    function projectGeoPoint(lon, lat, lift) {
+      const local = lonLatToVec3(lon, lat, R + lift);
+      const world = earth.localToWorld(local.clone());
+      const projected = world.project(camera);
+      const earthWorldPosition = earth.getWorldPosition(new THREE.Vector3());
+      const facing = world.clone().sub(earthWorldPosition).normalize().dot(camera.position.clone().normalize());
+      const zone = document.querySelector(".globe-zone").getBoundingClientRect();
+      return {
+        x: (projected.x * 0.5 + 0.5) * zone.width + zone.left,
+        y: (-projected.y * 0.5 + 0.5) * zone.height + zone.top,
+        z: projected.z,
+        facing,
+        zone,
+      };
+    }
+
+    function projectLabel(element, lon, lat, offsetY = 0) {
+      const point = projectGeoPoint(lon, lat, 0.34);
+      const x = point.x;
+      const y = point.y + offsetY;
+      element.style.left = `${x}px`;
+      element.style.top = `${y}px`;
+      element.style.opacity = point.z < 1 ? "1" : "0";
+    }
+
+    function projectMapLabel(label) {
+      const point = projectGeoPoint(label.lon, label.lat, label.lift);
+      const signal = signals[selectedIndex] || signals[0];
+      const isSignalCity = label.kind === "city" && labelKey(label.key) === labelKey(signal.city);
+      const isSupportCity = label.kind === "city" && ["brasilia", "manaus"].includes(labelKey(label.key));
+      const x = point.x + (label.offsetX ?? 0);
+      const y = point.y + (label.offsetY ?? 0);
+      label.element.style.left = `${x}px`;
+      label.element.style.top = `${y}px`;
+      label.element.classList.toggle("signal-city", isSignalCity);
+      const threshold = isSignalCity ? 0.06 : (label.threshold ?? -0.18);
+      let opacity = label.opacity ?? 1;
+      if (isSignalCity) opacity = 0.98;
+      if (label.kind === "city" && !isSignalCity && !isSupportCity) opacity *= 0.58;
+      if (label.kind === "neighbor") opacity *= 0.86;
+      label.element.style.opacity = point.z < 1 && point.facing > threshold ? String(opacity) : "0";
+    }
+
+    function resize() {
+      const zone = document.querySelector(".globe-zone").getBoundingClientRect();
+      camera.aspect = Math.max(1, zone.width) / Math.max(1, zone.height);
+      camera.updateProjectionMatrix();
+      renderer.setSize(Math.max(1, zone.width), Math.max(1, zone.height), false);
+    }
+
+    function setPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
+    }
+
+    function pick(event, commit = false) {
+      setPointer(event);
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(markerEntries.map((entry) => entry.core), false);
+      if (!hits.length) {
+        cityLabel.classList.remove("is-visible");
+        return;
+      }
+      const entry = markerEntries.find((candidate) => candidate.core === hits[0].object);
+      if (!entry) return;
+      cityLabel.querySelector("span").textContent = `${entry.signal.city}, ${entry.signal.uf}`;
+      projectLabel(cityLabel, entry.signal.lon, entry.signal.lat, -28);
+      cityLabel.classList.add("is-visible");
+      if (commit) updatePanel(entry.group.userData.index);
+    }
+
+    function hideBoot() {
+      const elapsed = performance.now() - bootStartedAt;
+      window.setTimeout(() => boot.classList.add("is-hidden"), Math.max(1700 - elapsed, 500));
+    }
+
+    async function init() {
+      bootStatus.textContent = "carregando texturas nasa";
+      const loader = new THREE.TextureLoader();
+      const [topoTexture, nightTexture, countries, brazil] = await Promise.all([
+        loader.loadAsync("./earth-assets/nasa-blue-marble-topography-july-5400.jpg")
+          .catch(() => loader.loadAsync("./earth-assets/nasa-blue-marble-july-5400.jpg")),
+        loader.loadAsync("./earth-assets/nasa-black-marble-2016-3600.jpg"),
+        fetch("./natural-earth-countries-110m-simplified.json").then((r) => r.json()),
+        fetch("./brazil-uf-2024-simplified.json").then((r) => r.json()),
+      ]);
+      topoTexture.colorSpace = THREE.SRGBColorSpace;
+      nightTexture.colorSpace = THREE.SRGBColorSpace;
+      topoTexture.anisotropy = 8;
+      nightTexture.anisotropy = 8;
+
+      bootStatus.textContent = "montando planeta";
+      const mapTexture = makeGoogleEarthTexture(topoTexture.image);
+      earthMaterial = makeEarthMaterial(mapTexture, topoTexture, nightTexture);
+      const earthGeometry = applyTerrainRelief(new THREE.SphereGeometry(R, 384, 192), topoTexture.image, 0.048);
+      const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+      const atmosphere = new THREE.Mesh(
+        new THREE.SphereGeometry(R * 1.045, 160, 88),
+        makeAtmosphereMaterial(),
+      );
+
+      earth.add(earthMesh, atmosphere);
+      earth.add(makeBrazilFocus());
+      earth.add(makeBoundaryLineSegments(countries.features, R, 0xf7f4e7, 0.1, 0.062, { precision: 1000, excludeCodes: ["BRA"] }));
+      earth.add(makeBoundaryLineSegments(countries.features, R, 0x40e0d0, 0.62, 0.108, { precision: 1000, includeCodes: ["BRA"] }));
+      earth.add(makeBoundaryLineSegments(brazil.states, R, 0xe8fff7, 0.28, 0.096, { precision: 1000 }));
+      earth.add(markerRoot);
+
+      markerEntries = signals.map(makeMarker);
+      buildStars();
+      setBrazilView();
+      updatePanel(0);
+      cityLabel.querySelector("span").textContent = "São Paulo, SP";
+      cityLabel.classList.add("is-visible");
+      updateSolarReadouts();
+
+      bootStatus.textContent = "abrindo mapa de Reels";
+      window.requestAnimationFrame(() => document.documentElement.classList.add("is-ready"));
+      hideBoot();
+    }
+
+    window.addEventListener("resize", resize);
+    canvas.addEventListener("pointermove", (event) => pick(event));
+    canvas.addEventListener("click", (event) => pick(event, true));
+    controls.addEventListener("start", () => { autoReturn = 0; });
+    document.getElementById("resetView").addEventListener("click", () => setBrazilView());
+    document.getElementById("nextSignal").addEventListener("click", () => updatePanel(selectedIndex + 1));
+
+    function animate(now = 0) {
+      const frame = frameAt(now);
+      if (frame - lastSolarFrame >= FPS * 20) {
+        lastSolarFrame = frame;
+        updateSolarReadouts();
+      }
+      if (autoReturn > 0) {
+        const settle = interpolate(frame, [0, FPS * 3.8], [0.015, 0.006]);
+        earth.quaternion.slerp(targetEarthQuaternion, settle);
+      }
+      markerEntries.forEach((entry, index) => {
+        const active = index === selectedIndex;
+        const pulse = Math.sin((frame / FPS) * (active ? 1.25 : 0.72) + index) * 0.5 + 0.5;
+        entry.halo.scale.setScalar(active ? 0.38 + pulse * 0.024 : 0.24 + pulse * 0.012);
+        entry.ring.rotation.z += active ? 0.0026 : 0.0012;
+        entry.ring.scale.setScalar(active ? 1 + pulse * 0.055 : 0.92 + pulse * 0.026);
+      });
+      controls.update();
+      updateSunDirection();
+      if (cityLabel.classList.contains("is-visible")) {
+        const signal = markerEntries[selectedIndex]?.signal || signals[0];
+        projectLabel(cityLabel, signal.lon, signal.lat, -30);
+      }
+      mapLabels.forEach(projectMapLabel);
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    init().catch((error) => {
+      console.error(error);
+      bootStatus.textContent = "erro ao carregar planeta";
+    });
+    resize();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
